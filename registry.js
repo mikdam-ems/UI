@@ -87,5 +87,16 @@ window.EMS_REGISTRY = [
     path: "heroes/07-tandem-wallet/",
     accent: "#E2FA52",
     summary: "Shared-wallet hero with a swipeable coverflow of group pots, each with live payment chips."
+  },
+  {
+    id: "hero-08",
+    kind: "hero",
+    type: "Hero",
+    title: "Cloud.de",
+    industry: "AI SaaS",
+    tags: ["Painted sky", "Drifting clouds", "Glass prompt", "Streamed AI answers"],
+    path: "heroes/08-cloud-de/",
+    accent: "#62B2F2",
+    summary: "Sky-and-hills AI platform hero with a working glass prompt card that streams answers."
   }
 ];
