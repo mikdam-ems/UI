@@ -65,5 +65,16 @@ window.EMS_REGISTRY = [
     path: "heroes/05-sadeem-wealth/",
     accent: "#D4AF6A",
     summary: "A fund's performance line draws across the night sky and Riyadh rises to meet it, in English or Arabic."
+  },
+  {
+    id: "hero-06",
+    kind: "hero",
+    type: "Hero",
+    title: "Cusana CRM",
+    industry: "B2B SaaS",
+    tags: ["Browser mockup", "Inline metric card", "Live tabs", "Data pulses"],
+    path: "heroes/06-cusana-crm/",
+    accent: "#FF7A1A",
+    summary: "CRM hero in a browser frame: a metric card inside the headline and a working three-node pipeline."
   }
 ];
