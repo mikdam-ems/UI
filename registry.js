@@ -76,5 +76,16 @@ window.EMS_REGISTRY = [
     path: "heroes/06-cusana-crm/",
     accent: "#FF7A1A",
     summary: "CRM hero in a browser frame: a metric card inside the headline and a working three-node pipeline."
+  },
+  {
+    id: "hero-07",
+    kind: "hero",
+    type: "Hero",
+    title: "tandem",
+    industry: "Fintech",
+    tags: ["Coverflow deck", "Swipe", "Illustrated scenes", "Glass chips"],
+    path: "heroes/07-tandem-wallet/",
+    accent: "#E2FA52",
+    summary: "Shared-wallet hero with a swipeable coverflow of group pots, each with live payment chips."
   }
 ];
