@@ -21,5 +21,16 @@ window.EMS_REGISTRY = [
     path: "heroes/01-surpay-fintech/",
     accent: "#8CA2BA",
     summary: "Slate-blue fintech hero where live payment cards rise out of an opened envelope."
+  },
+  {
+    id: "hero-02",
+    kind: "hero",
+    type: "Hero",
+    title: "FORMA Studio",
+    industry: "Fashion",
+    tags: ["Editorial", "SVG lens mask", "Frosted glass", "Parallax depth"],
+    path: "heroes/02-forma-fashion/",
+    accent: "#1B36A8",
+    summary: "Giant MOOD wordmark where the two O's become frosted glass lenses over the model."
   }
 ];
