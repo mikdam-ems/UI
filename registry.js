@@ -43,5 +43,16 @@ window.EMS_REGISTRY = [
     path: "heroes/03-sync-ai/",
     accent: "#C8E2EC",
     summary: "Clean SaaS hero with a working bento deck: shuffle integrations, confirm meetings, press real shortcuts."
+  },
+  {
+    id: "hero-04",
+    kind: "hero",
+    type: "Hero",
+    title: "ORYN Nocturne",
+    industry: "Automotive",
+    tags: ["Dark studio", "SVG car", "Light sweep", "Live paint configurator"],
+    path: "heroes/04-oryn-ev/",
+    accent: "#b3311b",
+    summary: "Luxury EV on a dark stage: a light band sweeps the paint, and swatches re-light the whole scene."
   }
 ];

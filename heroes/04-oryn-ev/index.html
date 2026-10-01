@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ORYN Nocturne</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: full-bleed dark studio; split intro on top, the car on a reflective floor, specs + paint swatches along the bottom */
+    @property --paint-hi  { syntax: "<color>"; inherits: true; initial-value: #5a606b; }
+    @property --paint-mid { syntax: "<color>"; inherits: true; initial-value: #1d2026; }
+    @property --paint-lo  { syntax: "<color>"; inherits: true; initial-value: #07080a; }
+    @property --glow      { syntax: "<color>"; inherits: true; initial-value: rgba(120, 140, 170, .28); }
+    :root {
+      --void: #060708;
+      --floor: #0d0f12;
+      --text: #ECEEF0;
+      --dim: #8A9099;
+      --hair: rgba(255,255,255,.1);
+      --wide: "Syncopate", "Eurostile", "Arial Black", sans-serif;
+      --body: "Manrope", system-ui, sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: dark;
+      transition: --paint-hi .9s var(--ease), --paint-mid .9s var(--ease), --paint-lo .9s var(--ease), --glow .9s var(--ease);
+    }
+    body { background: var(--void); color: var(--text); font-family: var(--body); }
+
+    .hero {
+      position: relative; isolation: isolate; overflow: hidden;
+      min-height: 100svh;
+      display: flex; flex-direction: column;
+      padding: 0 clamp(16px, 4vw, 56px);
+      background:
+        radial-gradient(60% 45% at 50% 0%, rgba(255,255,255,.07), transparent 70%),
+        radial-gradient(50% 35% at 50% 72%, var(--glow), transparent 70%),
+        linear-gradient(180deg, var(--void) 0%, var(--void) 62%, var(--floor) 100%);
+    }
+    /* soft spotlight that follows the pointer */
+    .spot {
+      position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background: radial-gradient(420px 300px at var(--sx, 50%) 58%, rgba(255,255,255,.06), transparent 70%);
+      transition: background .2s;
+    }
+
+    /* ---------- Nav ---------- */
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0; }
+    .brand { font-family: var(--wide); font-weight: 700; font-size: 18px; letter-spacing: .5em; color: var(--text); text-decoration: none; }
+    .links { display: flex; gap: 40px; list-style: none; margin: 0; padding: 0; }
+    .links a { color: var(--dim); text-decoration: none; font-size: 14px; letter-spacing: .02em; transition: color .2s; }
+    .links a:hover { color: var(--text); }
+    .ghost {
+      display: inline-flex; align-items: center; height: 42px; padding: 0 22px;
+      border: 1px solid rgba(255,255,255,.28); border-radius: 999px;
+      color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500;
+      transition: background .25s, border-color .25s;
+    }
+    .ghost:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.5); }
+
+    /* ---------- Intro ---------- */
+    .intro { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: end; margin-top: clamp(16px, 4vh, 48px); }
+    .eyebrow { font-family: var(--wide); font-size: 11px; letter-spacing: .38em; text-transform: uppercase; color: var(--dim); display: flex; align-items: center; gap: 14px; }
+    .eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--dim); }
+    h1 { margin: 18px 0 0; font-weight: 300; font-size: clamp(44px, 6.4vw, 96px); line-height: .98; letter-spacing: -.045em; }
+    h1 em { font-style: normal; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,.55); }
+    .intro-side { max-width: 400px; justify-self: end; padding-bottom: 8px; }
+    .intro-side p { margin: 0; color: var(--dim); font-size: 16px; line-height: 1.6; }
+    .ctas { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+    .solid {
+      display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 26px; border-radius: 999px;
+      background: var(--text); color: #0b0c0e; text-decoration: none; font-weight: 600; font-size: 14px;
+      transition: transform .25s var(--ease), box-shadow .25s;
+    }
+    .solid:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -10px rgba(255,255,255,.35); }
+    .solid svg { width: 14px; height: 14px; }
+    .ctas .ghost { height: 48px; }
+
+    /* ---------- Stage ---------- */
+    .stage { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center; min-height: 0; margin-top: 8px; }
+    .model-word {
+      position: absolute; left: 50%; top: 4%; transform: translateX(-50%);
+      font-family: var(--wide); font-weight: 700; font-size: clamp(56px, 13vw, 210px); letter-spacing: .04em;
+      color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,.08); white-space: nowrap; pointer-events: none;
+      user-select: none;
+    }
+    .car { position: relative; width: min(1240px, 100%, calc((100svh - 470px) * 2.55)); height: auto; overflow: visible; }
+
+    /* ---------- Bottom bar ---------- */
+    .bar {
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap;
+      border-top: 1px solid var(--hair); padding: 22px 0 28px; margin-top: 4px;
+    }
+    .specs { display: flex; gap: clamp(24px, 5vw, 64px); }
+    .spec b { display: block; font-weight: 300; font-size: clamp(26px, 2.6vw, 38px); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .spec b small { font-size: .45em; color: var(--dim); margin-left: 4px; letter-spacing: 0; }
+    .spec span { font-size: 12px; color: var(--dim); letter-spacing: .04em; }
+    .paint { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+    .paint-name { font-family: var(--wide); font-size: 11px; letter-spacing: .32em; text-transform: uppercase; color: var(--dim); }
+    .paint-name b { color: var(--text); font-weight: 400; }
+    .swatches { display: flex; gap: 10px; }
+    .sw {
+      width: 30px; height: 30px; border-radius: 50%; padding: 0; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.18); background: var(--c);
+      box-shadow: inset 0 -6px 10px rgba(0,0,0,.35), inset 0 4px 8px rgba(255,255,255,.25);
+      outline-offset: 4px; transition: transform .25s var(--ease);
+    }
+    .sw:hover { transform: scale(1.12); }
+    .sw[aria-pressed="true"] { outline: 1px solid rgba(255,255,255,.85); }
+    .sw:focus-visible, .solid:focus-visible, .ghost:focus-visible, .links a:focus-visible, .brand:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+    /* ---------- Motion ---------- */
+    .rise { opacity: 0; transform: translateY(18px); animation: rise 1s var(--ease) forwards; }
+    .r1 { animation-delay: .1s; } .r2 { animation-delay: .25s; } .r3 { animation-delay: .4s; } .r4 { animation-delay: 1.6s; }
+    .reveal { opacity: 0; animation: fade 1.6s ease .5s forwards; }
+    .lights { opacity: 0; animation: lightsOn .9s steps(1) 1.4s forwards; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @keyframes fade { to { opacity: 1; } }
+    @keyframes lightsOn { 0% { opacity: 0; } 20% { opacity: 1; } 35% { opacity: .2; } 50%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .rise, .reveal, .lights { opacity: 1; transform: none; animation: none; }
+      :root { transition: none; }
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .links { display: none; }
+      .intro { grid-template-columns: 1fr; gap: 20px; }
+      .intro-side { justify-self: start; }
+      .car { width: 100%; }
+      .stage { flex: none; margin-top: 32px; }
+      .bar { flex-direction: column; align-items: stretch; }
+      .paint { align-items: flex-start; }
+    }
+    @media (max-width: 520px) {
+      .brand { letter-spacing: .35em; font-size: 15px; }
+      .specs { justify-content: space-between; gap: 12px; }
+      .spec span { font-size: 11px; }
+      .ctas a { flex: 1; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero" id="hero">
+    <div class="spot" aria-hidden="true"></div>
+
+    <nav class="nav rise r1">
+      <a class="brand" href="#">ORYN</a>
+      <ul class="links">
+        <li><a href="#">Models</a></li>
+        <li><a href="#">Technology</a></li>
+        <li><a href="#">Charging</a></li>
+        <li><a href="#">Ownership</a></li>
+      </ul>
+      <a class="ghost" href="#">Reserve</a>
+    </nav>
+
+    <div class="intro">
+      <div class="rise r2">
+        <div class="eyebrow">Introducing ORYN Nocturne</div>
+        <h1>Silence,<br><em>sculpted.</em></h1>
+      </div>
+      <div class="intro-side rise r3">
+        <p>An all-electric grand tourer drawn from a single line of light. Twin motors, 720 km of range and a cabin tuned to 28 dB at cruise.</p>
+        <div class="ctas">
+          <a class="solid" href="#">Reserve yours
+            <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h9M7.5 3.5 11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="ghost" href="#">Configure</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="model-word" aria-hidden="true">NOCTURNE</div>
+
+      <svg class="car reveal" viewBox="0 0 1200 470" role="img" aria-label="Side profile of the ORYN Nocturne electric grand tourer">
+        <defs>
+          <!-- body silhouette, front facing right; wheels at x 300 / 900, axle y 300, ground y 358 -->
+          <path id="bodyPath" d="M122 300 C112 284 110 254 124 232 C132 222 150 214 175 208 C250 190 330 168 405 150 C470 134 520 122 585 120 C655 118 705 132 760 166 C790 182 830 192 900 200 C980 208 1040 212 1072 222 C1094 230 1102 250 1098 272 C1096 288 1088 298 1070 300 L970 300 A70 70 0 0 0 830 300 L370 300 A70 70 0 0 0 230 300 Z"/>
+          <clipPath id="bodyClip"><use href="#bodyPath"/></clipPath>
+
+          <linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" style="stop-color: var(--paint-hi)"/>
+            <stop offset=".42" style="stop-color: var(--paint-mid)"/>
+            <stop offset="1" style="stop-color: var(--paint-lo)"/>
+          </linearGradient>
+          <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#2b3036"/><stop offset=".55" stop-color="#0c0e11"/><stop offset="1" stop-color="#050607"/>
+          </linearGradient>
+          <linearGradient id="sweepGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+            <stop offset=".5" stop-color="#fff" stop-opacity=".55"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+          <radialGradient id="rim" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#3a3e45"/><stop offset=".8" stop-color="#1b1d21"/><stop offset="1" stop-color="#2c2f35"/>
+          </radialGradient>
+          <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#EAF6FF" stop-opacity=".22"/><stop offset="1" stop-color="#EAF6FF" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="reflFade" gradientUnits="userSpaceOnUse" x1="0" y1="358" x2="0" y2="470">
+            <stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+          <mask id="reflMask" maskUnits="userSpaceOnUse" x="0" y="358" width="1200" height="112">
+            <rect x="0" y="358" width="1200" height="112" fill="url(#reflFade)"/>
+          </mask>
+          <filter id="glow" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="soft"><feGaussianBlur stdDeviation="10"/></filter>
+
+          <g id="wheel">
+            <circle r="58" fill="#0b0c0e"/>
+            <circle r="57" fill="none" stroke="rgba(255,255,255,.07)"/>
+            <circle r="45" fill="url(#rim)"/>
+            <g class="spokes" stroke="#4a4f57" stroke-width="5" stroke-linecap="round">
+              <path d="M0 -12 L0 -42"/><path d="M0 -12 L0 -42" transform="rotate(36)"/><path d="M0 -12 L0 -42" transform="rotate(72)"/>
+              <path d="M0 -12 L0 -42" transform="rotate(108)"/><path d="M0 -12 L0 -42" transform="rotate(144)"/><path d="M0 -12 L0 -42" transform="rotate(180)"/>
+              <path d="M0 -12 L0 -42" transform="rotate(216)"/><path d="M0 -12 L0 -42" transform="rotate(252)"/><path d="M0 -12 L0 -42" transform="rotate(288)"/>
+              <path d="M0 -12 L0 -42" transform="rotate(324)"/>
+            </g>
+            <circle r="10" fill="#15171a" stroke="#5a5f68" stroke-width="1.5"/>
+          </g>
+
+          <g id="car">
+            <!-- body -->
+            <use href="#bodyPath" fill="url(#paint)"/>
+            <!-- glasshouse -->
+            <path d="M418 162 C480 141 530 131 588 130 C648 129 690 141 734 168 C690 172 520 175 418 172 Z" fill="url(#glass)"/>
+            <path d="M440 160 C500 142 560 136 600 135" stroke="rgba(255,255,255,.18)" stroke-width="1.2" fill="none"/>
+            <path d="M578 132 L574 172" stroke="rgba(0,0,0,.6)" stroke-width="4"/>
+            <!-- mirror -->
+            <path d="M732 170 q18 -8 32 0 q-8 9 -30 7 Z" style="fill: var(--paint-mid)"/>
+            <!-- character line, sill shadow, door seam, flush handle -->
+            <path d="M178 220 C400 200 700 205 1062 230" stroke="rgba(255,255,255,.16)" stroke-width="1.4" fill="none"/>
+            <path d="M380 288 L820 288" stroke="rgba(0,0,0,.45)" stroke-width="7" stroke-linecap="round"/>
+            <path d="M562 178 C556 220 556 262 562 296" stroke="rgba(0,0,0,.4)" stroke-width="1.6" fill="none"/>
+            <path d="M640 206 L690 207" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-linecap="round"/>
+            <!-- wheels -->
+            <use href="#wheel" x="300" y="300"/>
+            <use href="#wheel" x="900" y="300"/>
+          </g>
+        </defs>
+
+        <!-- floor shadow -->
+        <ellipse cx="600" cy="362" rx="520" ry="12" fill="#000" filter="url(#soft)"/>
+
+        <!-- headlight beam on the floor ahead of the car -->
+        <g class="lights"><path d="M1094 244 L1190 222 L1190 350 Z" fill="url(#beam)" filter="url(#soft)" opacity=".8"/></g>
+
+        <!-- reflection -->
+        <g mask="url(#reflMask)" opacity=".55">
+          <g transform="translate(0 716) scale(1 -1)"><use href="#car"/></g>
+        </g>
+
+        <use href="#car"/>
+
+        <!-- light sweep across the paint -->
+        <g clip-path="url(#bodyClip)" style="mix-blend-mode: screen">
+          <rect id="sweep" x="-340" y="80" width="220" height="240" fill="url(#sweepGrad)" transform="skewX(-18)"/>
+        </g>
+        <!-- rim light along the roofline -->
+        <path d="M175 208 C250 190 330 168 405 150 C470 134 520 122 585 120 C655 118 705 132 760 166" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>
+
+        <!-- lights -->
+        <g class="lights">
+          <path d="M1014 221 C1042 223 1066 228 1088 238" stroke="#EAF6FF" stroke-width="3.5" stroke-linecap="round" fill="none" filter="url(#glow)"/>
+          <path d="M127 240 C140 229 160 221 198 214" stroke="#FF2B2B" stroke-width="3.5" stroke-linecap="round" fill="none" filter="url(#glow)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="bar rise r4">
+      <div class="specs">
+        <div class="spec"><b data-count="720" data-dec="0">720<small>km</small></b><span>Range, WLTP</span></div>
+        <div class="spec"><b data-count="2.9" data-dec="1">2.9<small>s</small></b><span>0–100 km/h</span></div>
+        <div class="spec"><b data-count="18" data-dec="0">18<small>min</small></b><span>10–80% charge</span></div>
+      </div>
+      <div class="paint">
+        <div class="paint-name">Paint · <b id="paintName">Obsidian Black</b></div>
+        <div class="swatches" role="group" aria-label="Paint colour">
+          <button class="sw" style="--c:#1d2026" aria-pressed="true"  aria-label="Obsidian Black" data-name="Obsidian Black" data-hi="#5a606b" data-mid="#1d2026" data-lo="#07080a" data-glow="rgba(120,140,170,.28)"></button>
+          <button class="sw" style="--c:#c9d2da" aria-pressed="false" aria-label="Glacier White"  data-name="Glacier White"  data-hi="#f6f9fb" data-mid="#b5c0c9" data-lo="#3e4851" data-glow="rgba(190,215,235,.3)"></button>
+          <button class="sw" style="--c:#b3311b" aria-pressed="false" aria-label="Ember Red"      data-name="Ember Red"      data-hi="#ff8a5c" data-mid="#b3311b" data-lo="#2e0a05" data-glow="rgba(255,90,50,.3)"></button>
+          <button class="sw" style="--c:#2d5d4c" aria-pressed="false" aria-label="Verdant Green"  data-name="Verdant Green"  data-hi="#86c9ad" data-mid="#2d5d4c" data-lo="#08150f" data-glow="rgba(80,180,140,.26)"></button>
+          <button class="sw" style="--c:#a37a35" aria-pressed="false" aria-label="Solar Gold"     data-name="Solar Gold"     data-hi="#f4d690" data-mid="#a37a35" data-lo="#251906" data-glow="rgba(240,190,90,.26)"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const root = document.documentElement;
+    const sweep = document.getElementById('sweep');
+    const hero = document.getElementById('hero');
+
+    // Paint swatches re-light the whole scene
+    const swatches = document.querySelectorAll('.sw');
+    swatches.forEach(b => b.addEventListener('click', () => {
+      swatches.forEach(s => s.setAttribute('aria-pressed', s === b));
+      root.style.setProperty('--paint-hi', b.dataset.hi);
+      root.style.setProperty('--paint-mid', b.dataset.mid);
+      root.style.setProperty('--paint-lo', b.dataset.lo);
+      root.style.setProperty('--glow', b.dataset.glow);
+      document.getElementById('paintName').textContent = b.dataset.name;
+      runSweep(900);
+    }));
+
+    // Light sweep: one pass across the body, x in car units
+    let raf;
+    function runSweep(dur = 2200, delay = 0) {
+      if (reduceMotion) return;
+      cancelAnimationFrame(raf);
+      setTimeout(() => {
+        const t0 = performance.now();
+        const step = now => {
+          const t = Math.min(1, (now - t0) / dur), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          sweep.setAttribute('x', -340 + e * 1800);
+          if (t < 1) raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      }, delay);
+    }
+    runSweep(2400, 700);
+
+    // On desktop the light follows the pointer; it drifts back to idle sweeps when the pointer leaves
+    if (!reduceMotion && matchMedia('(pointer: fine)').matches) {
+      const car = document.querySelector('.car');
+      hero.addEventListener('pointermove', e => {
+        cancelAnimationFrame(raf);
+        const r = car.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width * 1200;
+        sweep.setAttribute('x', x - 110 + 0.32 * 200); // compensate for the skew so the band sits under the cursor
+        hero.style.setProperty('--sx', (e.clientX / innerWidth * 100) + '%');
+      });
+      hero.addEventListener('pointerleave', () => runSweep(1600));
+    }
+    if (!reduceMotion) setInterval(() => { if (!hero.matches(':hover')) runSweep(2200); }, 7000);
+
+    // Spec counters
+    if (!reduceMotion) {
+      document.querySelectorAll('[data-count]').forEach(el => {
+        const unit = el.querySelector('small').outerHTML, to = +el.dataset.count, dec = +el.dataset.dec;
+        const t0 = performance.now() + 1700, dur = 1400;
+        el.innerHTML = (0).toFixed(dec) + unit;
+        const step = now => {
+          const t = Math.max(0, Math.min(1, (now - t0) / dur));
+          el.innerHTML = (to * (1 - Math.pow(1 - t, 4))).toFixed(dec) + unit;
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    }
+  </script>
+</body>
+</html>
