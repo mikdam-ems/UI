@@ -70,7 +70,7 @@
     /* ---------- Copy ---------- */
     .copy {
       position: absolute; z-index: 4; left: 48px; bottom: 48px;
-      max-width: 330px;
+      max-width: min(330px, 25vw);
     }
     .copy h1 {
       margin: 0; color: var(--cobalt);
@@ -92,12 +92,6 @@
     .cta:hover svg { transform: translateX(4px); }
     .cta:focus-visible, .links a:focus-visible, .cart:focus-visible, .logo:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 4px; }
 
-    .look {
-      position: absolute; z-index: 4; right: 48px; bottom: 48px;
-      text-align: right; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--cobalt);
-      line-height: 1.8;
-    }
-    .look b { font-family: var(--display); font-weight: 800; font-size: 14px; letter-spacing: .08em; display: block; }
 
     /* ---------- Motion ---------- */
     .rise { opacity: 0; transform: translateY(24px); animation: rise 1s var(--ease) forwards; }
@@ -124,7 +118,6 @@
       .hero { height: auto; border-radius: 22px; }
       .stage { flex: none; aspect-ratio: 1400 / 700; margin-top: 32px; }
       .copy { position: static; padding: 8px 20px 32px; max-width: none; }
-      .look { display: none; }
     }
   </style>
 </head>
@@ -149,18 +142,12 @@
       <svg id="scene" viewBox="0 0 1400 760" preserveAspectRatio="xMidYMax meet" role="img" aria-label="MOOD, with a model framed through the two O letters">
         <defs>
           <!-- Letters are defined once and reused by the solid layer, the lens mask and the lens edge -->
-          <text id="tM" class="glyph" x="32" y="440">M</text>
-          <text id="tO1" class="glyph" x="412" y="440">O</text>
-          <text id="tO2" class="glyph" x="740" y="440">O</text>
-          <text id="tD" class="glyph" x="1068" y="440">D</text>
+          <text id="tM" class="glyph" x="32" y="420">M</text>
+          <text id="tO1" class="glyph" x="412" y="420">O</text>
+          <text id="tO2" class="glyph" x="740" y="420">O</text>
+          <text id="tD" class="glyph" x="1068" y="420">D</text>
 
           <clipPath id="lensClip"><use href="#tO1"/><use href="#tO2"/></clipPath>
-          <mask id="fadeBottom" maskContentUnits="objectBoundingBox">
-            <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset=".78" stop-color="#fff"/><stop offset="1" stop-color="#000"/>
-            </linearGradient>
-            <rect width="1" height="1" fill="url(#fadeGrad)"/>
-          </mask>
           <filter id="frost" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
 
           <radialGradient id="skin" cx="45%" cy="38%" r="70%">
@@ -191,7 +178,7 @@
           <g id="modelPos" transform="translate(904 290)">
             <g id="model">
               <!-- cutout photo, offset so the face centre sits at 0,0 -->
-              <image href="model.webp" x="-477" y="-318" width="1000" height="964" mask="url(#fadeBottom)"/>
+              <image href="model.webp" x="-477" y="-318" width="1000" height="964"/>
             </g>
           </g>
         </g>
@@ -217,11 +204,6 @@
           <svg viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
       </div>
-
-      <div class="look rise d3">
-        <b>Look 07</b>
-        Oversized cotton hoodie<br>SS / 26
-      </div>
   </section>
 
   <a class="ems-back" href="../../">← EMS Showcase</a>
@@ -234,7 +216,7 @@
     // Fit MOOD across the stage from the real font metrics, then sit her face inside the second O
     function layout() {
       const ids = ['tM', 'tO1', 'tO2', 'tD'].map(id => document.getElementById(id));
-      const span = 1336, left = 32, base = 440, kern = -8;
+      const span = 1336, left = 32, base = 420, kern = -8;
       ids.forEach(t => t.style.fontSize = '400px');
       const widths = ids.map(t => t.getComputedTextLength());
       const total = widths.reduce((a, b) => a + b, 0) + kern * 3;
@@ -246,9 +228,13 @@
         t.setAttribute('y', base);
         x += widths[i] * fs / 400 + kern * fs / 400;
       });
+      // Large editorial crop: hair rises above the letters, eyes sit behind the O lenses, shoulders bleed off the bottom
       const o = document.getElementById('tO2').getBBox();
-      const scale = (o.height / 550) * .62; // o is the O's em box (~550 at full size); .62 frames eyes-to-mouth in the counter
-      document.getElementById('modelPos').setAttribute('transform', `translate(${o.x + o.width / 2} ${o.y + o.height * .52}) scale(${scale})`);
+      const scale = fs / 330;
+      const eyeY = base - fs * .42;           // eye line through the middle of the letter band
+      const cx = o.x + o.width * .3;          // face between the O's so the hair fills both lenses
+      const cy = eyeY + 65 * scale;           // 65 = eye line to nose in the photo
+      document.getElementById('modelPos').setAttribute('transform', `translate(${cx} ${cy}) scale(${scale})`);
     }
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(layout);
 
