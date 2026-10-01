@@ -63,7 +63,13 @@
     .nav {
       display: flex; align-items: center; justify-content: space-between;
       gap: 24px;
-      padding: 24px clamp(20px, 4vw, 48px);
+      margin: 20px clamp(16px, 3vw, 32px) 0;
+      padding: 8px 8px 8px 28px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.75);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 30px -12px rgba(15,23,42,.18);
       position: relative; z-index: 6;
     }
     .logo {
@@ -112,6 +118,10 @@
       display: flex; flex-direction: column; align-items: center;
       text-align: center;
       padding: clamp(28px, 5vh, 64px) 16px 0;
+    }
+    @media (min-width: 901px) {
+      .content { padding-top: clamp(24px, 4vh, 52px); }
+      .stage .envelope-in { bottom: calc(var(--env-w) * -.21 - 24px); }
     }
     .badge {
       display: inline-flex; align-items: center; gap: 8px;
@@ -265,7 +275,7 @@
     @media (max-width: 560px) {
       body { padding: 8px; }
       .hero { border-radius: 24px; height: max(760px, calc(100svh - 16px)); }
-      .nav { padding: 18px 18px; }
+      .nav { margin: 12px 12px 0; padding: 6px 6px 6px 18px; }
       .btn-contact { display: none; }
       .ctas { width: 100%; max-width: 340px; }
       .ctas .btn { flex: 1; padding: 0 18px; }
