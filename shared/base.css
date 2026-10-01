@@ -1,0 +1,27 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden; }
+img, svg, canvas, video { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: inherit; }
+
+/* Floating "back to gallery" pill shown on every piece */
+.ems-back {
+  position: fixed; z-index: 9999; bottom: 16px; left: 16px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 999px;
+  font: 500 12px/1 system-ui, sans-serif; letter-spacing: .04em; text-decoration: none;
+  color: #fff; background: rgba(15, 15, 18, .72);
+  border: 1px solid rgba(255, 255, 255, .14);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: background .2s;
+}
+.ems-back:hover { background: rgba(15, 15, 18, .92); }
+[dir="rtl"] .ems-back { left: auto; right: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}

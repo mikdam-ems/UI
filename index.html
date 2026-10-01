@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EMS UI Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/base.css">
+  <style>
+    :root {
+      --bg: #0a0a0c; --surface: #131317; --line: rgba(255,255,255,.09);
+      --fg: #f3f1ec; --muted: #8d8b86; --accent: #d7ff3a;
+    }
+    body { background: var(--bg); color: var(--fg); font-family: Inter, system-ui, sans-serif; }
+    .wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 768px) { .wrap { padding: 0 40px; } }
+
+    header { padding: 72px 0 40px; border-bottom: 1px solid var(--line); }
+    .eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+    .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
+    h1 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: clamp(48px, 9vw, 132px); line-height: .92; letter-spacing: -.02em; margin: 24px 0 20px; }
+    h1 em { color: var(--accent); }
+    .lede { max-width: 560px; color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0; }
+    .stats { display: flex; gap: 40px; margin-top: 40px; flex-wrap: wrap; }
+    .stats b { display: block; font-family: "Instrument Serif", serif; font-weight: 400; font-size: 40px; }
+    .stats span { font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; padding: 24px 0; position: sticky; top: 0; z-index: 5; background: linear-gradient(var(--bg) 70%, transparent); }
+    .chip { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 13px; transition: .2s; }
+    .chip:hover { color: var(--fg); border-color: rgba(255,255,255,.25); }
+    .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 20px; padding-bottom: 96px; }
+    .card { position: relative; display: block; text-decoration: none; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--surface); transition: transform .4s cubic-bezier(.2,.7,.2,1), border-color .3s; }
+    .card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,.22); }
+    .thumb { aspect-ratio: 16/10; position: relative; overflow: hidden; background: radial-gradient(120% 90% at 20% 10%, var(--tint) 0%, transparent 60%), #0e0e11; }
+    .thumb iframe { position: absolute; top: 0; left: 0; width: 400%; height: 400%; transform: scale(.25); transform-origin: 0 0; border: 0; pointer-events: none; }
+    .num { position: absolute; top: 14px; left: 16px; font-family: "Instrument Serif", serif; font-size: 22px; mix-blend-mode: difference; }
+    .meta { padding: 18px 20px 20px; }
+    .meta-top { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+    .meta h3 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 28px; margin: 10px 0 6px; }
+    .meta p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+    .tags span { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,.05); color: #bdbab4; }
+
+    .empty { border: 1px dashed var(--line); border-radius: 18px; padding: 64px 24px; text-align: center; color: var(--muted); grid-column: 1 / -1; }
+    .empty strong { display: block; font-family: "Instrument Serif", serif; font-weight: 400; font-size: 36px; color: var(--fg); margin-bottom: 8px; }
+    footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <div class="eyebrow">EMS · UX/UI Studio</div>
+    <h1>Interfaces that make<br>people <em>stop</em> &amp; stare.</h1>
+    <p class="lede">A living collection of heroes and website sections crafted for fictional brands across industries — motion, 3D and typography pushed past the template.</p>
+    <div class="stats">
+      <div><b id="s-total">0</b><span>Pieces</span></div>
+      <div><b id="s-heroes">0</b><span>Heroes</span></div>
+      <div><b id="s-ind">0</b><span>Industries</span></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="filters" id="filters" aria-label="Filter by industry"></nav>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer class="wrap"><span>© EMS — internal showcase</span><span>All brands shown are fictional.</span></footer>
+
+  <script src="registry.js"></script>
+  <script>
+    const items = window.EMS_REGISTRY || [];
+    const grid = document.getElementById('grid');
+    const filters = document.getElementById('filters');
+    const industries = [...new Set(items.map(i => i.industry))];
+
+    document.getElementById('s-total').textContent = items.length;
+    document.getElementById('s-heroes').textContent = items.filter(i => i.kind === 'hero').length;
+    document.getElementById('s-ind').textContent = industries.length;
+
+    let active = 'All';
+    function renderFilters() {
+      filters.innerHTML = '';
+      ['All', ...industries].forEach(name => {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.textContent = name;
+        b.setAttribute('aria-pressed', name === active);
+        b.onclick = () => { active = name; renderFilters(); renderGrid(); };
+        filters.appendChild(b);
+      });
+    }
+
+    function renderGrid() {
+      const list = items.filter(i => active === 'All' || i.industry === active);
+      if (!list.length) {
+        grid.innerHTML = '<div class="empty"><strong>The stage is set.</strong>The first hero is on its way.</div>';
+        return;
+      }
+      grid.innerHTML = list.map((i, n) => `
+        <a class="card" href="${i.path}" style="--tint:${i.accent || '#333'}55">
+          <div class="thumb">
+            <iframe src="${i.path}" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
+            <span class="num">${String(items.indexOf(i) + 1).padStart(2, '0')}</span>
+          </div>
+          <div class="meta">
+            <div class="meta-top"><span>${i.type}</span><span>${i.industry}</span></div>
+            <h3>${i.title}</h3>
+            <p>${i.summary || ''}</p>
+            <div class="tags">${(i.tags || []).map(t => `<span>${t}</span>`).join('')}</div>
+          </div>
+        </a>`).join('');
+    }
+
+    renderFilters();
+    renderGrid();
+  </script>
+</body>
+</html>
