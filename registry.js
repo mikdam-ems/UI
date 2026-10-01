@@ -32,5 +32,16 @@ window.EMS_REGISTRY = [
     path: "heroes/02-forma-fashion/",
     accent: "#1B36A8",
     summary: "Giant MOOD wordmark where the two O's become frosted glass lenses over the model."
+  },
+  {
+    id: "hero-03",
+    kind: "hero",
+    type: "Hero",
+    title: "sync.ai",
+    industry: "Productivity SaaS",
+    tags: ["Bento grid", "Interactive cards", "Hand-drawn notes", "Keyboard aware"],
+    path: "heroes/03-sync-ai/",
+    accent: "#C8E2EC",
+    summary: "Clean SaaS hero with a working bento deck: shuffle integrations, confirm meetings, press real shortcuts."
   }
 ];
