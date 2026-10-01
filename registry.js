@@ -28,7 +28,7 @@ window.EMS_REGISTRY = [
     type: "Hero",
     title: "FORMA Studio",
     industry: "Fashion",
-    tags: ["Editorial", "SVG lens mask", "Frosted glass", "Parallax depth"],
+    tags: ["Editorial", "Photo cutout", "SVG lens mask", "Frosted glass", "Parallax depth"],
     path: "heroes/02-forma-fashion/",
     accent: "#1B36A8",
     summary: "Giant MOOD wordmark where the two O's become frosted glass lenses over the model."

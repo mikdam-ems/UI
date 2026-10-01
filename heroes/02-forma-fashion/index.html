@@ -155,6 +155,12 @@
           <text id="tD" class="glyph" x="1068" y="440">D</text>
 
           <clipPath id="lensClip"><use href="#tO1"/><use href="#tO2"/></clipPath>
+          <mask id="fadeBottom" maskContentUnits="objectBoundingBox">
+            <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset=".78" stop-color="#fff"/><stop offset="1" stop-color="#000"/>
+            </linearGradient>
+            <rect width="1" height="1" fill="url(#fadeGrad)"/>
+          </mask>
           <filter id="frost" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
 
           <radialGradient id="skin" cx="45%" cy="38%" r="70%">
@@ -180,42 +186,12 @@
           <use href="#tD" class="solid"/>
         </g>
 
-        <!-- Layer 2: the model (illustrated; drawn around her face centre at 0,0) -->
+        <!-- Layer 2: the model -->
         <g class="model-in">
           <g id="modelPos" transform="translate(904 290)">
             <g id="model">
-              <g id="afro"></g>
-              <!-- coat -->
-              <path d="M-200 240 C-186 182 -128 156 -64 146 L-32 140 L0 272 L32 140 L64 146 C128 156 186 182 200 240 L246 560 L-246 560 Z" fill="url(#coat)"/>
-              <!-- turtleneck + neck -->
-              <path d="M-27 34 L27 34 L30 120 L-30 120 Z" fill="#4A2A1D"/>
-              <path d="M-27 60 Q0 82 27 60 L27 74 Q0 96 -27 74 Z" fill="#000" opacity=".22"/>
-              <path d="M-52 102 Q0 88 52 102 L48 190 L-48 190 Z" fill="#17181C"/>
-              <path d="M-50 116 Q0 104 50 116 M-50 130 Q0 118 50 130 M-49 144 Q0 132 49 144" stroke="#232429" stroke-width="2" fill="none"/>
-              <path d="M-32 140 L0 272 L32 140 Z" fill="#17181C"/>
-              <!-- lapels -->
-              <path d="M-64 146 L-32 140 L0 272 L-18 352 L-104 218 L-86 196 Z" fill="url(#lapel)"/>
-              <path d="M64 146 L32 140 L0 272 L18 352 L104 218 L86 196 Z" fill="url(#lapel)"/>
-              <path d="M-86 196 L-70 206 M86 196 L70 206" stroke="#1A1C21" stroke-width="3" stroke-linecap="round"/>
-              <!-- sleeve seams, buttons -->
-              <path d="M-150 196 C-160 300 -168 420 -176 560 M150 196 C160 300 168 420 176 560" stroke="#121317" stroke-width="3" fill="none" opacity=".8"/>
-              <circle cx="-34" cy="404" r="7" fill="#0F1013"/><circle cx="34" cy="404" r="7" fill="#0F1013"/>
-              <circle cx="-34" cy="478" r="7" fill="#0F1013"/><circle cx="34" cy="478" r="7" fill="#0F1013"/>
-              <!-- ears + hoop -->
-              <ellipse cx="-50" cy="6" rx="10" ry="16" fill="#4F2C1F"/>
-              <ellipse cx="50" cy="6" rx="10" ry="16" fill="#4F2C1F"/>
-              <circle cx="-52" cy="30" r="11" fill="none" stroke="#D9A54A" stroke-width="3"/>
-              <!-- face -->
-              <path d="M0 -66 C34 -66 52 -40 52 -4 C52 34 30 66 0 70 C-30 66 -52 34 -52 -4 C-52 -40 -34 -66 0 -66 Z" fill="url(#skin)"/>
-              <path d="M-38 -22 Q-24 -30 -10 -24 M10 -24 Q24 -30 38 -22" stroke="#1C120E" stroke-width="4" fill="none" stroke-linecap="round"/>
-              <path d="M-34 -4 Q-23 2 -12 -4 M12 -4 Q23 2 34 -4" stroke="#1F140F" stroke-width="3" fill="none" stroke-linecap="round"/>
-              <path d="M2 -8 C4 8 8 18 2 24 C-2 26 -8 24 -8 22" stroke="#3B2117" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-              <path d="M-17 40 Q0 32 17 40 Q0 54 -17 40 Z" fill="#3A1C14"/>
-              <path d="M-17 40 Q0 37 17 40" stroke="#2A130D" stroke-width="1.5" fill="none"/>
-              <ellipse cx="-30" cy="18" rx="10" ry="6" fill="#8A5139" opacity=".35"/>
-              <ellipse cx="30" cy="18" rx="10" ry="6" fill="#8A5139" opacity=".35"/>
-              <!-- hairline over forehead -->
-              <path d="M-56 -30 C-58 -70 -30 -86 0 -86 C30 -86 58 -70 56 -30 C44 -54 22 -60 0 -60 C-22 -60 -44 -54 -56 -30 Z" fill="url(#afroShade)"/>
+              <!-- cutout photo, offset so the face centre sits at 0,0 -->
+              <image href="model.webp" x="-477" y="-318" width="1000" height="964" mask="url(#fadeBottom)"/>
             </g>
           </g>
         </g>
@@ -244,7 +220,7 @@
 
       <div class="look rise d3">
         <b>Look 07</b>
-        Double-face wool coat<br>SS / 26
+        Oversized cotton hoodie<br>SS / 26
       </div>
   </section>
 
@@ -254,22 +230,6 @@
     const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const NS = 'http://www.w3.org/2000/svg';
 
-    // Afro: a dense cloud of overlapping curls around the head
-    (function buildAfro() {
-      const g = document.getElementById('afro');
-      const add = (tag, attrs) => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); g.appendChild(el); return el; };
-      add('ellipse', { cx: 0, cy: -52, rx: 148, ry: 132, fill: 'url(#afroShade)' });
-      let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-      for (let i = 0; i < 46; i++) {
-        const a = (i / 46) * Math.PI * 2;
-        if (Math.sin(a) > .55) continue; // keep the jaw line clear
-        add('circle', { cx: Math.cos(a) * (132 + rnd() * 10), cy: -52 + Math.sin(a) * (118 + rnd() * 10), r: 24 + rnd() * 16, fill: i % 3 ? '#1A1411' : '#211915' });
-      }
-      for (let i = 0; i < 70; i++) {
-        const a = rnd() * Math.PI * 2, d = rnd() * 120;
-        add('circle', { cx: Math.cos(a) * d, cy: -60 + Math.sin(a) * d * .85, r: 3 + rnd() * 5, fill: '#33271F', opacity: .5 });
-      }
-    })();
 
     // Fit MOOD across the stage from the real font metrics, then sit her face inside the second O
     function layout() {
@@ -287,7 +247,7 @@
         x += widths[i] * fs / 400 + kern * fs / 400;
       });
       const o = document.getElementById('tO2').getBBox();
-      const scale = Math.min(1.25, (o.height * .58) / 170);
+      const scale = (o.height / 550) * .62; // o is the O's em box (~550 at full size); .62 frames eyes-to-mouth in the counter
       document.getElementById('modelPos').setAttribute('transform', `translate(${o.x + o.width / 2} ${o.y + o.height * .52}) scale(${scale})`);
     }
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(layout);
