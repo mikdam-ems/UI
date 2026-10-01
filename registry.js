@@ -83,7 +83,7 @@ window.EMS_REGISTRY = [
     type: "Hero",
     title: "tandem",
     industry: "Fintech",
-    tags: ["Coverflow deck", "Swipe", "Illustrated scenes", "Glass chips"],
+    tags: ["Coverflow deck", "Swipe", "Photo cards", "Glass chips"],
     path: "heroes/07-tandem-wallet/",
     accent: "#E2FA52",
     summary: "Shared-wallet hero with a swipeable coverflow of group pots, each with live payment chips."

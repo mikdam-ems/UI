@@ -84,7 +84,8 @@
       box-shadow: 0 40px 70px -30px rgba(0,0,0,.6);
     }
     .card .art { position: absolute; inset: 0; border-radius: 24px; overflow: hidden; }
-    .card .art svg, .card .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 28%, transparent 55%, rgba(0,0,0,.45) 100%); }
     .card[data-pos="0"]  { transform: translateX(0) scale(1); z-index: 3; filter: none; opacity: 1; cursor: default; }
     .card[data-pos="1"]  { transform: translateX(min(330px, 40vw)) scale(.82) rotate(4deg); z-index: 2; filter: blur(10px); opacity: .85; }
     .card[data-pos="-1"] { transform: translateX(max(-330px, -40vw)) scale(.82) rotate(-4deg); z-index: 2; filter: blur(10px); opacity: .85; }
@@ -196,73 +197,18 @@
   <script>
     const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    /* ---------- illustrated scenes (swap any of these for a photo via `photo: 'img/x.jpg'`) ---------- */
-    const scenes = {
-      lisbon: `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs>
-          <linearGradient id="s1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9674A"/><stop offset=".45" stop-color="#F9A35E"/><stop offset=".7" stop-color="#FDD9A0"/></linearGradient>
-          <radialGradient id="sun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFF6D8"/><stop offset="1" stop-color="#FFE29A" stop-opacity="0"/></radialGradient></defs>
-        <rect width="300" height="420" fill="url(#s1)"/>
-        <circle cx="200" cy="205" r="90" fill="url(#sun)"/><circle cx="200" cy="205" r="34" fill="#FFF3CF"/>
-        <rect y="222" width="300" height="40" fill="#F0B27A"/><path d="M0 232h300M20 244h120M170 250h110" stroke="#FCD3A2" stroke-width="2"/>
-        <path d="M-10 262 L40 238 L80 250 L120 230 L170 248 L210 236 L260 252 L310 240 V330 H-10Z" fill="#B9502F"/>
-        <path d="M0 268h46v40H0zM52 258h40v50H52zM98 266h38v42H98zM184 260h44v48h-44zM236 270h50v38h-50z" fill="#F4E4CF"/>
-        <path d="M10 278h8v10h-8zM26 278h8v10h-8zM62 270h8v10h-8zM76 270h8v10h-8zM108 278h8v10h-8zM194 272h8v10h-8zM210 272h8v10h-8zM248 282h8v10h-8zM264 282h8v10h-8z" fill="#7A3B2A" opacity=".7"/>
-        <path d="M0 258 L23 246 L46 258Z M52 250 L72 238 L92 250Z M184 252 L206 240 L228 252Z M236 262 L261 250 L286 262Z" fill="#C4542F"/>
-        <rect x="120" y="292" width="74" height="30" rx="7" fill="#F5C02A"/><path d="M126 298h14v10h-14zM146 298h14v10h-14zM166 298h14v10h-14z" fill="#3B3328"/><path d="M157 292 L150 276 M157 292 L164 276 M150 276h14" stroke="#2B231C" stroke-width="2"/>
-        <rect y="318" width="300" height="102" fill="#3A2224"/>
-        <path d="M0 336h300" stroke="#1E1214" stroke-width="5"/><path d="M14 336v40M64 336v40M114 336v40M164 336v40M214 336v40M264 336v40" stroke="#1E1214" stroke-width="3"/>
-        <g fill="#1B1012">
-          <circle cx="78" cy="262" r="15"/><path d="M58 420 C58 330 62 290 78 284 C94 290 98 330 98 420Z"/><path d="M64 300 L40 248 L47 244 L72 292Z M92 300 L114 250 L121 254 L98 300Z"/>
-          <circle cx="150" cy="268" r="16"/><path d="M128 420 C128 334 132 296 150 290 C168 296 172 334 172 420Z"/><path d="M134 306 L118 268 L125 264 L142 300Z"/><path d="M166 306 L190 278 L196 284 L172 312Z"/>
-          <circle cx="222" cy="272" r="14"/><path d="M204 420 C204 340 208 300 222 294 C236 300 240 340 240 420Z"/><path d="M234 310 L258 262 L265 266 L240 316Z"/>
-          <path d="M136 262 C138 244 162 244 164 262 C160 252 140 252 136 262Z" fill="#2E1A1C"/>
-        </g></svg>`,
-      festival: `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs>
-          <linearGradient id="f1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A0E3D"/><stop offset=".6" stop-color="#5B1F7A"/><stop offset="1" stop-color="#E0457B"/></linearGradient>
-          <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2FA52" stop-opacity=".7"/><stop offset="1" stop-color="#E2FA52" stop-opacity="0"/></linearGradient></defs>
-        <rect width="300" height="420" fill="url(#f1)"/>
-        <path d="M150 210 L40 0 L80 0Z M150 210 L130 0 L170 0Z M150 210 L230 0 L270 0Z" fill="url(#beam)"/>
-        <rect x="60" y="200" width="180" height="30" fill="#0D0720"/><circle cx="150" cy="212" r="7" fill="#FFF"/>
-        <g fill="#E2FA52"><rect x="40" y="60" width="6" height="12" transform="rotate(30 43 66)"/><rect x="230" y="90" width="6" height="12" transform="rotate(-20 233 96)"/><rect x="200" y="40" width="6" height="12" fill="#FF8FB1"/><rect x="90" y="120" width="6" height="12" fill="#7FE7FF" transform="rotate(50 93 126)"/></g>
-        <g fill="#0B0618"><circle cx="30" cy="330" r="22"/><circle cx="80" cy="318" r="24"/><circle cx="130" cy="326" r="22"/><circle cx="180" cy="314" r="25"/><circle cx="232" cy="324" r="22"/><circle cx="280" cy="330" r="24"/>
-          <rect y="330" width="300" height="90"/><path d="M95 312 L80 250 L88 248 L104 308Z M190 300 L206 240 L214 243 L198 304Z M60 320 L44 266 L52 264 L68 318Z"/></g></svg>`,
-      flat: `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice">
-        <rect width="300" height="420" fill="#123C3A"/>
-        <rect x="40" y="40" width="160" height="200" rx="6" fill="#0A1F2E"/><path d="M120 40v200M40 140h160" stroke="#123C3A" stroke-width="6"/>
-        <g fill="#FFD27A"><rect x="56" y="70" width="8" height="10"/><rect x="80" y="96" width="8" height="10"/><rect x="150" y="62" width="8" height="10"/><rect x="170" y="100" width="8" height="10"/><rect x="62" y="170" width="8" height="10"/><rect x="140" y="182" width="8" height="10"/><rect x="176" y="164" width="8" height="10"/></g>
-        <circle cx="160" cy="80" r="14" fill="#F6F0D8"/>
-        <path d="M232 70 L262 70 L252 110 L242 110Z" fill="#F5C26B"/><path d="M247 110v120" stroke="#0B2A28" stroke-width="4"/><ellipse cx="247" cy="90" rx="60" ry="40" fill="#F5C26B" opacity=".14"/>
-        <rect y="270" width="300" height="150" fill="#C98A57"/><rect y="270" width="300" height="10" fill="#A96E40"/>
-        <path d="M30 270 C20 230 40 200 50 190 C46 220 56 240 50 270Z M50 270 C60 220 86 210 96 204 C80 230 74 250 70 270Z" fill="#3E8E5E"/><rect x="28" y="262" width="46" height="34" rx="6" fill="#E8DCC6"/>
-        <rect x="130" y="300" width="40" height="44" rx="8" fill="#F4F1EA"/><path d="M170 312 h10 a8 8 0 0 1 0 16 h-10" stroke="#F4F1EA" stroke-width="5" fill="none"/>
-        <rect x="200" y="306" width="38" height="40" rx="8" fill="#E2FA52"/><path d="M238 316 h8 a8 8 0 0 1 0 16 h-8" stroke="#E2FA52" stroke-width="5" fill="none"/>
-        <path d="M142 296 c-4 -10 6 -14 2 -24 M214 300 c-4 -10 6 -14 2 -24" stroke="#fff" stroke-opacity=".5" stroke-width="2" fill="none"/></svg>`,
-      dinner: `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs>
-          <radialGradient id="d1" cx="50%" cy="65%" r="70%"><stop offset="0" stop-color="#7A3E1E"/><stop offset="1" stop-color="#22110A"/></radialGradient></defs>
-        <rect width="300" height="420" fill="url(#d1)"/>
-        <path d="M-10 40 Q75 90 150 50 T310 60" stroke="#3B2416" stroke-width="2" fill="none"/>
-        <g fill="#FFD98A">${[20,55,90,125,160,195,230,265].map((x,i)=>`<circle cx="${x}" cy="${[56,70,74,62,52,58,66,62][i]}" r="6"/><circle cx="${x}" cy="${[56,70,74,62,52,58,66,62][i]}" r="16" opacity=".18"/>`).join('')}</g>
-        <ellipse cx="150" cy="360" rx="190" ry="80" fill="#F2E6D3"/>
-        <rect x="112" y="250" width="76" height="56" rx="8" fill="#F7C9D5"/><rect x="112" y="250" width="76" height="14" rx="7" fill="#FFF3F6"/>
-        <g stroke="#FFF" stroke-width="3"><path d="M130 250v-18M150 250v-22M170 250v-18"/></g>
-        <g fill="#FFC14D"><ellipse cx="130" cy="226" rx="4" ry="7"/><ellipse cx="150" cy="222" rx="4" ry="7"/><ellipse cx="170" cy="226" rx="4" ry="7"/></g>
-        <g fill="none" stroke="#F8F1E4" stroke-width="3"><path d="M50 200 l10 40 h20 l10 -40Z"/><path d="M220 196 l10 40 h20 l10 -40Z"/><path d="M70 240v30M240 236v30"/></g>
-        <path d="M54 214 h32 l-4 20 h-24Z M224 210 h32 l-4 20 h-24Z" fill="#E2FA52" opacity=".85"/>
-        <circle cx="60" cy="330" r="26" fill="#FFF" opacity=".9"/><circle cx="240" cy="332" r="26" fill="#FFF" opacity=".9"/><circle cx="150" cy="350" r="30" fill="#FFF" opacity=".9"/></svg>`
-    };
-
     const pots = [
-      { scene: 'lisbon',   tag: 'TRIP POT',     who: 'Maya paid you $24', what: 'Tacos on Friday · Just now', req: 24, title: 'Lisbon, June',      raised: 1840, goal: 2400, friends: 5 },
-      { scene: 'festival', tag: 'FESTIVAL POT', who: 'Omar paid you $65', what: 'Weekend passes · 2 min ago',  req: 65, title: 'Primavera weekend', raised: 910,  goal: 1300, friends: 4 },
-      { scene: 'flat',     tag: 'HOUSE POT',    who: 'Lena paid you $38', what: 'Internet bill · 1 h ago',     req: 38, title: 'Flat 4B, bills',    raised: 412,  goal: 560,  friends: 3 },
-      { scene: 'dinner',   tag: 'DINNER POT',   who: 'Sam paid you $31',  what: 'Birthday dinner · Yesterday', req: 31, title: "Noor's 30th",       raised: 286,  goal: 320,  friends: 8 }
+      { photo: 'img/trip.webp',     alt: 'Four friends laughing on a mountain hike', tag: 'TRIP POT',     who: 'Maya paid you $24', what: 'Tacos on Friday · Just now', req: 24, title: 'Dolomites, June',      raised: 1840, goal: 2400, friends: 5 },
+      { photo: 'img/festival.webp', alt: 'A cheering crowd at a concert', tag: 'FESTIVAL POT', who: 'Omar paid you $65', what: 'Weekend passes · 2 min ago',  req: 65, title: 'Primavera weekend', raised: 910,  goal: 1300, friends: 4 },
+      { photo: 'img/flat.webp',     alt: 'Flatmates high-fiving over tea at home', tag: 'HOUSE POT',    who: 'Lena paid you $38', what: 'Internet bill · 1 h ago',     req: 38, title: 'Flat 4B, bills',    raised: 412,  goal: 560,  friends: 3 },
+      { photo: 'img/dinner.webp',   alt: 'A birthday cake with sparklers on a party table', tag: 'DINNER POT',   who: 'Sam paid you $31',  what: 'Birthday dinner · Yesterday', req: 31, title: "Noor's 30th",       raised: 286,  goal: 320,  friends: 8 }
     ];
     const money = n => '$' + n.toLocaleString('en-US');
 
     const deck = document.getElementById('deck');
     deck.innerHTML = pots.map((p, i) => `
       <article class="card" data-i="${i}" role="group" aria-roledescription="slide" aria-label="${p.title}, ${i + 1} of ${pots.length}">
-        <div class="art">${p.photo ? `<img src="${p.photo}" alt="">` : scenes[p.scene]}</div>
+        <div class="art"><img src="${p.photo}" alt="${p.alt}" draggable="false"></div>
         <span class="tag">${p.tag}</span>
         <div class="note" role="status"><span class="ok"><svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.5 3 3 6-7" stroke="#0B0F0C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           <span><b>${p.who}</b><small>${p.what}</small></span></div>
