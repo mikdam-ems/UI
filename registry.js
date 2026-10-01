@@ -54,5 +54,16 @@ window.EMS_REGISTRY = [
     path: "heroes/04-oryn-ev/",
     accent: "#b3311b",
     summary: "Luxury EV on a dark stage: a light band sweeps the paint, and swatches re-light the whole scene."
+  },
+  {
+    id: "hero-05",
+    kind: "hero",
+    type: "Hero",
+    title: "Sadeem Wealth",
+    industry: "Wealth management",
+    tags: ["Bilingual EN/AR", "RTL", "Canvas skyline", "Live chart", "Riyadh"],
+    path: "heroes/05-sadeem-wealth/",
+    accent: "#D4AF6A",
+    summary: "A fund's performance line draws across the night sky and Riyadh rises to meet it, in English or Arabic."
   }
 ];
