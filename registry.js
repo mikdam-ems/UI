@@ -131,5 +131,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/01-fintech-wallet/",
     accent: "#5B7BFE",
     summary: "Soft-shaded fintech dashboard where every widget works: switch wallets, hover charts and send money into the ledger."
+  },
+  {
+    id: "dash-02",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Nueansa",
+    industry: "Accounting SaaS",
+    tags: ["Bi-directional cash flow", "Searchable ledger", "AI insight gauge", "Period switching"],
+    path: "dashboards/02-nueansa-accounting/",
+    accent: "#FF5216",
+    summary: "Warm ivory accounting dashboard: hover the day-by-day cash flow, filter the ledger and ask the AI insight card."
   }
 ];
