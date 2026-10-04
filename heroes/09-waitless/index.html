@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waitless</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&family=Caveat:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: pale shell holding the nav and a striped white stage; two-tone headline centred between two tilted live activity cards */
+    :root {
+      --canvas: #E8EAEF;
+      --shell: #F4F5F7;
+      --stage: #FFFFFF;
+      --ink: #09090B;
+      --mute: #71717A;
+      --soft: #A1A1AA;
+      --line: #E4E4E7;
+      --ph: #FF6154;
+      --font: "Urbanist", "Gilroy", system-ui, sans-serif;
+      --hand: "Caveat", "Segoe Print", cursive;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: light;
+    }
+    body { background: var(--canvas); color: var(--ink); font-family: var(--font); padding: clamp(10px, 3vw, 40px); }
+
+    .shell { max-width: 1440px; margin: 0 auto; background: var(--shell); border-radius: 32px; padding: 0 0 22px; box-shadow: 0 1px 0 #fff inset, 0 30px 60px -40px rgba(9,9,11,.25); }
+
+    /* ---------- Nav ---------- */
+    .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 22px 44px; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
+    .logo svg { width: 26px; height: 26px; }
+    .links { display: flex; gap: 36px; list-style: none; margin: 0; padding: 0; }
+    .links a { color: var(--mute); text-decoration: none; font-size: 15px; font-weight: 500; transition: color .2s; }
+    .links a:hover { color: var(--ink); }
+    .nav-end { justify-self: end; display: flex; align-items: center; gap: 24px; }
+    .dash { color: #3F3F46; text-decoration: none; font-size: 15px; font-weight: 500; }
+    .gloss {
+      display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 18px 0 20px; border-radius: 999px; border: 0;
+      background: linear-gradient(180deg, #3A3A40 0%, #0B0B0E 55%, #000 100%); color: #fff; text-decoration: none; font: 600 15px var(--font);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 8px 18px -8px rgba(0,0,0,.55);
+      transition: transform .25s var(--ease), box-shadow .25s;
+    }
+    .gloss:hover { transform: translateY(-1px); }
+    .gloss svg { width: 14px; height: 14px; transition: transform .25s var(--ease); }
+    .gloss:hover svg { transform: translateX(3px); }
+
+    /* ---------- Stage ---------- */
+    .stage {
+      position: relative; isolation: isolate; overflow: hidden;
+      margin: 0 22px; border-radius: 28px; background: var(--stage);
+      min-height: max(640px, calc(100svh - 190px));
+      display: grid; place-items: center; padding: 64px 16px 72px;
+      box-shadow: 0 1px 2px rgba(9,9,11,.04), 0 20px 50px -30px rgba(9,9,11,.2);
+    }
+    .stage::before { /* faint vertical column stripes, fading at top and bottom */
+      content: ""; position: absolute; inset: 0; z-index: -1;
+      background: repeating-linear-gradient(90deg, transparent 0 78px, rgba(9,9,11,.022) 78px 80px, transparent 80px 118px, rgba(9,9,11,.035) 118px 158px);
+      -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
+              mask-image: linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
+    }
+    .center { text-align: center; max-width: 640px; position: relative; z-index: 2; }
+
+    .ph {
+      display: inline-flex; align-items: center; gap: 10px; padding: 8px 18px 8px 12px; border-radius: 12px;
+      background: #fff; border: 1.5px solid #F9A8B4; text-decoration: none; text-align: left;
+      box-shadow: 0 6px 18px -10px rgba(255,97,84,.5); transition: transform .25s var(--ease);
+    }
+    .ph:hover { transform: translateY(-2px); }
+    .ph svg { width: 26px; height: 30px; flex: none; }
+    .ph small { display: block; font-size: 9px; font-weight: 800; letter-spacing: .08em; color: var(--ph); }
+    .ph b { display: block; font-size: 16px; font-weight: 700; color: var(--ph); letter-spacing: -.01em; }
+
+    h1 { margin: 18px 0 0; font-weight: 600; font-size: clamp(38px, 4.8vw, 70px); line-height: 1.04; letter-spacing: -.035em; color: var(--mute); }
+    h1 .ln { display: block; white-space: nowrap; }
+    h1 strong { font-weight: 700; color: var(--ink); }
+    h1 .w { display: inline-block; opacity: 0; transform: translateY(.35em); filter: blur(6px); animation: word .8s var(--ease) forwards; }
+    .sub { margin: 20px 0 0; color: #8B8B93; font-size: 19px; font-weight: 500; }
+
+    .actions { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 30px; flex-wrap: wrap; }
+    .actions .gloss { height: 54px; padding: 0 24px 0 26px; font-size: 17px; box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 18px 30px -12px rgba(0,0,0,.6), 0 4px 8px -2px rgba(0,0,0,.3); }
+    .text-link { color: #3F3F46; text-decoration: none; font-size: 17px; font-weight: 600; border-bottom: 1px solid transparent; transition: border-color .2s; }
+    .text-link:hover { border-color: currentColor; }
+
+    .live { display: inline-flex; align-items: center; gap: 10px; margin-top: 22px; font-size: 14px; color: var(--mute); font-weight: 500; }
+    .live .avs { display: flex; }
+    .live .avs i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; margin-left: -6px; background-size: cover; background-position: center; }
+    .live .avs i:first-child { margin-left: 0; }
+    .live b { color: var(--ink); font-variant-numeric: tabular-nums; }
+    .pulse { width: 7px; height: 7px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 0 rgba(34,197,94,.5); animation: pulse 2s infinite; }
+
+    .int { margin-top: 30px; }
+    .int p { margin: 0; color: var(--soft); font-size: 17px; font-weight: 500; }
+    .tiles { display: flex; justify-content: center; gap: 16px; margin-top: 16px; }
+    .tile { position: relative; width: 54px; height: 54px; border-radius: 12px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; box-shadow: 0 2px 0 rgba(9,9,11,.04), 0 8px 16px -12px rgba(9,9,11,.3); transition: transform .3s var(--ease), box-shadow .3s; }
+    .tile svg { width: 28px; height: 28px; }
+    .tile:hover { transform: translateY(-4px) rotate(-3deg); box-shadow: 0 14px 22px -12px rgba(9,9,11,.35); }
+    .tile::after { content: attr(data-name); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translate(-50%, 4px); padding: 4px 8px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+    .tile:hover::after { opacity: 1; transform: translate(-50%, 0); }
+
+    /* ---------- Activity cards ---------- */
+    .act {
+      position: absolute; z-index: 1; width: clamp(220px, 20vw, 300px);
+      padding: 7px 7px 0; border-radius: 26px; background: #fff;
+      box-shadow: 0 1px 0 #fff inset, 0 30px 60px -28px rgba(9,9,11,.35), 0 0 0 1px rgba(9,9,11,.04);
+      transition: transform 1s var(--ease);
+    }
+    .act .photo { position: relative; aspect-ratio: 214 / 232; max-width: 100%; border-radius: 20px; overflow: hidden; background: #ECECEE; }
+    .act .photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .5s ease, transform .6s var(--ease); }
+    .act .photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 52%, rgba(255,255,255,.85) 86%, #fff 100%); }
+    .act .cap { position: relative; margin-top: -46px; padding: 0 18px 20px; font-size: clamp(15px, 1.2vw, 18px); white-space: nowrap; font-weight: 500; color: #3F3F46; letter-spacing: -.01em; min-height: 66px; }
+    .act .cap b { color: var(--ink); font-weight: 700; }
+    .act .cap span { display: inline-block; transition: opacity .35s ease, transform .35s var(--ease); }
+    .act .cap .out { opacity: 0; transform: translateY(6px); }
+    .act .rank { font-variant-numeric: tabular-nums; }
+    .left { left: 6.5%; top: 26%; --r: -5deg; transform: rotate(var(--r)); }
+    .right { right: 6.5%; top: 20%; --r: 5deg; transform: rotate(var(--r)); }
+    .float-a { animation: floatA 7s ease-in-out infinite; }
+    .float-b { animation: floatB 8s ease-in-out infinite; }
+    .badge-up { position: absolute; top: 16px; right: 16px; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(9,9,11,.82); color: #fff; font-size: 12px; font-weight: 700; z-index: 2; opacity: 0; transform: translateY(-6px); transition: opacity .3s, transform .3s var(--ease); }
+    .badge-up.on { opacity: 1; transform: none; }
+    .badge-up svg { width: 11px; height: 11px; color: #4ADE80; }
+
+    .gloss:focus-visible, .text-link:focus-visible, .links a:focus-visible, .dash:focus-visible, .logo:focus-visible, .ph:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+    /* ---------- Motion ---------- */
+    .rise { opacity: 0; transform: translateY(14px); animation: rise .9s var(--ease) forwards; }
+    .d1 { animation-delay: .05s; } .d2 { animation-delay: .1s; } .d3 { animation-delay: 1.1s; } .d4 { animation-delay: 1.25s; } .d5 { animation-delay: 1.4s; } .d6 { animation-delay: 1.55s; }
+    .act.rise { animation: cardIn 1.2s var(--ease) forwards; }
+    .left.rise { animation-delay: .6s; } .right.rise { animation-delay: .8s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @keyframes word { to { opacity: 1; transform: none; filter: none; } }
+    @keyframes cardIn { from { opacity: 0; transform: rotate(0deg) translateY(40px) scale(.94); } to { opacity: 1; transform: rotate(var(--r)); } }
+    @keyframes floatA { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+    @keyframes floatB { 0%, 100% { translate: 0 0; } 50% { translate: 0 12px; } }
+    @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .rise, h1 .w { opacity: 1; transform: none; filter: none; animation: none; }
+      .act.rise { opacity: 1; animation: none; transform: rotate(var(--r)); }
+      .float-a, .float-b, .pulse { animation: none; }
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1180px) {
+      .stage { display: flex; flex-direction: column; align-items: center; }
+      .act { position: relative; left: auto; right: auto; top: auto; width: min(240px, 42vw); }
+      .cards { display: flex; justify-content: center; gap: 4%; margin-top: 48px; width: 100%; order: 2; }
+    }
+    @media (min-width: 1181px) { .cards { display: contents; } }
+    @media (max-width: 900px) { .links { display: none; } .nav { grid-template-columns: 1fr auto; } }
+    @media (max-width: 560px) {
+      .nav { padding: 18px 20px; }
+      .dash { display: none; }
+      .stage { margin: 0 8px; padding: 40px 14px 48px; border-radius: 22px; }
+      .sub { font-size: 17px; }
+      .actions { gap: 18px; }
+      .tiles { gap: 10px; }
+      .tile { width: 48px; height: 48px; }
+      .act .cap { font-size: 13px; padding: 0 10px 14px; margin-top: -38px; min-height: 52px; white-space: normal; }
+      h1 .ln { display: inline; white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav rise d1">
+      <a class="logo" href="#">
+        <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="11.5" stroke="#D4D4D8" stroke-width="1.5"/><circle cx="13" cy="13" r="7" stroke="#09090B" stroke-width="2"/><circle cx="13" cy="13" r="2.6" fill="#09090B"/></svg>
+        Waitless
+      </a>
+      <ul class="links">
+        <li><a href="#">Explore</a></li><li><a href="#">Integrations</a></li><li><a href="#">Case studies</a></li><li><a href="#">Pricing</a></li><li><a href="#">Updates</a></li>
+      </ul>
+      <div class="nav-end">
+        <a class="dash" href="#">Dashboard</a>
+        <a class="gloss" href="#">Start for free <svg viewBox="0 0 14 14" fill="none"><path d="m5 3 4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </nav>
+
+    <section class="stage">
+      <div class="center">
+        <a class="ph rise d2" href="#">
+          <svg viewBox="0 0 26 30"><path d="M7 17 3 29l5-2.5L11 29l1-10M19 17l4 12-5-2.5L15 29l-1-10" fill="#E5484D"/><circle cx="13" cy="11" r="10" fill="#F5B83D"/><circle cx="13" cy="11" r="7.2" fill="#FCD34D" stroke="#E9A52B" stroke-width="1"/><text x="13" y="14.5" text-anchor="middle" font-size="10" font-weight="800" fill="#B7791F" font-family="Urbanist, sans-serif">1</text></svg>
+          <span><small>PRODUCT HUNT</small><b>#1 Product of the Day</b></span>
+        </a>
+        <h1 aria-label="Bring Your Vision To Life And Grow Your Community" id="h1"><span aria-hidden="true">
+          <span class="ln"><span class="w">Bring</span> <span class="w">Your</span> <span class="w">Vision</span></span>
+          <span class="ln"><span class="w">To</span> <strong class="w">Life</strong> <span class="w">And</span> <strong class="w">Grow</strong></span>
+          <span class="ln"><span class="w">Your</span> <strong class="w">Community</strong></span></span></h1>
+        <p class="sub rise d3">Collect sign ups with built-in referrals</p>
+        <div class="actions rise d4">
+          <a class="gloss" href="#" id="startBtn">Start for free <svg viewBox="0 0 14 14" fill="none"><path d="m5 3 4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="text-link" href="#">Explore Projects</a>
+        </div>
+        <div class="live rise d5" aria-live="polite">
+          <span class="pulse"></span>
+          <span class="avs" aria-hidden="true"><i style="background-image:url(img/jason.webp)"></i><i style="background-image:url(img/vanessa.webp)"></i><i style="background:#D4D4D8"></i></span>
+          <span><b id="count">12,480</b> people joined waitlists this week</span>
+        </div>
+        <div class="int rise d6">
+          <p>Integrated with:</p>
+          <div class="tiles">
+            <span class="tile" data-name="Shopify"><svg viewBox="0 0 28 28"><path d="M8 8.5c0-3 2.2-5 4.2-5 1.8 0 3.2 1.6 3.4 4.2" fill="none" stroke="#5E8E3E" stroke-width="1.6"/><path d="M5 9.5 18 7l4 1 1.5 15.5L12 26 4 24Z" fill="#95BF47"/><path d="M18 7l4 1 1.5 15.5L12 26Z" fill="#5E8E3E"/><path d="M13.6 13.2c-.6-.4-1.5-.6-2.3-.4-1.4.4-1.8 1.7-.6 2.5 1 .7 1.6 1.1 1.4 2-.2.9-1.3 1.2-2.6.6" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+            <span class="tile" data-name="Gumroad"><svg viewBox="0 0 28 28"><circle cx="14.5" cy="14.5" r="10" fill="#09090B"/><circle cx="13.5" cy="13.5" r="10" fill="#FF90E8" stroke="#09090B" stroke-width="1.4"/><path d="M17.2 10.6a4.4 4.4 0 1 0 .4 5.2h-3.1" fill="none" stroke="#09090B" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <span class="tile" data-name="Google Sheets"><svg viewBox="0 0 28 28"><path d="M7 3h10l5 5v17H7z" fill="#0F9D58"/><path d="M17 3v5h5" fill="#87CEAC"/><rect x="10" y="13" width="9" height="8" rx=".6" fill="#fff"/><path d="M10 15.7h9M10 18.3h9M13.2 13v8" stroke="#0F9D58" stroke-width="1.1"/></svg></span>
+            <span class="tile" data-name="Airtable"><svg viewBox="0 0 28 28"><path d="M13 4.5 3.8 8.3c-.5.2-.5.9 0 1.1L13 13a3 3 0 0 0 2 0l9.2-3.6c.5-.2.5-.9 0-1.1L15 4.5a3 3 0 0 0-2 0Z" fill="#FCB400"/><path d="M15.2 15.4v8.7c0 .4.4.7.8.5l9-3.5c.3-.1.4-.3.4-.6v-8.7c0-.4-.4-.7-.8-.5l-9 3.5c-.2.1-.4.3-.4.6Z" fill="#18BFFF"/><path d="M13 16 3.6 11.6c-.4-.2-.9.1-.9.5v8.4c0 .3.1.5.4.6l9.5 4.3c.4.2.9-.1.9-.5V16.6c0-.3-.2-.5-.5-.6Z" fill="#F82B60"/></svg></span>
+            <span class="tile" data-name="Notion"><svg viewBox="0 0 28 28"><path d="M5.5 5.2 18.4 4.2c1.6-.1 2 0 3 .7l4.1 2.9c.7.5.9.6.9 1.2v15.3c0 1-.4 1.6-1.6 1.7L9.7 26.9c-.9 0-1.4-.1-1.9-.8l-3-3.9c-.6-.7-.8-1.3-.8-2V6.8c0-.8.4-1.5 1.5-1.6Z" fill="#fff" stroke="#09090B" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 9.7v12.2M9.5 9.7l9 12.2M18.5 9.2v12.7M8 9.7h3M17 9.2h3M8 21.9h3M17 21.9h3" stroke="#09090B" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="act left rise" id="leftCard" aria-live="polite">
+          <div class="float-a">
+            <div class="photo"><img id="leftImg" src="img/jason.webp" alt="Jason, a new sign-up"></div>
+            <div class="cap"><span id="leftText"><b>Jason</b> signed up</span></div>
+          </div>
+        </article>
+        <article class="act right rise" id="rightCard" aria-live="polite">
+          <div class="float-b">
+            <div class="photo"><img src="img/vanessa.webp" alt="Vanessa, climbing the waitlist"><span class="badge-up" id="upBadge"><svg viewBox="0 0 12 12" fill="none"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="upBy">+3 referrals</span></span></div>
+            <div class="cap"><b>Vanessa</b> climbed up to <span class="rank" id="rank">#148</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Headline: muted words first, emphasis words land last
+    document.querySelectorAll('h1 .w').forEach((w, i, all) => {
+      const strong = w.tagName === 'STRONG';
+      w.style.animationDelay = (strong ? .55 + [...all].filter(x => x.tagName === 'STRONG').indexOf(w) * .16 : .15 + i * .05) + 's';
+    });
+
+    // Left card: a stream of community events
+    const events = [
+      { who: 'Jason', what: 'signed up' },
+      { who: 'Priya', what: 'joined via referral' },
+      { who: 'Omar', what: 'shared on X' },
+      { who: 'Lena', what: 'invited 4 friends' }
+    ];
+    const leftText = document.getElementById('leftText');
+    let ev = 0;
+    function nextEvent() {
+      ev = (ev + 1) % events.length;
+      leftText.classList.add('out');
+      setTimeout(() => { leftText.innerHTML = `<b>${events[ev].who}</b> ${events[ev].what}`; leftText.classList.remove('out'); }, 350);
+    }
+
+    // Right card: Vanessa's referrals push her up the list
+    const rankEl = document.getElementById('rank'), badge = document.getElementById('upBadge'), upBy = document.getElementById('upBy');
+    let rank = 148;
+    function climb(to, dur = 1600) {
+      const from = rank, t0 = performance.now();
+      badge.classList.add('on'); upBy.textContent = `+${Math.max(1, Math.round((from - to) / 12))} referrals`;
+      const step = now => {
+        const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
+        rank = Math.round(from + (to - from) * e); rankEl.textContent = '#' + rank;
+        if (t < 1) requestAnimationFrame(step); else setTimeout(() => badge.classList.remove('on'), 1200);
+      };
+      requestAnimationFrame(step);
+    }
+
+    // Live weekly counter ticks up now and then
+    const count = document.getElementById('count'); let n = 12480;
+
+    if (reduceMotion) {
+      rankEl.textContent = '#110';
+    } else {
+      setTimeout(() => climb(110), 1800);
+      setInterval(nextEvent, 3200);
+      let target = 110;
+      setInterval(() => { if (target > 64) { target -= 2 + Math.round(Math.random() * 5); climb(target, 1000); } else { rank = 148; target = 110; climb(110); } }, 7000);
+      setInterval(() => { n += 1 + Math.floor(Math.random() * 3); count.textContent = n.toLocaleString('en-US'); }, 1500);
+
+      // cards lean toward the pointer
+      if (matchMedia('(pointer: fine)').matches && innerWidth > 1180) {
+        const cards = [document.getElementById('leftCard'), document.getElementById('rightCard')];
+        cards.forEach(c => c.addEventListener('animationend', e => { if (e.animationName === 'cardIn') { c.classList.remove('rise'); c.dataset.ready = 1; } }));
+        addEventListener('pointermove', e => {
+          const x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
+          cards.forEach((c, i) => {
+            if (!c.dataset.ready) return;
+            c.style.transform = `rotate(${i ? 5 : -5}deg) translate(${x * (i ? 18 : 14)}px, ${y * 10}px) rotateY(${x * 6}deg)`;
+          });
+        });
+      }
+    }
+
+    // Primary CTA: playful confirmation instead of a dead link
+    document.getElementById('startBtn').addEventListener('click', e => {
+      e.preventDefault();
+      const b = e.currentTarget; if (b.dataset.done) return;
+      b.dataset.done = 1; const html = b.innerHTML;
+      b.innerHTML = `You’re #${(n + 1).toLocaleString('en-US')} in line ✓`;
+      n += 1; count.textContent = n.toLocaleString('en-US');
+      setTimeout(() => { b.innerHTML = html; delete b.dataset.done; }, 2600);
+    });
+  </script>
+</body>
+</html>

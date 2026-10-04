@@ -98,5 +98,16 @@ window.EMS_REGISTRY = [
     path: "heroes/08-cloud-de/",
     accent: "#62B2F2",
     summary: "Sky-and-hills AI platform hero with a working glass prompt card that streams answers."
+  },
+  {
+    id: "hero-09",
+    kind: "hero",
+    type: "Hero",
+    title: "Waitless",
+    industry: "Community SaaS",
+    tags: ["Two-tone headline", "Live activity cards", "Rank counter", "Striped stage"],
+    path: "heroes/09-waitless/",
+    accent: "#FF6154",
+    summary: "Waitlist hero framed by tilted live cards: new sign-ups stream in and a referrer climbs the ranks."
   }
 ];
