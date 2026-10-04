@@ -109,5 +109,16 @@ window.EMS_REGISTRY = [
     path: "heroes/09-waitless/",
     accent: "#FF6154",
     summary: "Waitlist hero framed by tilted live cards: new sign-ups stream in and a referrer climbs the ranks."
+  },
+  {
+    id: "hero-10",
+    kind: "hero",
+    type: "Hero",
+    title: "Apex",
+    industry: "Banking",
+    tags: ["Phone mockup", "Pocket cards", "Live balance", "Floating widgets"],
+    path: "heroes/10-apex-banking/",
+    accent: "#2563EB",
+    summary: "Banking hero with a working phone: tap pocket cards, hide the balance, top up and flip months on the chart."
   }
 ];
