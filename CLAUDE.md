@@ -10,6 +10,7 @@ for fictional brands across industries. Not production code; visual impact first
 - `_template/index.html` — copy this to start a new piece.
 - `heroes/NN-slug/index.html` — one self-contained folder per hero.
 - `sections/<type>/NN-slug/index.html` — other sections (pricing, features, stats, testimonials, footer…).
+- `dashboards/NN-slug/index.html` — full product dashboards (registry `kind: "dashboard"`, `type: "Dashboard"`).
 
 ## Rules for each piece
 - Self-contained: its own `index.html` (+ optional local `style.css`, `main.js`, assets). Opens directly in a browser, no build step.

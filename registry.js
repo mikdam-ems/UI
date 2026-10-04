@@ -120,5 +120,16 @@ window.EMS_REGISTRY = [
     path: "heroes/10-apex-banking/",
     accent: "#2563EB",
     summary: "Banking hero with a working phone: tap pocket cards, hide the balance, top up and flip months on the chart."
+  },
+  {
+    id: "dash-01",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Orbit Wallet",
+    industry: "Fintech",
+    tags: ["Multi-currency wallet", "Spline chart", "Quick transfer", "Live widgets"],
+    path: "dashboards/01-fintech-wallet/",
+    accent: "#5B7BFE",
+    summary: "Soft-shaded fintech dashboard where every widget works: switch wallets, hover charts and send money into the ledger."
   }
 ];
