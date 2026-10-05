@@ -142,5 +142,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/02-nueansa-accounting/",
     accent: "#FF5216",
     summary: "Warm ivory accounting dashboard: hover the day-by-day cash flow, filter the ledger and ask the AI insight card."
+  },
+  {
+    id: "iot-01",
+    kind: "iot",
+    type: "IoT",
+    title: "Sellution",
+    industry: "Smart home",
+    tags: ["Dark glassmorphism", "Live camera scene", "Drag gauges", "Solar chart"],
+    path: "iot/01-sellution-smart-home/",
+    accent: "#84CC16",
+    summary: "Dark glass smart-home hub where room switches and the brightness gauge actually light up the house on camera."
   }
 ];
