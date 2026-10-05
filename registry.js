@@ -164,5 +164,16 @@ window.EMS_REGISTRY = [
     path: "automation/01-flowmint-builder/",
     accent: "#B4F535",
     summary: "Visual process builder: drag nodes and connectors re-route, drop elements from the palette, inspect and publish steps."
+  },
+  {
+    id: "dash-03",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Finora",
+    industry: "Wealth management",
+    tags: ["Portfolio holdings", "4 live views", "Sortable table", "AI assistant"],
+    path: "dashboards/03-finora-wealth/",
+    accent: "#C0E800",
+    summary: "Lime investment portfolio dashboard: switch list, chart, card and news views, sell or withdraw holdings, ask the AI assistant."
   }
 ];
