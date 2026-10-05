@@ -153,5 +153,16 @@ window.EMS_REGISTRY = [
     path: "iot/01-sellution-smart-home/",
     accent: "#84CC16",
     summary: "Dark glass smart-home hub where room switches and the brightness gauge actually light up the house on camera."
+  },
+  {
+    id: "auto-01",
+    kind: "automation",
+    type: "Automation",
+    title: "Flowmint Builder",
+    industry: "Workflow automation",
+    tags: ["Node graph", "Drag & drop", "Orthogonal routing", "Undo / redo"],
+    path: "automation/01-flowmint-builder/",
+    accent: "#B4F535",
+    summary: "Visual process builder: drag nodes and connectors re-route, drop elements from the palette, inspect and publish steps."
   }
 ];
