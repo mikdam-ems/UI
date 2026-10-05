@@ -197,5 +197,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/05-agentic-ops/",
     accent: "#8B5CF6",
     summary: "Dark violet command centre for AI agents: watch tasks pulse through the planner, filter missions by status, retry failures and tune autonomy."
+  },
+  {
+    id: "exp-01",
+    kind: "experiment",
+    type: "3D Model",
+    title: "Pluvia",
+    industry: "E-commerce",
+    tags: ["Three.js", "Procedural 3D", "Open / close rig", "Colourways"],
+    path: "experiments/01-pluvia-umbrella/",
+    accent: "#e8a33d",
+    summary: "Procedural 3D umbrella built in code: drag to orbit, open and close the canopy, and switch colourways live."
   }
 ];
