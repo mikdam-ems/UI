@@ -186,5 +186,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/04-insightos-sales/",
     accent: "#D0FF59",
     summary: "AI sales analytics board: switch themes and periods, hover the revenue donut, sort opportunities and chat with Bostie AI."
+  },
+  {
+    id: "dash-05",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Agentic Ops Hub",
+    industry: "AI operations",
+    tags: ["Live agent flow", "Status donut filter", "Mission simulation", "Configure dialog"],
+    path: "dashboards/05-agentic-ops/",
+    accent: "#8B5CF6",
+    summary: "Dark violet command centre for AI agents: watch tasks pulse through the planner, filter missions by status, retry failures and tune autonomy."
   }
 ];
