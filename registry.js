@@ -208,5 +208,16 @@ window.EMS_REGISTRY = [
     path: "experiments/01-pluvia-umbrella/",
     accent: "#e8a33d",
     summary: "Procedural 3D umbrella built in code: drag to orbit, open and close the canopy, and switch colourways live."
+  },
+  {
+    id: "exp-02",
+    kind: "experiment",
+    type: "Scroll story",
+    title: "Sotto",
+    industry: "E-commerce",
+    tags: ["Three.js", "Rain-on-glass shader", "Scroll story", "3D add-to-cart", "EN / AR"],
+    path: "experiments/02-sotto-umbrellas/",
+    accent: "#a8121c",
+    summary: "Umbrella maker scroll story: rain runs down your screen, a 3D umbrella opens over you, you walk into the shop, and umbrellas leap into an umbrella-stand cart."
   }
 ];
