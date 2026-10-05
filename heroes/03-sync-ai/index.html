@@ -211,7 +211,16 @@
     .btn-dark:focus-visible, .links a:focus-visible, .signin:focus-visible, .play:focus-visible, .stack:focus-visible, .cal-top button:focus-visible { outline: 2px solid #5B8FA6; outline-offset: 3px; }
 
     /* ---------- Responsive ---------- */
-    @media (max-width: 1180px) { .notes { display: none; } }
+    /* Height fit: on desktop the hero is one screen tall; spacing follows the viewport height and fit.js shrinks the bento */
+    @media (min-width: 921px) {
+      .hero { height: max(600px, calc(100svh - 48px)); }
+      .head { padding-top: clamp(28px, 7vh, 76px); }
+      h1 { font-size: clamp(32px, min(4.8vw, 6.6vh), 64px); }
+      .form { margin-top: clamp(16px, 3.4vh, 36px); }
+      .privacy { margin-top: clamp(10px, 2vh, 22px); }
+      .deck-wrap { margin-top: clamp(24px, 6.5vh, 72px); padding-bottom: 0; }
+    }
+    @media (max-width: 1180px), (max-height: 700px) { .notes { display: none; } }
     @media (max-width: 920px) {
       .links { display: none; }
       .nav { grid-template-columns: 1fr auto; padding: 16px 20px; }
@@ -236,7 +245,7 @@
   </style>
 </head>
 <body>
-  <section class="hero">
+  <section class="hero" data-fit-root>
     <nav class="nav rise r1">
       <a class="logo" href="#">sync<span>.</span>ai</a>
       <ul class="links">
@@ -267,7 +276,7 @@
       </div>
     </div>
 
-    <div class="deck-wrap">
+    <div class="deck-wrap" data-fit data-fit-from="921" data-fit-gap="32" data-fit-min=".5">
       <!-- hand-drawn arrows from the action area into the deck -->
       <div class="notes" aria-hidden="true">
         <svg viewBox="0 0 1340 520" preserveAspectRatio="xMidYMin meet">
@@ -420,5 +429,6 @@
       setTimeout(function step() { m.textContent = v.toFixed(1).replace('.0', '') + 'X'; if ((v += .1) <= 3.001) setTimeout(step, 28); else m.textContent = '3X'; }, 900);
     }
   </script>
+  <script src="../../shared/fit.js"></script>
 </body>
 </html>

@@ -136,6 +136,16 @@
       .answer { transition: none; }
     }
 
+    /* Height fit: one screen tall on wider screens; copy follows the height and fit.js zooms the workspace card */
+    @media (min-width: 641px) {
+      .hero { min-height: max(600px, 100svh); }
+      h1 { font-size: clamp(44px, min(7.6vw, 11.5vh), 116px); }
+      .capsule { margin-top: clamp(12px, 2.8vh, 26px); }
+      .cta-row { margin-top: clamp(12px, 2.8vh, 26px); }
+      .cta { height: clamp(44px, 6.4vh, 54px); }
+      .card { bottom: calc(clamp(56px, 9vh, 84px) / var(--fit, 1)); }
+    }
+
     /* ---------- Responsive ---------- */
     @media (max-width: 1020px) { .links { display: none; } .menu { display: grid; } }
     @media (max-width: 640px) {
@@ -155,7 +165,7 @@
   </style>
 </head>
 <body>
-  <section class="hero">
+  <section class="hero" data-fit-root>
     <div class="sky" aria-hidden="true"></div>
     <div class="sun" aria-hidden="true"></div>
     <canvas id="clouds" aria-hidden="true"></canvas>
@@ -200,7 +210,7 @@
       <div class="cta-row rise r4"><a class="cta" href="#">Get Started – it’s free</a></div>
     </header>
 
-    <section class="card rise" aria-label="AI workspace">
+    <section class="card rise" aria-label="AI workspace" data-fit data-fit-anchor="bottom" data-fit-above=".cta-row" data-fit-offset="keep" data-fit-from="641" data-fit-gap="24" data-fit-min=".55">
       <h2 class="welcome">Welcome, Robinzon</h2>
       <form class="prompt" id="promptForm" autocomplete="off">
         <button class="agents" type="button" aria-label="Choose an agent"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M8 .5 2 8h4l-1 5.5L12 6H8z"/></svg>Agents</button>
@@ -347,5 +357,6 @@
     let h = 0;
     if (!reduceMotion) setInterval(() => { if (document.activeElement !== input && !input.value) input.placeholder = hints[h = (h + 1) % hints.length]; }, 4000);
   </script>
+  <script src="../../shared/fit.js"></script>
 </body>
 </html>

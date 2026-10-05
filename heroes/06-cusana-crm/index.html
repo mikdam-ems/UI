@@ -186,6 +186,13 @@
       .pulse { display: none; }
     }
 
+    /* Height fit: on desktop the browser frame is one screen tall; fit.js zooms the hero inside it */
+    @media (min-width: 1101px) {
+      .browser { height: max(520px, calc(100svh - 2 * clamp(12px, 3vw, 40px))); display: flex; flex-direction: column; }
+      .hero { padding-top: clamp(24px, 5vh, 56px); padding-bottom: clamp(24px, 5vh, 64px); flex: none; }
+      h1 { font-size: clamp(40px, min(4.9vw, 8.6vh), 76px); }
+    }
+
     /* ---------- Responsive ---------- */
     @media (max-width: 1100px) {
       .hero { grid-template-columns: 1fr; }
@@ -214,7 +221,7 @@
   </style>
 </head>
 <body>
-  <div class="browser">
+  <div class="browser" data-fit-root>
     <!-- browser chrome -->
     <div class="tabs" aria-hidden="true">
       <div class="lights"><i></i><i></i><i></i></div>
@@ -250,7 +257,7 @@
       <a class="btn-dark" href="#">Request Demo <svg viewBox="0 0 14 14" fill="none"><path d="m5 3 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </nav>
 
-    <section class="hero">
+    <section class="hero" data-fit data-fit-from="1101" data-fit-gap="0" data-fit-min=".55">
       <div>
         <a class="badge rise d2" href="#"><span class="new">New</span>Perfectly Organized with New AI Tools <svg viewBox="0 0 14 14" fill="none"><path d="m5 3 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         <h1 class="rise d3">Turn Customer Data <span style="white-space:nowrap">into
@@ -399,5 +406,6 @@
       }, 140);
     });
   </script>
+  <script src="../../shared/fit.js"></script>
 </body>
 </html>

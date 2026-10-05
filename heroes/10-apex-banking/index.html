@@ -55,6 +55,14 @@
 
     /* ---------- Stage ---------- */
     .stage { position: relative; max-width: 1180px; margin: 34px auto 0; height: 640px; }
+    /* Height fit: on desktop the hero is one screen tall; copy follows the height and fit.js zooms the phone stage */
+    @media (min-width: 901px) {
+      .hero { height: max(560px, 100svh); min-height: 0; }
+      h1 { font-size: clamp(40px, min(6vw, 9.6vh), 82px); }
+      .sub { margin-top: clamp(10px, 2vh, 18px); }
+      .ctas { margin-top: clamp(14px, 3vh, 28px); }
+      .stage { margin-top: clamp(18px, 4vh, 34px); }
+    }
 
     /* phone */
     .phone {
@@ -192,7 +200,7 @@
   </style>
 </head>
 <body>
-  <section class="hero">
+  <section class="hero" data-fit-root>
     <nav class="nav rise r1">
       <a class="logo" href="#"><span class="mark">A</span>Apex</a>
       <div class="tabs">
@@ -217,7 +225,7 @@
       </div>
     </div>
 
-    <div class="stage rise r5">
+    <div class="stage rise r5" data-fit data-fit-need="560" data-fit-gap="0" data-fit-min=".55">
       <!-- phone -->
       <div class="phone" id="phone">
         <div class="status"><span>9:41</span>
@@ -388,5 +396,6 @@
       });
     }
   </script>
+  <script src="../../shared/fit.js"></script>
 </body>
 </html>
