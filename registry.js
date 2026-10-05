@@ -175,5 +175,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/03-finora-wealth/",
     accent: "#C0E800",
     summary: "Lime investment portfolio dashboard: switch list, chart, card and news views, sell or withdraw holdings, ask the AI assistant."
+  },
+  {
+    id: "dash-04",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "InsightOS",
+    industry: "Sales analytics",
+    tags: ["AI assistant orb", "Interactive donut", "Deal bars", "Light / dark theme"],
+    path: "dashboards/04-insightos-sales/",
+    accent: "#D0FF59",
+    summary: "AI sales analytics board: switch themes and periods, hover the revenue donut, sort opportunities and chat with Bostie AI."
   }
 ];
