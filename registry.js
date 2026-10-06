@@ -197,5 +197,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/05-agentic-ops/",
     accent: "#8B5CF6",
     summary: "Dark violet command centre for AI agents: watch tasks pulse through the planner, filter missions by status, retry failures and tune autonomy."
+  },
+  {
+    id: "dash-06",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Spotlane",
+    industry: "Smart mobility",
+    tags: ["Generative street map", "Pan & zoom", "Live slot availability", "Navigation pass"],
+    path: "dashboards/06-spotlane-parking/",
+    accent: "#4F46E5",
+    summary: "Light glass parking finder over a DC street map: filter amenities, compare live lot availability, book Slot B-14 and simulate turn-by-turn navigation."
   }
 ];
