@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../../shared/base.css">
   <style>
     /* Layout: full-bleed generative street map; floating glass header (search, date/time, amenity pills),
-       380px result list on the left, pins + K Street pop-over on the map, navigation capsule bottom-centre. */
+       380px result list on the left, pins + Shmeisani garage pop-over on the map, navigation capsule bottom-centre. */
     :root {
       --bg: #F1F5F9;
       --glass: rgba(255, 255, 255, .92);
@@ -559,6 +559,10 @@
     .m-bld { fill: #D9E0E9; }
     .m-park { fill: #DDF3E6; }
     .m-water { fill: #D6E6F5; }
+    .m-heritage { fill: #F3EADB; stroke: #E7D9C3; stroke-width: 2; }
+    .m-topo path { fill: none; stroke: rgba(100, 116, 139, .14); stroke-width: 1.3; }
+    .m-circle { font: 700 13px "Plus Jakarta Sans", system-ui, sans-serif; fill: #64748B; text-anchor: middle; paint-order: stroke; stroke: #F1F5F9; stroke-width: 5px; }
+    .m-heritagelabel { font: italic 700 13px "Plus Jakarta Sans", system-ui, sans-serif; fill: #A1804C; paint-order: stroke; stroke: #F8F3EA; stroke-width: 4px; }
     .m-casing { stroke: #D3DBE5; fill: none; stroke-linecap: round; }
     .m-road { stroke: #fff; fill: none; stroke-linecap: round; }
     .m-label { font: 600 14px "Plus Jakarta Sans", system-ui, sans-serif; fill: #94A3B8; paint-order: stroke; stroke: #F1F5F9; stroke-width: 4px; letter-spacing: .02em; }
@@ -572,7 +576,7 @@
     .m-route-flow { stroke: #A5B4FC; stroke-width: 3; fill: none; stroke-linecap: round; stroke-dasharray: 2 18; animation: flow 1.1s linear infinite; }
     .m-route-done { stroke: #C7D2FE; stroke-width: 8.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
     @keyframes flow { to { stroke-dashoffset: -20; } }
-    .labels-off .m-label, .labels-off .m-area { display: none; }
+    .labels-off .m-label, .labels-off .m-area, .labels-off .m-circle { display: none; }
 
     /* ---------- Tablet: narrower panel ---------- */
     @media (max-width: 1240px) {
@@ -703,10 +707,10 @@
 
   <main class="app" id="app">
     <!-- Fullscreen map -->
-    <div class="map" id="map" aria-label="Map of parking lots near Independence Ave NW, Washington DC" role="region">
+    <div class="map" id="map" aria-label="Map of parking lots near Zahran St, Amman" role="region">
       <div class="world" id="world"></div>
       <div class="markers" id="markers">
-        <div class="me" id="me"><i></i><b>You · Independence Ave</b></div>
+        <div class="me" id="me"><i></i><b>You · 3rd Circle</b></div>
         <div class="car" id="car"><i><svg viewBox="0 0 24 24"><use href="#i-car"/></svg></i></div>
         <div class="pop glass" id="pop" role="dialog" aria-label="Selected parking lot"></div>
       </div>
@@ -763,11 +767,11 @@
           <div class="fields">
             <label class="field">
               <svg class="i"><use href="#i-pin"/></svg>
-              <span class="fl"><small>You are in</small><input id="city" value="Washington DC" autocomplete="off"></span>
+              <span class="fl"><small>You are in</small><input id="city" value="Amman, Jordan" autocomplete="off"></span>
             </label>
             <label class="field">
               <svg class="i"><use href="#i-road"/></svg>
-              <span class="fl"><small>Street</small><input id="street" value="Independence Ave. NW" autocomplete="off"></span>
+              <span class="fl"><small>Street</small><input id="street" value="Zahran St" autocomplete="off"></span>
             </label>
           </div>
           <div class="when">
@@ -802,7 +806,7 @@
           <div class="panel-head">
             <span class="live"><i></i><span id="updated">Live · updated just now</span></span>
             <h1 id="found">We found <em>3 parking lots</em> near you</h1>
-            <p id="ctx">Near Independence Ave. NW · Jun 28, 7:30 PM</p>
+            <p id="ctx">Near Zahran St · Jun 28, 7:30 PM</p>
             <div class="seg" role="group" aria-label="Sort results">
               <button type="button" data-sort="best" aria-pressed="true">Best match</button>
               <button type="button" data-sort="price" aria-pressed="false">Cheapest</button>
@@ -813,17 +817,17 @@
             <article class="lot med" data-id="penn" tabindex="0">
               <div class="lot-top">
                 <span class="lot-mark">P</span>
-                <div><h3>Penn Parking</h3><p class="addr">1101 Pennsylvania Ave NW, Washington, DC 20004</p></div>
+                <div><h3>Jabal Amman Car Park</h3><p class="addr">Al-Kulliyah St, off 2nd Circle, Amman</p></div>
               </div>
               <div class="avail"><span class="badge"><i></i>Medium availability <span class="num" data-free>14 free</span></span><span class="meter"><span data-meter style="width:18%"></span></span></div>
               <div class="meta">
                 <span class="chip ev" data-amen="ev"><svg class="i"><use href="#i-bolt"/></svg>EV 22 kW</span>
-                <span class="chip metro" data-amen="pr"><svg class="i"><use href="#i-train"/></svg>Metro 2 min</span>
+                <span class="chip metro" data-amen="pr"><svg class="i"><use href="#i-train"/></svg>BRT 3 min</span>
                 <span class="chip" data-amen="disabled"><svg class="i"><use href="#i-access"/></svg></span>
-                <span class="dist num">0.9 km · 4 min</span>
+                <span class="dist num">0.6 km · 3 min</span>
               </div>
               <div class="lot-foot">
-                <span class="price"><b class="num">$12</b>/hr</span>
+                <span class="price"><b class="num">JD 1.50</b>/hr</span>
                 <button type="button" class="btn primary" data-book>Book a spot</button>
               </div>
             </article>
@@ -832,7 +836,7 @@
               <span class="best">Best price</span>
               <div class="lot-top">
                 <span class="lot-mark">P</span>
-                <div><h3>2020 K Street Garage - ParkChirp</h3><p class="addr">2020 K St NW, Washington, DC 20006</p></div>
+                <div><h3>Shmeisani Central Garage - Mawqif</h3><p class="addr">Wadi Saqra St, Shmeisani, Amman</p></div>
               </div>
               <div class="avail"><span class="badge"><i></i>High availability <span class="num" data-free>42 free</span></span><span class="meter"><span data-meter style="width:35%"></span></span></div>
               <div class="meta">
@@ -843,7 +847,7 @@
                 <span class="dist num">1.2 km · 6 min</span>
               </div>
               <div class="lot-foot">
-                <span class="price"><b class="num">$8.50</b>/hr</span>
+                <span class="price"><b class="num">JD 1.00</b>/hr</span>
                 <button type="button" class="btn primary" data-book>Book a spot</button>
               </div>
             </article>
@@ -851,16 +855,16 @@
             <article class="lot low" data-id="spp" tabindex="0">
               <div class="lot-top">
                 <span class="lot-mark">P</span>
-                <div><h3>SP+ Parking</h3><p class="addr">1250 H St NW, Washington, DC 20005</p></div>
+                <div><h3>Abdali Boulevard Parking</h3><p class="addr">Abdali Blvd, Al-Abdali, Amman</p></div>
               </div>
               <div class="avail"><span class="badge"><i></i>Low availability <span class="num" data-free>3 free</span></span><span class="meter"><span data-meter style="width:5%"></span></span></div>
               <div class="meta">
                 <span class="chip" data-amen="disabled"><svg class="i"><use href="#i-access"/></svg></span>
                 <span class="chip metro" data-amen="pr"><svg class="i"><use href="#i-train"/></svg>Park &amp; Ride</span>
-                <span class="dist num">1.4 km · 7 min</span>
+                <span class="dist num">1.1 km · 5 min</span>
               </div>
               <div class="lot-foot">
-                <span class="price"><b class="num">$15</b>/hr</span>
+                <span class="price"><b class="num">JD 2.00</b>/hr</span>
                 <button type="button" class="btn ghost" data-notify><svg class="i"><use href="#i-bell"/></svg>Notify me</button>
               </div>
             </article>
@@ -884,7 +888,7 @@
       <div class="cap-slot">
         <span class="cap-ic">P</span>
         <div>
-          <small id="cap-lot">2020 K Street Garage · Floor 2</small>
+          <small id="cap-lot">Shmeisani Central Garage · Floor 2</small>
           <strong><span id="cap-title">Reserved Slot</span> <b id="cap-slot">#B-14</b></strong><span class="hold num" id="hold">14:59</span>
         </div>
       </div>
@@ -913,30 +917,59 @@
     /* ---------------- Data ---------------- */
     const ME = { x: 950, y: 940 };
     const LOTS = {
-      penn: { name: 'Penn Parking', short: 'Penn Parking', level: 'med', levelLabel: 'Medium availability',
-        price: 12, priceLabel: '$12', free: 14, total: 80, band: [9, 22], km: 0.9, min: 4, x: 1260, y: 761,
+      penn: { name: 'Jabal Amman Car Park', short: 'Jabal Amman Car Park', level: 'med', levelLabel: 'Medium availability',
+        price: 1.5, priceLabel: 'JD 1.50', free: 14, total: 80, band: [9, 22], km: 0.6, min: 3, x: 1260, y: 761,
         floor: 'Level P1', slot: 'A-07', ev: ['EV charging · 1 of 2 bays free', '22 kW AC · Type 2'], evOn: true,
-        phone: '(202) 555-0119', route: [[950, 940], [1016, 940], [1016, 698.5], [1260, 761]] },
-      kst: { name: '2020 K Street Garage - ParkChirp', short: '2020 K Street Garage', level: 'high', levelLabel: 'High availability',
-        price: 8.5, priceLabel: '$8.50', free: 42, total: 120, band: [34, 52], km: 1.2, min: 6, x: 772, y: 372,
+        phone: '06 500 0119', route: [[950, 940], [1230, 920], [1260, 761]] },
+      kst: { name: 'Shmeisani Central Garage - Mawqif', short: 'Shmeisani Central Garage', level: 'high', levelLabel: 'High availability',
+        price: 1, priceLabel: 'JD 1.00', free: 42, total: 120, band: [34, 52], km: 1.2, min: 6, x: 772, y: 372,
         floor: 'Floor 2', slot: 'B-14', ev: ['EV charger ready · 2 of 4 bays free', '50 kW DC fast charge · CCS / Type 2'], evOn: true,
-        phone: '(202) 555-0148', route: [[950, 940], [772, 940], [772, 372]] },
-      spp: { name: 'SP+ Parking', short: 'SP+ Parking', level: 'low', levelLabel: 'Low availability',
-        price: 15, priceLabel: '$15', free: 3, total: 60, band: [1, 5], km: 1.4, min: 7, x: 1430, y: 490,
-        floor: 'Level 3', slot: 'C-02', ev: ['No EV bays at this site', 'Nearest charger: Penn Parking'], evOn: false,
-        phone: '(202) 555-0173', route: [[950, 940], [1138, 940], [1138, 490], [1430, 490]] }
+        phone: '06 500 0148', route: [[950, 940], [680, 960], [700, 760], [740, 560], [772, 372]] },
+      spp: { name: 'Abdali Boulevard Parking', short: 'Abdali Boulevard Parking', level: 'low', levelLabel: 'Low availability',
+        price: 2, priceLabel: 'JD 2.00', free: 3, total: 60, band: [1, 5], km: 1.1, min: 5, x: 1430, y: 490,
+        floor: 'Level 3', slot: 'C-02', ev: ['No EV bays at this site', 'Nearest charger: Jabal Amman Car Park'], evOn: false,
+        phone: '06 500 0173', route: [[950, 940], [1230, 920], [1260, 761], [1330, 600], [1430, 490]] }
     };
     // seeded rng for stable generative map
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
-    /* ---------------- Generative street map ---------------- */
-    // World units ≈ 1.25 m. Core (named DC grid) sits around 0..2000 × 0..1300; the grid keeps going past every screen edge.
+    /* ---------------- Generative street map: Amman ---------------- */
+    // A hilly city: neighbourhood street grids at different angles, topographic contours,
+    // Zahran St with its numbered circles, Wadi Abdoun, the Citadel and Al-Balad. The grid keeps going past every screen edge.
     const X0 = -1424, Y0 = -1040, X1 = 3400, Y1 = 2420;
-    const xs = Array.from({ length: 40 }, (_, k) => 40 + (k - 12) * 122);   // index i = k - 12
-    const ys = Array.from({ length: 39 }, (_, k) => 40 + (k - 12) * 90);
-    const X = i => 40 + i * 122, Y = j => 40 + j * 90;
-    const riverEdge = x => x < 0 ? 1120 + .3 * x : 1120 + .42 * x + .0016 * x * x;
+    const ROADS = [
+      { name: 'Zahran St', w: 26, at: [.2, .5, .78], pts: [[-1424, 1190], [-380, 1110], [-110, 1070], [160, 1030], [420, 990], [680, 960], [950, 940], [1230, 920], [1500, 900], [1700, 930], [1820, 990], [1950, 1040]] },
+      { name: 'Wadi Saqra St', w: 22, at: [.3, .58], pts: [[680, 960], [700, 760], [740, 560], [772, 372], [800, 150], [830, -250], [880, -1040]] },
+      { name: 'Al-Kulliyah St', w: 18, at: [.55], pts: [[1230, 920], [1260, 761], [1330, 600], [1430, 490], [1490, 300], [1520, 100]] },
+      { name: 'Abdali Blvd', w: 16, at: [.5], pts: [[1395, 330], [1430, 490], [1465, 640]] },
+      { name: 'King Hussein St', w: 20, at: [.4], pts: [[1430, 490], [1640, 600], [1800, 760], [1950, 1040], [2050, 1200], [2200, 1500], [2350, 2420]] },
+      { name: 'Queen Rania St', w: 26, at: [.25, .5, .72], pts: [[-1424, -230], [-400, -170], [300, -150], [830, -250], [1400, -280], [2200, -200], [3400, -260]] },
+      { name: 'Al-Madina Al-Munawwara St', w: 22, at: [.42], pts: [[60, -1040], [140, -150], [200, 400], [190, 800], [160, 1030]] },
+      { name: 'Mecca St', w: 24, at: [.45], pts: [[-110, 1070], [-260, 600], [-520, 0], [-760, -500], [-1000, -1040]] },
+      { name: 'Abdoun Bridge', w: 18, at: [.2], pts: [[420, 990], [450, 1160], [480, 1300], [560, 1700], [600, 2420]] },
+      { name: 'Airport Rd', w: 26, at: [.4], pts: [[-380, 1110], [-640, 1500], [-900, 2000], [-1100, 2420]] },
+      { name: 'Al-Istiqlal St', w: 20, at: [.5], pts: [[1520, -1040], [1580, -300], [1640, 250], [1700, 560], [1800, 760]] },
+      { name: 'Abdul Hamid Sharaf St', w: 18, at: [.3, .62], pts: [[200, 400], [500, 330], [772, 372], [1000, 300], [1395, 330]] },
+      { name: 'Al-Qahira St', w: 16, at: [.4], pts: [[-200, 1520], [480, 1300], [1100, 1340], [1600, 1420], [2050, 1200]] },
+      { name: 'Rainbow St', w: 14, at: [.5], pts: [[1500, 900], [1610, 870], [1740, 880]] },
+      { name: 'Hashemi St', w: 18, at: [.3], pts: [[1950, 1040], [2300, 1060], [2800, 1000], [3400, 1060]] },
+      { name: 'Al-Quds St', w: 18, at: [.4], pts: [[2050, 1200], [2600, 1500], [3400, 1700]] }
+    ];
+    const CIRCLES = [[1500, 900], [1230, 920], [950, 940], [680, 960], [420, 990], [160, 1030], [-110, 1070], [-380, 1110]];
+    // [cx, cy, radius, street angle°, block size] — each neighbourhood has its own grid
+    const DISTRICTS = [
+      [700, 330, 400, 12, 92], [1450, 470, 260, -22, 74], [1330, 860, 300, 8, 64], [1760, 520, 260, 32, 66],
+      [2000, 1000, 270, -14, 52], [1280, 80, 330, -4, 80], [480, 780, 330, -6, 96], [600, 1500, 430, 18, 110],
+      [-20, 1420, 400, -12, 86], [100, 640, 360, 4, 102], [-360, 60, 480, -24, 98], [-950, 560, 500, 14, 110],
+      [300, -620, 480, 2, 108], [-950, -650, 480, 28, 112], [1100, -650, 430, -10, 100], [2250, 300, 430, 22, 90],
+      [2350, -520, 450, -6, 104], [-1000, 1550, 460, -20, 108], [1450, 1650, 480, 10, 100], [2550, 1500, 480, -18, 96],
+      [-300, 2150, 450, 6, 112], [900, 2150, 450, -14, 104], [2200, 2150, 420, 12, 100], [3050, 800, 420, -8, 96],
+      [3050, -300, 420, 16, 104], [3100, 2050, 400, 0, 100], [2750, 1000, 300, 25, 80], [-1150, -100, 300, -8, 100],
+      [1010, 620, 300, -16, 78], [1150, 1190, 300, 6, 90], [280, 1170, 280, -4, 94], [1720, 1260, 320, 14, 86],
+      [1890, 790, 190, -30, 58], [860, -20, 320, 8, 94], [-650, 1000, 380, 10, 104], [-620, -480, 380, -14, 104]
+    ];
+    const HILLS = [[1880, 700, 240], [1330, 820, 300], [700, 300, 330], [1300, 60, 320], [1760, 480, 220], [-360, 0, 420], [100, 640, 320], [600, 1520, 380], [2250, 300, 360], [-950, 560, 420], [-20, 1420, 320]];
 
     function el(tag, attrs, parent) {
       const n = document.createElementNS(NS, tag);
@@ -944,55 +977,81 @@
       if (parent) parent.appendChild(n);
       return n;
     }
+    const blob = (cx, cy, r, wob = .12) => {
+      const p1 = rnd() * 6.28, p2 = rnd() * 6.28, p3 = rnd() * 6.28;
+      let d = '';
+      for (let k = 0; k <= 48; k++) {
+        const t = k / 48 * Math.PI * 2;
+        const rr = r * (1 + wob * Math.sin(3 * t + p1) + wob * .6 * Math.sin(5 * t + p2) + wob * .3 * Math.sin(2 * t + p3));
+        d += `${k ? 'L' : 'M'}${(cx + rr * Math.cos(t)).toFixed(1)} ${(cy + rr * Math.sin(t)).toFixed(1)}`;
+      }
+      return d + 'Z';
+    };
+    const poly = pts => 'M' + pts.map(p => p.join(' ')).join('L');
+
     function buildMap() {
       const svg = el('svg', { width: X1 - X0, height: Y1 - Y0, viewBox: `${X0} ${Y0} ${X1 - X0} ${Y1 - Y0}`, 'aria-hidden': 'true' });
       svg.style.cssText = `position:absolute;left:${X0}px;top:${Y0}px`;
-      const gBlocks = el('g', {}, svg), gRoads = el('g', {}, svg), gTop = el('g', {}, svg), gLabels = el('g', {}, svg);
-      el('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#F1F5F9' }, gBlocks);
+      const defs = el('defs', {}, svg);
+      const gCity = el('g', {}, svg), gGreen = el('g', {}, svg), gTopo = el('g', { class: 'm-topo' }, svg),
+        gRoads = el('g', {}, svg), gTop = el('g', {}, svg), gLabels = el('g', {}, svg);
+      el('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#F1F5F9' }, gCity);
 
-      const parks = new Set(['4,4', '8,4', '12,6', '-3,2', '17,-2', '2,13', '19,12', '-6,6', '14,-5']);
-      const prez = (i, j) => (i === 4 || i === 5) && j >= 6 && j <= 8;
-      for (let i = -12; i < 27; i++) for (let j = -12; j < 26; j++) {
-        const x = X(i) + 9, y = Y(j) + 9, w = 104, h = 72;
-        if (j === 9 || prez(i, j)) continue;                 // National Mall row, President's Park
-        if (y + h > riverEdge(x) - 14) continue;            // under the river
-        if (parks.has(`${i},${j}`)) { el('rect', { x, y, width: w, height: h, rx: 8, class: 'm-park' }, gBlocks); continue; }
-        el('rect', { x, y, width: w, height: h, rx: 6, class: 'm-block' }, gBlocks);
-        const n = Math.floor(rnd() * 3);
-        for (let k = 0; k < n; k++) {
-          const bw = 24 + rnd() * 40, bh = 18 + rnd() * 26;
-          el('rect', { x: x + 6 + rnd() * (w - bw - 12), y: y + 6 + rnd() * (h - bh - 12), width: bw, height: bh, rx: 3, class: 'm-bld' }, gBlocks);
+      // Neighbourhoods: soft-edged blob, building footprints, then its own street grid on top
+      DISTRICTS.forEach(([cx, cy, r, ang, sp], i) => {
+        const shape = blob(cx, cy, r, .14);
+        const cp = el('clipPath', { id: `dc${i}` }, defs); el('path', { d: shape }, cp);
+        const g = el('g', { 'clip-path': `url(#dc${i})` }, gCity);
+        el('path', { d: shape, class: 'm-block' }, g);
+        const loc = el('g', { transform: `translate(${cx} ${cy}) rotate(${ang})` }, g);
+        let b = '';
+        for (let k = 0, n = Math.round(r * r / 1500); k < n; k++) {
+          const w = sp * (.22 + rnd() * .3), h = sp * (.18 + rnd() * .26);
+          const x = (rnd() * 2 - 1) * r, y = (rnd() * 2 - 1) * r;
+          b += `M${x.toFixed(0)} ${y.toFixed(0)}h${w.toFixed(0)}v${h.toFixed(0)}h${(-w).toFixed(0)}z`;
         }
-      }
-      el('rect', { x: X0, y: Y(9) + 9, width: X1 - X0, height: Y(10) - Y(9) - 18, rx: 10, class: 'm-park' }, gBlocks);
-      el('rect', { x: X(4) + 9, y: Y(6) + 9, width: X(6) - X(4) - 18, height: Y(9) - Y(6) - 18, rx: 10, class: 'm-park' }, gBlocks);
-      el('rect', { x: X(4) + 92, y: Y(6) + 40, width: 60, height: 32, rx: 4, fill: '#E9EEF3', stroke: '#D3DBE5' }, gBlocks);
-      el('ellipse', { cx: 760, cy: 1070, rx: 70, ry: 40, class: 'm-water' }, gBlocks); // tidal basin
+        el('path', { d: b, class: 'm-bld' }, loc);
+        let st = '';
+        const line = (horizontal, off) => {
+          const pts = [];
+          for (let s = -r; s <= r; s += r / 3) {
+            const j = (rnd() * 2 - 1) * sp * .09;
+            pts.push(horizontal ? [s, off + j] : [off + j, s]);
+          }
+          st += poly(pts.map(p => p.map(v => +v.toFixed(1))));
+        };
+        for (let o = -r + sp * rnd(); o < r; o += sp * (.85 + rnd() * .4)) if (rnd() > .1) line(true, o);
+        for (let o = -r + sp * rnd(); o < r; o += sp * (1.1 + rnd() * .5)) if (rnd() > .18) line(false, o);
+        el('path', { d: st, class: 'm-casing', 'stroke-width': 11, 'stroke-linejoin': 'round' }, loc);
+        el('path', { d: st, class: 'm-road', 'stroke-width': 8, 'stroke-linejoin': 'round' }, loc);
+      });
 
-      // Roads
-      const majorV = new Set([6, 8, 0, 14]), majorH = new Set([4, 9, 10, -3]);
-      const roads = [];
-      xs.forEach((x, k) => roads.push({ d: `M${x} ${Y0}V${Y1}`, w: majorV.has(k - 12) ? 24 : 14 }));
-      ys.forEach((y, k) => roads.push({ d: `M${X0} ${y}H${X1}`, w: majorH.has(k - 12) ? 24 : 14 }));
-      const line = (x, y, m, xa = X0, xb = X1) => [xa, y + m * (xa - x), xb, y + m * (xb - x)];
-      const diag = [
-        { p: line(120, 470, .255), w: 26, name: 'Pennsylvania Ave NW', at: [.33, .42, .5] },
-        { p: line(0, 160, .21), w: 20, name: 'Massachusetts Ave NW', at: [.32, .44, .52] },
-        { p: [589 - 1485 / 1.68, 445 - 1485, 589, 445], w: 20, name: 'Connecticut Ave NW', at: [.55, .85] },
-        { p: line(1250, 770, -.56, 900, X1), w: 20, name: 'New York Ave NW', at: [.12, .3] }
-      ];
-      diag.forEach(r => roads.push({ d: `M${r.p[0]} ${r.p[1]}L${r.p[2]} ${r.p[3]}`, w: r.w }));
-      roads.forEach(r => el('path', { d: r.d, class: 'm-casing', 'stroke-width': r.w + 3 }, gRoads));
-      roads.forEach(r => el('path', { d: r.d, class: 'm-road', 'stroke-width': r.w }, gRoads));
-      // river on top of streets
-      let d = `M${X0} ${riverEdge(X0)}`;
-      for (let x = X0 + 40; x <= 1000; x += 40) d += `L${x} ${riverEdge(x)}`;
-      el('path', { class: 'm-water', d: d + `L1000 ${Y1}L${X0} ${Y1}Z` }, gTop);
+      // Wadi Abdoun, parks, heritage sites
+      const wadi = [[-300, 1260], [100, 1230], [420, 1185], [700, 1230], [1000, 1195], [1300, 1255], [1650, 1300]];
+      el('path', { d: poly(wadi), fill: 'none', stroke: '#DDF3E6', 'stroke-width': 74, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gGreen);
+      el('path', { d: poly(wadi), fill: 'none', stroke: '#CFE3F3', 'stroke-width': 4, 'stroke-dasharray': '10 8', 'stroke-linecap': 'round' }, gGreen);
+      el('path', { d: blob(-950, -210, 170, .1), class: 'm-park' }, gGreen);
+      el('path', { d: blob(1530, 610, 46, .08), class: 'm-park' }, gGreen);
+      el('path', { d: blob(2075, 1170, 34, .06), class: 'm-park' }, gGreen);
+      el('path', { d: blob(1880, 700, 74, .1), class: 'm-heritage' }, gGreen);
+      el('path', { d: 'M1985 1125A48 48 0 0 1 2081 1125Z', class: 'm-heritage' }, gGreen);
+      for (let k = 1; k < 4; k++) el('path', { d: `M${2033 - 48 + k * 11} 1125A${48 - k * 11} ${48 - k * 11} 0 0 1 ${2033 + 48 - k * 11} 1125`, fill: 'none', stroke: '#E2D2B6', 'stroke-width': 1.5 }, gGreen);
+
+      // Topographic contours — Amman's jabals
+      HILLS.forEach(([cx, cy, R]) => { for (let r = 46; r <= R; r += 40) el('path', { d: blob(cx, cy, r, .1) }, gTopo); });
+
+      // Arterial roads + Zahran St circles
+      ROADS.forEach(r => el('path', { d: poly(r.pts), class: 'm-casing', 'stroke-width': r.w + 3, 'stroke-linejoin': 'round' }, gRoads));
+      ROADS.forEach(r => el('path', { d: poly(r.pts), class: 'm-road', 'stroke-width': r.w, 'stroke-linejoin': 'round' }, gRoads));
+      CIRCLES.forEach(([x, y]) => {
+        el('circle', { cx: x, cy: y, r: 34, fill: '#fff', stroke: '#D3DBE5', 'stroke-width': 3 }, gRoads);
+        el('circle', { cx: x, cy: y, r: 18, fill: '#DDF3E6', stroke: '#C5E8D3', 'stroke-width': 2 }, gRoads);
+      });
 
       // Small "full" lots
       const g = el('g', { class: 'm-full' }, gTop);
-      [[1500, 805], [520, 580], [1700, 400], [1260, 310], [380, 760], [1630, 1080], [1080, 580], [270, 400],
-       [2200, 670], [-200, 300], [1900, 1300], [600, -150], [2500, 220], [140, -420]].forEach(([x, y]) => {
+      [[1500, 805], [520, 580], [1700, 400], [1260, 310], [380, 760], [1630, 1080], [1080, 580], [270, 420],
+       [2200, 670], [-200, 300], [1900, 1300], [600, -150], [2500, 220], [140, -420], [-600, 1300], [2400, 1250]].forEach(([x, y]) => {
         el('circle', { cx: x, cy: y, r: 12 }, g);
         const t = el('text', { x, y: y + 4 }, g); t.textContent = 'P';
       });
@@ -1003,39 +1062,39 @@
       el('path', { id: 'routeDone', class: 'm-route-done', d: '', 'stroke-dasharray': '0 99999' }, gTop);
       el('path', { id: 'routeFlow', class: 'm-route-flow', d: '' }, gTop);
 
-      // Labels
+      // Labels: road names follow the road, always reading left → right
+      ROADS.forEach((r, i) => {
+        const pts = r.pts[0][0] > r.pts[r.pts.length - 1][0] ? [...r.pts].reverse() : r.pts;
+        el('path', { id: `rl${i}`, d: poly(pts) }, defs);
+        r.at.forEach(at => {
+          const t = el('text', { class: 'm-label', dy: 5 }, gLabels);
+          const tp = el('textPath', { href: `#rl${i}`, startOffset: `${at * 100}%`, 'text-anchor': 'middle' }, t);
+          tp.textContent = r.name;
+        });
+      });
       const label = (txt, x, y, cls = 'm-label', rot = 0) => {
         const t = el('text', { x, y, class: cls, 'text-anchor': 'middle', transform: rot ? `rotate(${rot} ${x} ${y})` : '' }, gLabels);
         t.textContent = txt;
       };
-      const hNames = { '-1': 'P St NW', 0: 'O St NW', 1: 'N St NW', 2: 'M St NW', 3: 'L St NW', 4: 'K St NW', 5: 'H St NW', 6: 'G St NW', 7: 'F St NW', 8: 'E St NW', 9: 'Constitution Ave NW', 10: 'Independence Ave NW', 11: 'C St SW', 12: 'D St SW' };
-      Object.entries(hNames).forEach(([j, n]) => [-4, 2, 9, 15, 21].forEach(i => {
-        const x = X(i) + 61 + (j % 2) * 30, y = Y(+j) + 5;
-        if (y < riverEdge(x) - 30) label(n, x, y);
-      }));
-      const ord = n => n + ((n % 100 > 10 && n % 100 < 14) ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
-      for (let i = -2; i <= 18; i++) [-2, 2, 7, 12].forEach(j => {
-        const x = X(i) + 5, y = Y(j) + 45;
-        if (y < riverEdge(x) - 60) label(`${ord(22 - i)} St NW`, x, y, 'm-label', -90);
-      });
-      diag.forEach(r => {
-        const [x1, y1, x2, y2] = r.p;
-        const a = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-        r.at.forEach(t => label(r.name, x1 + (x2 - x1) * t, y1 + (y2 - y1) * t + 5, 'm-label', a));
-      });
-      label('N A T I O N A L   M A L L', 1320, 900, 'm-parklabel');
-      label('N A T I O N A L   M A L L', 2500, 900, 'm-parklabel');
-      label("President's Park", 650, 790, 'm-parklabel');
-      label('Farragut Sq.', 589, 452, 'm-parklabel');
-      label('Franklin Sq.', 1077, 452, 'm-parklabel');
-      label('POTOMAC RIVER', -260, 1250, 'm-waterlabel', 17);
-      label('DOWNTOWN', 1260, 274, 'm-area');
-      label('FOGGY BOTTOM', 200, 660, 'm-area');
-      label('PENN QUARTER', 1700, 720, 'm-area');
-      label('GOLDEN TRIANGLE', 650, 140, 'm-area');
-      label('DUPONT CIRCLE', 300, -260, 'm-area');
-      label('MOUNT VERNON SQ.', 1700, 70, 'm-area');
-      label('SOUTHWEST WATERFRONT', 1500, 1290, 'm-area');
+      const ordn = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
+      CIRCLES.forEach(([x, y], i) => label(`${ordn(i + 1)} Circle`, x, y - 44, 'm-circle'));
+      label('Amman Citadel', 1880, 704, 'm-heritagelabel');
+      label('Roman Theatre', 2033, 1150, 'm-heritagelabel');
+      label('Abdali Park', 1530, 614, 'm-parklabel');
+      label('King Hussein Park', -950, -205, 'm-parklabel');
+      label('W A D I   A B D O U N', 860, 1218, 'm-parklabel');
+      label('SHMEISANI', 540, 250, 'm-area');
+      label('AL-ABDALI', 1560, 420, 'm-area');
+      label('JABAL AMMAN', 1350, 1030, 'm-area');
+      label('JABAL AL-WEIBDEH', 1820, 420, 'm-area');
+      label('AL-BALAD', 2150, 960, 'm-area');
+      label('JABAL AL-HUSSEIN', 1220, -60, 'm-area');
+      label('ABDOUN', 700, 1430, 'm-area');
+      label('SWEIFIEH', -60, 1400, 'm-area');
+      label('UM UTHAINA', 40, 860, 'm-area');
+      label('KHALDA', -1000, 520, 'm-area');
+      label("TLA' AL-ALI", -380, -60, 'm-area');
+      label('JUBEIHA', 300, -640, 'm-area');
       return svg;
     }
 
@@ -1111,7 +1170,7 @@
       const panel = $('.panel').getBoundingClientRect(), head = $('.top').getBoundingClientRect();
       return { l: panel.right - m.left + 40, t: head.bottom - m.top + 24, r: mw - 200, b: mh - 120 };
     }
-    // Fit the user, every lot and (desktop) the side call-out of the K Street pin into the free area.
+    // Fit the user, every lot and (desktop) the side call-out of the Shmeisani pin into the free area.
     function fitView(dur) {
       const a = availRect(), aw = Math.max(120, a.r - a.l), ah = Math.max(120, a.b - a.t);
       const pts = [ME, ...Object.values(LOTS)];
@@ -1174,9 +1233,9 @@
 
     /* ---------------- Guest journey: state ---------------- */
     // status: held (slot held 15 min, not paid) → paid → parked → done. View = which sheet is open.
-    const FEE = 1.5, EV_RATE = .45, HOLD = 15 * 60 - 1;
+    const FEE = .25, EV_RATE = .2, HOLD = 15 * 60 - 1;
     const pad = n => String(n).padStart(2, '0');
-    const money = v => '$' + v.toFixed(2);
+    const money = v => 'JD ' + v.toFixed(2);
     const mmss = s => `${Math.floor(s / 60)}:${pad(s % 60)}`;
     const toMin = t => { const m = t.match(/(\d+):(\d+)\s*(AM|PM)/); return (+m[1] % 12 + (m[3] === 'PM' ? 12 : 0)) * 60 + +m[2]; };
     const fmtT = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; const h = Math.floor(m / 60); return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}`; };
@@ -1189,13 +1248,13 @@
     const validPlate = v => /^[A-Z0-9]{2,8}$/.test(cleanPlate(v));
 
     Object.keys(LOTS).forEach(k => LOTS[k].key = k);
-    Object.assign(LOTS.kst, { addr: '2020 K St NW', amen: ['ev', 'long', 'wash', 'disabled'], kw: 50, entrance: 'K St NW entrance', floors: [['Floor 1', 'A'], ['Floor 2', 'B'], ['Floor 3', 'C']] });
-    Object.assign(LOTS.penn, { addr: '1101 Pennsylvania Ave NW', amen: ['ev', 'pr', 'disabled'], kw: 22, entrance: '11th St NW entrance', floors: [['Level P1', 'A'], ['Level P2', 'D']] });
-    Object.assign(LOTS.spp, { addr: '1250 H St NW', amen: ['disabled', 'pr'], kw: 0, entrance: 'H St NW entrance', floors: [['Level 2', 'B'], ['Level 3', 'C']] });
+    Object.assign(LOTS.kst, { addr: 'Wadi Saqra St, Shmeisani', amen: ['ev', 'long', 'wash', 'disabled'], kw: 50, entrance: 'Wadi Saqra St entrance', floors: [['Floor 1', 'A'], ['Floor 2', 'B'], ['Floor 3', 'C']] });
+    Object.assign(LOTS.penn, { addr: 'Al-Kulliyah St, off 2nd Circle', amen: ['ev', 'pr', 'disabled'], kw: 22, entrance: 'Al-Kulliyah St entrance', floors: [['Level P1', 'A'], ['Level P2', 'D']] });
+    Object.assign(LOTS.spp, { addr: 'Abdali Blvd, Al-Abdali', amen: ['disabled', 'pr'], kw: 0, entrance: 'Abdali Blvd entrance', floors: [['Level 2', 'B'], ['Level 3', 'C']] });
 
     const fresh = () => ({
       lot: 'kst', floor: 'Floor 2', slot: 'B-14', status: 'held', view: null,
-      arrive: null, hours: 3, plate: '', region: 'DC', size: 'std', ev: true, modifying: false,
+      arrive: null, hours: 3, plate: '', region: 'JO', size: 'std', ev: true, modifying: false,
       contact: '', pay: 'card', cnum: '4242 4242 4242 4242', cexp: '08 / 29', ccvc: '123', paid: 0, id: '', error: null, confirmCancel: false,
       arrived: false, gate: 'idle', showQr: false, reassigned: false,
       elapsed: 0, ext: 0, extPaid: 0, extSel: 60, lateFee: 0, kwh: 0, charging: false, lowWarned: false,
@@ -1307,7 +1366,7 @@
       return `<div class="bill">
         <div><span>Parking · ${S.hours}h × ${l.priceLabel}</span><b class="num">${money(l.price * S.hours)}</b></div>
         <div><span>Service fee</span><b class="num">${money(FEE)}</b></div>
-        ${S.ev && l.kw ? `<div><span>EV energy · $0.45/kWh</span><b>billed after</b></div>` : ''}
+        ${S.ev && l.kw ? `<div><span>EV energy · JD 0.20/kWh</span><b>billed after</b></div>` : ''}
         ${S.modifying ? `<div class="neg"><span>Already paid</span><b class="num">−${money(S.paid)}</b></div>` : ''}
         <div class="tot"><span>${S.modifying ? (due >= 0 ? 'Due now' : 'Refund') : 'Total'}</span><b class="num">${money(Math.abs(due))}</b></div>
       </div>`;
@@ -1383,15 +1442,15 @@
               <div class="slot-legend"><span><i></i>Free</span><span class="t"><i></i>Taken</span><span class="s"><i></i>Yours</span><span>${ico('access')}Accessible</span>${l.kw ? `<span>${ico('bolt')}EV charger</span>` : ''}</div></div>
             <div class="sec"><h3>Your vehicle</h3>
               <div class="fld"><label for="plate">Licence plate</label>
-                <div class="plate-row"><select class="inp" id="region" aria-label="Plate state">${['DC', 'MD', 'VA', 'NY', 'PA'].map(r => `<option ${r === S.region ? 'selected' : ''}>${r}</option>`).join('')}</select>
-                  <input class="inp plate" id="plate" value="${esc(S.plate)}" placeholder="ABC 1234" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="plate-msg"></div>
+                <div class="plate-row"><select class="inp" id="region" aria-label="Plate country">${['JO', 'SA', 'AE', 'KW', 'IQ'].map(r => `<option ${r === S.region ? 'selected' : ''}>${r}</option>`).join('')}</select>
+                  <input class="inp plate" id="plate" value="${esc(S.plate)}" placeholder="12-34567" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="plate-msg"></div>
                 <span class="hint" id="plate-msg">The gate reads your plate — no ticket, no app needed at entry.</span></div>
               <div class="seg" role="group" aria-label="Vehicle size" style="grid-template-columns:1fr 1fr"><button type="button" data-size="std" aria-pressed="${S.size === 'std'}">Standard car</button><button type="button" data-size="long" aria-pressed="${S.size === 'long'}">Longer than 3.5m</button></div>
               ${S.size === 'long' ? (l.amen.includes('long')
                 ? `<div class="note">${ico('check')}<span>We'll keep an XL bay (up to 5.4 m) for you at no extra cost.</span></div>`
-                : `<div class="alert amber"><div class="alert-top">${ico('alert')}<div><b>No XL bays here</b>${l.short} has a 2.1 m height limit and standard bays only. 2020 K Street Garage fits longer vehicles.</div></div></div>`) : ''}
+                : `<div class="alert amber"><div class="alert-top">${ico('alert')}<div><b>No XL bays here</b>${l.short} has a 2.1 m height limit and standard bays only. Shmeisani Central Garage fits longer vehicles.</div></div></div>`) : ''}
             </div>
-            ${l.kw ? `<label class="switch"><input type="checkbox" id="evres" ${S.ev ? 'checked' : ''}><span class="ic-box">${ico('bolt')}</span><span><b>Charge while I'm parked</b><span class="s">${l.kw} kW · $0.45/kWh, billed after your session</span></span><span class="tg"></span></label>` : ''}
+            ${l.kw ? `<label class="switch"><input type="checkbox" id="evres" ${S.ev ? 'checked' : ''}><span class="ic-box">${ico('bolt')}</span><span><b>Charge while I'm parked</b><span class="s">${l.kw} kW · JD 0.20/kWh, billed after your session</span></span><span class="tg"></span></label>` : ''}
             ${billRows(due)}
             <div class="note">${ico('clock')}<span>Free cancellation until <b>${fmtT(S.arrive - 15)}</b>. Running late? Your slot stays yours until <b>${fmtT(S.arrive + 15)}</b>.</span></div>`,
           foot: `<button type="button" class="btn primary" data-next>Continue to checkout · <span class="num">${money(Math.abs(due))}</span></button>
@@ -1418,7 +1477,7 @@
               if (!validPlate(S.plate)) {
                 const i = $('#plate', root), m = $('#plate-msg', root);
                 i.classList.add('bad'); m.classList.add('bad');
-                m.textContent = S.plate ? 'Use 2–8 letters and numbers, like ABC 1234.' : 'Add your plate so the gate can let you in.';
+                m.textContent = S.plate ? 'Use 2–8 letters and numbers, like 12-34567.' : 'Add your plate so the gate can let you in.';
                 i.focus(); i.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
                 return;
               }
@@ -1602,9 +1661,9 @@
               <div class="kv"><div><span>Started</span><b class="num">${fmtT(S.arrive)}</b></div><div><span>Ends</span><b class="num" data-ends>–</b></div><div><span>Charged so far</span><b class="num" data-sofar>–</b></div></div>
             </div>
             <span class="demo-clock">${ico('timer')}Demo clock · 1 second = 1 minute</span>
-            ${l.kw ? `<div class="sec"><h3>EV charging <em>${l.kw} kW · $0.45/kWh</em></h3>
+            ${l.kw ? `<div class="sec"><h3>EV charging <em>${l.kw} kW · JD 0.20/kWh</em></h3>
               <label class="switch"><input type="checkbox" id="evsw" ${S.charging ? 'checked' : ''}><span class="ic-box">${ico('bolt')}</span><span><b data-evstate>${S.charging ? 'Charging' : 'Not charging'}</b><span class="s">Connector at bay ${S.slot}</span></span><span class="tg"></span></label>
-              <div class="ev-live"><div><span>Energy</span><b class="num" data-kwh>0.0 kWh</b></div><div><span>Cost</span><b class="num" data-evcost>$0.00</b></div><div><span>Battery</span><b class="num" data-batt>34%</b></div></div></div>` : ''}
+              <div class="ev-live"><div><span>Energy</span><b class="num" data-kwh>0.0 kWh</b></div><div><span>Cost</span><b class="num" data-evcost>JD 0.00</b></div><div><span>Battery</span><b class="num" data-batt>34%</b></div></div></div>` : ''}
             <div class="sec"><h3>Need more time?</h3>
               <div class="chips">${[30, 60, 120].map(m => `<button type="button" class="opt num" data-ext="${m}" aria-pressed="${sel === m}">+${durTxt(m)} · ${money(l.price * m / 60)}</button>`).join('')}</div>
               <button type="button" class="btn ghost" data-extend>${ico('plus')}Extend by ${durTxt(sel)} · ${money(l.price * sel / 60)}</button>
@@ -1846,9 +1905,9 @@
     }
     function runningLate() {
       notice({ tone: 'amber', icon: 'clock', title: "Looks like you're running late",
-        text: `${S.slot} is held until ${fmtT(S.arrive + 15)}. Keep it for 30 more minutes for ${money(2)} so it isn't released.`,
+        text: `${S.slot} is held until ${fmtT(S.arrive + 15)}. Keep it for 30 more minutes for ${money(.5)} so it isn't released.`,
         actions: [
-          { label: 'Keep my slot · $2.00', primary: true, fn: () => { S.arrive += 30; S.lateFee += 2; toast(`Slot held until ${fmtT(S.arrive + 15)}`, 'timer'); rerender(); } },
+          { label: `Keep my slot · ${money(.5)}`, primary: true, fn: () => { S.arrive += 30; S.lateFee += .5; toast(`Slot held until ${fmtT(S.arrive + 15)}`, 'timer'); rerender(); } },
           { label: "I'll make it", fn: () => {} }
         ] });
     }

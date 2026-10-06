@@ -203,10 +203,10 @@ window.EMS_REGISTRY = [
     kind: "dashboard",
     type: "Dashboard",
     title: "Spotlane",
-    industry: "Smart mobility",
+    industry: "Smart mobility · Amman",
     tags: ["Full guest journey", "Slot picker & checkout", "QR pass + gate entry", "Live session", "Edge-case scenarios"],
     path: "dashboards/06-spotlane-parking/",
     accent: "#4F46E5",
-    summary: "End-to-end guest parking journey over a DC street map: pick a slot, check out without an account, get a QR pass, navigate, open the gate, run a live session and rate the stay."
+    summary: "End-to-end guest parking journey over a generative map of Amman: pick a slot, check out without an account, get a QR pass, navigate, open the gate, run a live session and rate the stay."
   }
 ];
