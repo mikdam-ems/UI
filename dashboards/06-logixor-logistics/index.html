@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logixor Command Center</title>
+  <meta name="description" content="Supply chain command centre with a live, explorable 3D isometric logistics site.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-cube-top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7FB0FF"/><stop offset="1" stop-color="#3B82F6"/></linearGradient>
+      <linearGradient id="g-cube-left" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563EB"/><stop offset="1" stop-color="#1D4ED8"/></linearGradient>
+      <linearGradient id="g-cube-right" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6366F1"/><stop offset="1" stop-color="#4338CA"/></linearGradient>
+    </defs>
+  </svg>
+
+  <div class="page">
+    <!-- ============ NAV ============ -->
+    <header class="nav">
+      <a class="brand" href="#" aria-label="Logixor home">
+        <svg class="brand-cube" viewBox="0 0 40 40" aria-hidden="true">
+          <path d="M20 3 35 11.5 20 20 5 11.5Z" fill="url(#g-cube-top)"/>
+          <path d="M5 11.5 20 20v17L5 28.5Z" fill="url(#g-cube-left)"/>
+          <path d="M35 11.5 20 20v17l15-8.5Z" fill="url(#g-cube-right)"/>
+          <path d="M20 12.5 27 16.5 20 20.5 13 16.5Z" fill="#fff" opacity=".9"/>
+        </svg>
+        <span>Logixor</span>
+      </a>
+
+      <nav class="tabs glass-lite" aria-label="Primary">
+        <button class="tab is-active" data-tab="command" aria-current="page">Command Center</button>
+        <button class="tab" data-tab="shipments">Shipments</button>
+        <button class="tab" data-tab="network">Network</button>
+        <button class="tab" data-tab="analytics">Analytics</button>
+        <button class="tab" data-tab="reports">Reports</button>
+      </nav>
+
+      <div class="controls">
+        <div class="search-wrap">
+          <button class="icon-btn" id="searchBtn" aria-label="Search" aria-expanded="false" aria-controls="searchPop">
+            <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          </button>
+          <div class="pop glass" id="searchPop" hidden>
+            <input id="searchInput" type="search" placeholder="Jump to a site, dock or shipment…" aria-label="Jump to location" autocomplete="off">
+            <ul id="searchList" role="listbox"></ul>
+          </div>
+        </div>
+        <button class="icon-btn" id="bellBtn" aria-label="Notifications, 8 unread">
+          <svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+          <span class="badge" id="bellBadge">8</span>
+        </button>
+        <button class="icon-btn hide-sm" aria-label="Messages">
+          <svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1 1 21 12Z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg>
+        </button>
+        <button class="icon-btn" id="themeBtn" aria-label="Switch to night mode" aria-pressed="false">
+          <svg class="i sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="i moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>
+        </button>
+        <button class="avatar" aria-label="Account: Rana Haddad">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="av" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#DCE8FA"/><stop offset="1" stop-color="#A9C3EE"/></linearGradient></defs>
+            <rect width="48" height="48" fill="url(#av)"/>
+            <path d="M8 48c1.5-9 8-13 16-13s14.5 4 16 13Z" fill="#1E3A8A"/>
+            <path d="M20 34h8v4l-4 3-4-3Z" fill="#E9B894"/>
+            <circle cx="24" cy="22" r="8.5" fill="#F1C6A2"/>
+            <path d="M15.5 21c0-7 4-10 8.5-10s8.8 2.6 8.5 10c-1.6-3.4-4.5-4.4-8.5-4.4s-7 1-8.5 4.4Z" fill="#2B2118"/>
+          </svg>
+          <span class="online" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============ TOP: 3D STAGE + OVERLAY CARDS ============ -->
+    <section class="top" aria-label="Command overview and live site">
+      <div class="stage" id="stage">
+        <canvas id="world" aria-label="Interactive 3D map of the Logixor logistics hub. Drag to pan, Ctrl + scroll or pinch to zoom." role="img"></canvas>
+        <div class="stage-fallback" aria-hidden="true"></div>
+
+        <!-- Hotspots: positioned by scene.js from 3D anchors -->
+        <div class="anchors" id="anchors">
+          <button class="spot" data-anchor="atl02"><span class="spot-dot amber"></span><span class="spot-txt"><b>ATL-02</b><small>92% capacity</small></span></button>
+          <button class="spot" data-anchor="yard"><span class="spot-dot"></span><span class="spot-txt"><b>Container Yard</b><small>1,284 TEU</small></span></button>
+          <button class="spot" data-anchor="depot"><span class="spot-dot"></span><span class="spot-txt"><b>Fuel Depot</b><small>4 tanks · 71%</small></span></button>
+          <button class="spot" data-anchor="dock3"><span class="spot-dot green"></span><span class="spot-txt"><b>Dock 3</b><small>78% utilised</small></span></button>
+          <button class="spot" data-anchor="gate"><span class="spot-dot red"></span><span class="spot-txt"><b>Truck Gate</b><small>Congested</small></span></button>
+
+          <div class="pin" data-anchor="pin" id="pin">
+            <div class="pin-card glass">
+              <div class="pin-head">
+                <span class="pin-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span>
+                <div><b>Live Shipments</b><small>Tracking in real time</small></div>
+              </div>
+              <div class="pin-row">
+                <div class="pin-bar"><i id="pinFill" style="width:72%"><span class="pin-truck"><svg viewBox="0 0 24 24"><path d="M2 7h11v9H2zM13 10h4l3 3v3h-7z"/><circle cx="6" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/></svg></span></i></div>
+                <b class="pin-pct" id="pinPct">72%</b>
+              </div>
+            </div>
+            <span class="pin-line"></span>
+            <span class="pin-dot"></span>
+          </div>
+        </div>
+
+        <div class="explore-head glass">
+          <svg class="brand-cube" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 35 11.5 20 20 5 11.5Z" fill="url(#g-cube-top)"/><path d="M5 11.5 20 20v17L5 28.5Z" fill="url(#g-cube-left)"/><path d="M35 11.5 20 20v17l15-8.5Z" fill="url(#g-cube-right)"/></svg>
+          <div><b>Harbourline Hub · Site 07</b><small>Drag to pan · right-drag or two fingers to rotate · scroll or pinch to zoom</small></div>
+        </div>
+
+        <div class="map-tools glass" id="mapTools" role="toolbar" aria-label="Map controls">
+          <button data-act="zoom-in" aria-label="Zoom in"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button data-act="zoom-out" aria-label="Zoom out"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <button data-act="rotate" aria-label="Rotate view 45°"><svg class="i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg></button>
+          <button data-act="reset" aria-label="Reset view"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 15v5h-5M4 15v5h5M20 9V4h-5"/></svg></button>
+          <span class="tool-sep" aria-hidden="true"></span>
+          <button data-act="explore" class="explore-btn" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20Z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span class="explore-lbl">Explore site</span><span class="exit-lbl">Exit</span></button>
+        </div>
+        <div class="map-hint" id="mapHint" role="status" aria-live="polite"></div>
+      </div>
+
+      <!-- Command overview -->
+      <article class="card glass overview" id="overview">
+        <header class="card-head">
+          <h2>Command Overview</h2>
+          <div class="select" data-select="range">
+            <button class="select-btn" aria-haspopup="listbox" aria-expanded="false">
+              <svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+              <span>Today</span>
+              <svg class="i chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="select-menu glass" role="listbox" hidden>
+              <li role="option" data-value="today" aria-selected="true">Today</li>
+              <li role="option" data-value="week">This Week</li>
+              <li role="option" data-value="month">This Month</li>
+            </ul>
+          </div>
+        </header>
+        <ul class="metrics">
+          <li class="metric">
+            <span class="m-ic blue"><svg class="i" viewBox="0 0 24 24"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span>
+            <div class="m-txt"><b>Shipments Today</b><small>Total shipments</small></div>
+            <div class="m-val"><b data-metric="ship">8,542</b><span class="delta up" data-delta="ship">12.6%</span></div>
+          </li>
+          <li class="metric">
+            <span class="m-ic green"><svg class="i" viewBox="0 0 24 24"><path d="M2 7h11v9H2zM13 10h4l3 3v3h-7z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/><path d="m5 11 2 2 3-3"/></svg></span>
+            <div class="m-txt"><b>On-Time Delivery Rate</b><small>Performance</small></div>
+            <div class="m-val"><b data-metric="otd">96.4%</b><span class="delta up" data-delta="otd">6.8%</span></div>
+          </li>
+          <li class="metric">
+            <span class="m-ic violet"><svg class="i" viewBox="0 0 24 24"><path d="M3 21V9l9-5 9 5v12"/><path d="M7 21v-8h10v8M7 16h10"/></svg></span>
+            <div class="m-txt"><b>Active Warehouses</b><small>Operational</small></div>
+            <div class="m-val"><b data-metric="wh">68</b><span class="delta up" data-delta="wh">4</span></div>
+          </li>
+          <li class="metric">
+            <span class="m-ic orange"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.9-1.7-1.4-3-1.4-1.8 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.6-3.2-1.6M12 6v1.8M12 16.9v1.6"/></svg></span>
+            <div class="m-txt"><b>Total Freight Spend</b><small>Today's spend</small></div>
+            <div class="m-val"><b data-metric="spend">$128,430</b><span class="delta up warn" data-delta="spend">8.5%</span></div>
+          </li>
+        </ul>
+      </article>
+
+      <!-- System alerts -->
+      <article class="card glass alerts" id="alerts">
+        <header class="card-head">
+          <h2><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>System Alerts</h2>
+          <span class="timer" title="Next sync"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg><b id="timer">8m 45s</b></span>
+        </header>
+        <ul class="feed">
+          <li><button class="feed-item" data-fly="pin">
+            <span class="f-ic red"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20Z" fill="currentColor"/><path d="M12 9.5v4.5M12 16.8v.2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <span class="f-txt"><b>Delay in Shipment #LX-2487</b><small>ETA delayed by 2h 15m</small></span>
+            <time>10m ago</time>
+          </button></li>
+          <li><button class="feed-item" data-fly="gate">
+            <span class="f-ic violet"><svg viewBox="0 0 24 24"><path d="M3 6.5h11v9H3zM14 9.5h4l3 3v3h-7z" fill="currentColor"/><circle cx="7" cy="17.5" r="2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2" fill="currentColor"/></svg></span>
+            <span class="f-txt"><b>High Traffic Zone</b><small>Congestion on I-95 North</small></span>
+            <time>35m ago</time>
+          </button></li>
+          <li><button class="feed-item" data-fly="atl02">
+            <span class="f-ic orange"><svg viewBox="0 0 24 24"><path d="M2 10 12 3l10 7v11H2Z" fill="currentColor"/><path d="M7 21v-6h10v6" fill="#fff"/><path d="M7 18h10" stroke="currentColor" stroke-width="1.4"/></svg></span>
+            <span class="f-txt"><b>Warehouse Capacity</b><small>Warehouse ATL-02 at 92%</small></span>
+            <time>1h ago</time>
+          </button></li>
+        </ul>
+        <div class="kpis">
+          <div><b>Late Shipments</b><small>Daily</small><strong>64</strong><em class="red">↑ 12%</em></div>
+          <div><b>Capacity Risk</b><small>Storage</small><strong>66%</strong><em class="amber">Medium</em></div>
+          <div><b>Dock Utilization</b><small>Average</small><strong>78%</strong><em class="green">Good</em></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ BOTTOM GRID ============ -->
+    <section class="grid4" aria-label="Operations detail">
+      <article class="card glass flow">
+        <header class="card-head stack"><h2>Live Logistics Flow</h2><p>Real-time movement overview</p></header>
+        <button class="thumb" id="thumbBtn" aria-label="Live camera: truck gate. Open on map">
+          <canvas id="thumb"></canvas>
+          <span class="live-tag"><i></i>LIVE · CAM 04</span>
+        </button>
+        <div class="flow-stats">
+          <div><small>In Transit</small><b data-count="5142">5,142</b><div class="bar"><i class="blue" style="--w:62%"></i></div><em>62%</em></div>
+          <div><small>Delivered</small><b data-count="3400">3,400</b><div class="bar"><i class="green" style="--w:41%"></i></div><em>41%</em></div>
+        </div>
+      </article>
+
+      <article class="card glass tracking">
+        <header class="card-head stack"><h2>Tracking Details</h2></header>
+        <div class="trk-id">
+          <div><small>Tracking ID</small><b>#LX-5217-TRK</b></div>
+          <span class="pill-badge">In Transit</span>
+        </div>
+        <ol class="stepper">
+          <li class="is-current"><span class="st-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg></span><div><small>Current Location</small><b>Rotterdam Port, Netherlands</b></div></li>
+          <li class="is-done"><span class="st-ic"><svg viewBox="0 0 24 24"><path d="M3 18h18M5 18l1.5-6h11L19 18M8 12V8h8v4M12 8V5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><small>Departure</small><b>Hamburg, Germany</b></div></li>
+          <li><span class="st-ic"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="9.5" r="2.4" fill="currentColor"/></svg></span><div><small>Arrival</small><b>New York, USA</b></div></li>
+          <li><span class="st-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l2.6 1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><small>Est. Delivery</small><b>May 18, 2025 – 08:30 AM</b></div></li>
+        </ol>
+      </article>
+
+      <article class="card glass perf" id="perf">
+        <header class="card-head"><h2>Performance Insights</h2></header>
+        <div class="perf-bar">
+          <div class="legend"><span><i class="blue"></i>Shipments</span><span><i class="orange"></i>Trend</span></div>
+          <div class="select" data-select="perf">
+            <button class="select-btn sm" aria-haspopup="listbox" aria-expanded="false"><span>This Month</span><svg class="i chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+            <ul class="select-menu glass right" role="listbox" hidden>
+              <li role="option" data-value="month" aria-selected="true">This Month</li>
+              <li role="option" data-value="quarter">This Quarter</li>
+              <li role="option" data-value="year">Last Year</li>
+            </ul>
+          </div>
+        </div>
+        <div class="chart" id="lineChart"></div>
+      </article>
+
+      <article class="card glass inv" id="inv">
+        <header class="card-head stack"><h2>Inventory Snapshot</h2></header>
+        <div class="inv-top"><div><small>Total Products</small><b>2,456</b></div><span class="delta up">5.2%</span></div>
+        <div class="chart" id="barChart"></div>
+      </article>
+    </section>
+  </div>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+  <script src="app.js"></script>
+  <!-- 3D scene inlined so the page also runs straight from file:// (module scripts can't load local files there) -->
+  <script type="module">
+// Logixor — procedural isometric logistics hub (Three.js).
+// Everything here is generated in code: buildings, container yard, conveyor, tank farm, pylons,
+// trucks, forklifts, a gantry crane. MapControls give pan / rotate / zoom; HTML hotspots and the
+// live-shipment pin are projected from 3D anchors every frame.
+import * as THREE from 'three';
+import { MapControls } from 'three/addons/controls/MapControls.js';
+
+const stage = document.getElementById('stage');
+const canvas = document.getElementById('world');
+const thumbCanvas = document.getElementById('thumb');
+const root = document.documentElement;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = matchMedia('(pointer: coarse)').matches;
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+} catch (e) {
+  root.classList.add('no-webgl');
+  throw e;
+}
+window.LX_SCENE = true;
+renderer.setPixelRatio(Math.min(devicePixelRatio, coarse ? 1.5 : 1.75));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xEBF1F7, 560, 820);
+const world = new THREE.Group();
+scene.add(world);
+
+/* ------------------------------------------------------------------ */
+/* Materials — each has a light and a night colour                     */
+/* ------------------------------------------------------------------ */
+const themed = [];
+function M(light, dark, params = {}, glow = 0) {
+  const m = new THREE.MeshStandardMaterial({ color: light, roughness: 0.82, metalness: 0.02, ...params });
+  themed.push({ m, light: new THREE.Color(light), dark: new THREE.Color(dark), glow });
+  return m;
+}
+function ribTex(ribs, lo = 206, repeat = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 4;
+  const g = c.getContext('2d'); const w = 256 / ribs;
+  for (let i = 0; i < ribs; i++) {
+    const gr = g.createLinearGradient(i * w, 0, (i + 1) * w, 0);
+    gr.addColorStop(0, `rgb(${lo},${lo + 8},${lo + 18})`);
+    gr.addColorStop(0.45, '#ffffff'); gr.addColorStop(0.6, '#ffffff');
+    gr.addColorStop(1, `rgb(${lo},${lo + 8},${lo + 18})`);
+    g.fillStyle = gr; g.fillRect(i * w, 0, w + 0.5, 4);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(...repeat); t.anisotropy = maxAniso;
+  return t;
+}
+function windowTex() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 16;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 128, 16);
+  g.fillStyle = '#000'; for (let i = 0; i < 128; i += 16) g.fillRect(i, 0, 2, 16);
+  const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = maxAniso; return t;
+}
+
+const MAT = {
+  ground: M(0xE3EAF2, 0x15233D, { roughness: 1 }),
+  lot: M(0xF3F6FA, 0x1D2D4A, { roughness: 0.95 }),
+  road: M(0xD3DCE7, 0x0F1A2E, { roughness: 0.95 }),
+  paint: M(0xFFFFFF, 0x5B6F92, { roughness: 0.9 }),
+  wall: M(0xF6F8FB, 0x566B90),
+  wallRib: M(0xF4F7FB, 0x52678C, { map: ribTex(40, 214, [3, 1]) }),
+  roof: M(0xEEF3F8, 0x44597F, { map: ribTex(48, 210, [2, 1]) }),
+  roofBlue: M(0xB9CFF1, 0x3D5E9C, { map: ribTex(48, 196, [2, 1]) }),
+  roofGable: M(0xA8C3EE, 0x3D5E9C, { map: ribTex(24, 190, [0.25, 0.25]), side: THREE.DoubleSide }),
+  skylight: M(0x8FB4F2, 0x31538F, { roughness: 0.35, metalness: 0.2 }),
+  door: M(0x9DB4D3, 0x3A5277, { map: ribTex(18, 170, [1, 1]) }),
+  window: M(0x5E7FB3, 0x0B1424, { roughness: 0.3, metalness: 0.3, emissive: 0xFFC46B, emissiveMap: windowTex() }, 1.6),
+  blue: M(0x2F66E0, 0x2A5BD0, { roughness: 0.55 }),
+  blueSoft: M(0x6E98EC, 0x3A64B8, { roughness: 0.6 }),
+  dark: M(0x3B4658, 0x0B1220, { roughness: 0.6 }),
+  glass: M(0x29354A, 0x0B1424, { roughness: 0.2, metalness: 0.5, emissive: 0x9CC2FF }, 0.35),
+  trailer: M(0xF7F9FC, 0x6A7EA2, { map: ribTex(30, 214, [1, 1]) }),
+  tyre: M(0x2A2F38, 0x07090E, { roughness: 0.9 }),
+  belt: M(0x5A6578, 0x1C2433, { map: ribTex(10, 120, [10, 1]), roughness: 0.7 }),
+  card: M(0xE4B57E, 0x8C6A45, { roughness: 0.9 }),
+  pallet: M(0xC9A27A, 0x5C4632, { roughness: 1 }),
+  yellow: M(0xF5B840, 0xC4902A, { roughness: 0.5 }),
+  steel: M(0xCDD6E2, 0x60718F, { roughness: 0.45, metalness: 0.4 }),
+  tank: M(0xF2F5F9, 0x5A6F94, { map: ribTex(26, 206, [4, 1]), roughness: 0.5, metalness: 0.15 }),
+  container: M(0xFFFFFF, 0xA3B1CB, { map: ribTex(36, 172, [1, 1]), roughness: 0.6 }),
+  canopy: M(0xE7EEF7, 0x30466B, { roughness: 0.9, flatShading: true }),
+  trunk: M(0xBFC9D6, 0x2B3546),
+  lamp: M(0xF2F5FA, 0x1B2436, { emissive: 0xFFE2A8 }, 2.4),
+  orange: M(0xF97316, 0xF97316, { emissive: 0xF97316 }, 0.9)
+};
+MAT.orange.emissiveIntensity = 0.35;
+const wireMat = new THREE.MeshBasicMaterial({ color: 0x7F93B2, wireframe: true, transparent: true, opacity: 0.9 });
+const lineMat = new THREE.LineBasicMaterial({ color: 0x8D9FBA, transparent: true, opacity: 0.7 });
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+function shade(m, cast = true, receive = true) { m.castShadow = cast; m.receiveShadow = receive; return m; }
+function block(w, h, d, mat, x, y, z, parent = world, cast = true) {
+  const m = new THREE.Mesh(BOX, mat);
+  m.scale.set(w, h, d); m.position.set(x, y + h / 2, z);
+  parent.add(shade(m, cast));
+  return m;
+}
+function rng(seed) { return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646; }
+const rand = rng(7);
+
+/* ------------------------------------------------------------------ */
+/* Ground, lots, roads                                                 */
+/* ------------------------------------------------------------------ */
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), MAT.ground);
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; world.add(ground);
+
+function lot(x, z, w, d) { block(w, 0.12, d, MAT.lot, x, 0, z, world, false); }
+lot(-10, -2, 132, 40);     // central conveyor band
+lot(-14, -50, 108, 44);    // container yard
+lot(70, -56, 50, 50);      // tank farm
+lot(14, 52, 64, 48);       // warehouse B
+lot(76, 52, 40, 46);       // warehouse C
+lot(-50, 44, 44, 44);      // truck gate / parking
+lot(-112, 0, 44, 120);     // west campus
+lot(0, -102, 220, 30);     // far row
+
+const ROAD_Z = [-24, 20], ROAD_X = [-84, 100];
+const roadW = 9;
+const dashes = [];
+for (const z of ROAD_Z) {
+  block(400, 0.16, roadW, MAT.road, 0, 0, z, world, false);
+  for (let x = -196; x < 200; x += 9) dashes.push([x, z, 4, 0.5]);
+}
+for (const x of ROAD_X) {
+  block(roadW, 0.17, 320, MAT.road, x, 0, 0, world, false);
+  for (let z = -156; z < 160; z += 9) if (!ROAD_Z.some((rz) => Math.abs(rz - z) < 7)) dashes.push([x, z, 0.5, 4]);
+}
+{
+  const inst = new THREE.InstancedMesh(BOX, MAT.paint, dashes.length);
+  const o = new THREE.Object3D();
+  dashes.forEach(([x, z, w, d], i) => { o.position.set(x, 0.2, z); o.scale.set(w, 0.04, d); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); });
+  inst.receiveShadow = true; world.add(inst);
+}
+// parking bays in the truck gate
+{
+  const bays = [];
+  for (let i = 0; i < 7; i++) bays.push([-68 + i * 6, 30], [-68 + i * 6, 58]);
+  const inst = new THREE.InstancedMesh(BOX, MAT.paint, bays.length);
+  const o = new THREE.Object3D();
+  bays.forEach(([x, z], i) => { o.position.set(x, 0.14, z); o.scale.set(0.35, 0.03, 13); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); });
+  world.add(inst);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buildings                                                           */
+/* ------------------------------------------------------------------ */
+function gableRoof(w, d, rise, mat, x, y, z) {
+  const s = new THREE.Shape();
+  s.moveTo(-d / 2 - 0.8, 0); s.lineTo(d / 2 + 0.8, 0); s.lineTo(0, rise); s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: w + 1.2, bevelEnabled: false });
+  g.translate(0, 0, -(w + 1.2) / 2);
+  const m = new THREE.Mesh(g, mat);
+  m.rotation.y = Math.PI / 2; m.position.set(x, y, z);
+  world.add(shade(m));
+  return m;
+}
+function doorsOn(face, b, n, dw, dh, canopy = true) {
+  const { x, z, w, d } = b;
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n - 0.5;
+    if (face === 'n' || face === 's') {
+      const zz = face === 'n' ? z - d / 2 - 0.05 : z + d / 2 + 0.05;
+      block(dw, dh, 0.3, MAT.door, x + t * w * 0.9, 0, zz);
+      if (canopy) block(dw + 1.2, 0.3, 2.2, MAT.steel, x + t * w * 0.9, dh + 0.4, zz + (face === 'n' ? -1 : 1));
+    } else {
+      const xx = face === 'w' ? x - w / 2 - 0.05 : x + w / 2 + 0.05;
+      block(0.3, dh, dw, MAT.door, xx, 0, z + t * d * 0.9);
+      if (canopy) block(2.2, 0.3, dw + 1.2, MAT.steel, xx + (face === 'w' ? -1 : 1), dh + 0.4, z + t * d * 0.9);
+    }
+  }
+}
+function windowBand(b, y, faces = 'nsew') {
+  const { x, z, w, d } = b; const t = 1.3;
+  if (faces.includes('n')) { const m = block(w * 0.86, t, 0.2, MAT.window, x, y, z - d / 2 - 0.08, world, false); m.material = MAT.window; }
+  if (faces.includes('s')) block(w * 0.86, t, 0.2, MAT.window, x, y, z + d / 2 + 0.08, world, false);
+  if (faces.includes('e')) block(0.2, t, d * 0.86, MAT.window, x + w / 2 + 0.08, y, z, world, false);
+  if (faces.includes('w')) block(0.2, t, d * 0.86, MAT.window, x - w / 2 - 0.08, y, z, world, false);
+}
+function warehouse(b) {
+  const { x, z, w, d, h } = b;
+  block(w, h, d, b.rib ? MAT.wallRib : MAT.wall, x, 0, z);
+  if (b.gable) {
+    gableRoof(w, d, b.gable, MAT.roofGable, x, h, z);
+  } else {
+    block(w + 0.8, 0.9, d + 0.8, b.roofMat || MAT.roof, x, h, z);
+    if (b.skylights) for (let i = 0; i < b.skylights; i++) {
+      const t = (i + 0.5) / b.skylights - 0.5;
+      block(w * 0.78, 0.35, 1.5, MAT.skylight, x, h + 0.9, z + t * d * 0.8, world, false);
+    }
+    if (b.hvac) for (let i = 0; i < b.hvac; i++) block(3, 1.6, 2.4, MAT.steel, x - w / 2 + 5 + i * 5, h + 0.9, z - d / 2 + 4);
+  }
+  if (b.windows) windowBand(b, h - 2.6, b.windows);
+  for (const [face, n, dw, dh] of b.doors || []) doorsOn(face, b, n, dw, dh);
+  return b;
+}
+
+// A: ATL-02 — main cross-dock, conveyor exits its east face
+const A = warehouse({ x: -50, z: -4, w: 30, d: 26, h: 14, rib: true, hvac: 3, windows: 'ns', doors: [['s', 4, 3.6, 5], ['e', 1, 5, 7]] });
+// B & C: blue gable-roof distribution centres south of the main road
+const B = warehouse({ x: 14, z: 54, w: 52, d: 30, h: 10, gable: 5, windows: 'e', doors: [['n', 7, 3.4, 4.6]] });
+const C = warehouse({ x: 76, z: 54, w: 32, d: 28, h: 11, roofMat: MAT.roofBlue, skylights: 4, windows: 'nw', doors: [['n', 4, 3.4, 4.6]] });
+// small office / guard house / west campus
+warehouse({ x: 72, z: -2, w: 18, d: 14, h: 9, windows: 'nsew', hvac: 2 });
+warehouse({ x: -30, z: 28, w: 6, d: 5, h: 4.5, windows: 'nsew' });
+warehouse({ x: -112, z: -32, w: 26, d: 22, h: 11, roofMat: MAT.roofBlue, skylights: 3, windows: 'e', doors: [['e', 3, 3.2, 4.4]] });
+warehouse({ x: -114, z: 6, w: 20, d: 16, h: 8, windows: 'nsew', hvac: 2 });
+warehouse({ x: -110, z: 38, w: 24, d: 20, h: 9, gable: 4, doors: [['e', 3, 3.2, 4.4]] });
+// far row (fades into fog)
+for (let i = 0; i < 6; i++) warehouse({ x: -90 + i * 36, z: -104, w: 28, d: 20, h: 10 + (i % 3) * 3, roofMat: i % 2 ? MAT.roofBlue : MAT.roof, skylights: i % 2 ? 3 : 0, windows: 's', doors: [['s', 3, 3.2, 4.4]] });
+
+/* ------------------------------------------------------------------ */
+/* Conveyor + boxes                                                    */
+/* ------------------------------------------------------------------ */
+const CONV = { x0: -34.5, x1: 34, z: -4, y: 3.6 };
+{
+  const len = CONV.x1 - CONV.x0, cx = (CONV.x0 + CONV.x1) / 2;
+  block(len, 0.9, 3.6, MAT.blue, cx, CONV.y - 0.9, CONV.z);
+  block(len, 0.12, 3, MAT.belt, cx, CONV.y, CONV.z, world, false);
+  MAT.belt.map.repeat.set(len / 2.2, 1);
+  block(len, 0.7, 0.25, MAT.blueSoft, cx, CONV.y, CONV.z - 1.75);
+  block(len, 0.7, 0.25, MAT.blueSoft, cx, CONV.y, CONV.z + 1.75);
+  for (let x = CONV.x0 + 2; x < CONV.x1; x += 6) {
+    block(0.35, CONV.y - 0.9, 0.35, MAT.steel, x, 0, CONV.z - 1.4);
+    block(0.35, CONV.y - 0.9, 0.35, MAT.steel, x, 0, CONV.z + 1.4);
+  }
+  block(4, CONV.y, 4.4, MAT.blue, CONV.x1 + 1, 0, CONV.z); // end station
+}
+const BOXES = 12;
+const boxInst = new THREE.InstancedMesh(BOX, MAT.card, BOXES);
+boxInst.castShadow = boxInst.receiveShadow = true;
+world.add(boxInst);
+const boxSizes = Array.from({ length: BOXES }, () => [2 + rand() * 0.6, 1.6 + rand() * 0.6, 2 + rand() * 0.4]);
+const tmp = new THREE.Object3D();
+function updateBoxes(t) {
+  const len = CONV.x1 - CONV.x0 - 2;
+  for (let i = 0; i < BOXES; i++) {
+    const p = ((t * 3.2) / len + i / BOXES) % 1;
+    const [w, h, d] = boxSizes[i];
+    tmp.position.set(CONV.x0 + 1 + p * len, CONV.y + 0.12 + h / 2, CONV.z);
+    tmp.rotation.set(0, (i % 3) * 0.08 - 0.08, 0);
+    tmp.scale.set(w, h, d); tmp.updateMatrix();
+    boxInst.setMatrixAt(i, tmp.matrix);
+  }
+  boxInst.instanceMatrix.needsUpdate = true;
+}
+updateBoxes(0);
+// pin marker on the belt
+const pinRing = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.22, 8, 40), MAT.orange);
+pinRing.rotation.x = -Math.PI / 2; pinRing.position.set(12, CONV.y + 0.3, CONV.z);
+world.add(pinRing);
+
+// pallets & stacked cartons outside ATL-02
+{
+  const spots = [];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) spots.push([-60 + i * 4.2, 13 + j * 4.2, 1 + ((i + j) % 3)]);
+  for (let i = 0; i < 3; i++) spots.push([-26 + i * 4.2, 9, 1 + (i % 2)]);
+  for (const [x, z, n] of spots) {
+    block(3.2, 0.4, 3.2, MAT.pallet, x, 0.1, z);
+    for (let k = 0; k < n; k++) block(2.8, 1.3, 2.8, MAT.card, x, 0.5 + k * 1.35, z);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Container yard + gantry crane                                       */
+/* ------------------------------------------------------------------ */
+{
+  const slots = [];
+  const palette = [0x3F74E2, 0x3F74E2, 0x5C8EF0, 0x2A5AD0, 0xE9EEF5, 0xE9EEF5, 0xD8E2EF, 0x3F74E2, 0xE69A5B];
+  for (let blk = 0; blk < 2; blk++) {
+    for (let col = 0; col < 3; col++) {
+      for (let row = 0; row < 7; row++) {
+        const x = -54 + blk * 50 + col * 13.2;
+        const z = -34 - row * 3;
+        const hgt = 1 + Math.floor(rand() * 3.2);
+        for (let k = 0; k < Math.min(hgt, 3); k++) slots.push([x, k, z, palette[Math.floor(rand() * palette.length)]]);
+      }
+    }
+  }
+  const geo = new THREE.BoxGeometry(12.2, 2.6, 2.6);
+  const inst = new THREE.InstancedMesh(geo, MAT.container, slots.length);
+  const o = new THREE.Object3D(); const col = new THREE.Color();
+  slots.forEach(([x, k, z, c], i) => {
+    o.position.set(x, 0.12 + 1.3 + k * 2.62, z); o.updateMatrix(); inst.setMatrixAt(i, o.matrix);
+    inst.setColorAt(i, col.setHex(c));
+  });
+  shade(inst); world.add(inst);
+}
+const crane = new THREE.Group();
+{
+  const H = 13, span = 26;
+  for (const s of [-1, 1]) {
+    block(0.9, H, 0.9, MAT.steel, -3, 0, s * span / 2, crane);
+    block(0.9, H, 0.9, MAT.steel, 3, 0, s * span / 2, crane);
+    block(8, 0.8, 1.4, MAT.blue, 0, 0.2, s * span / 2, crane);
+    block(7, 0.9, 1, MAT.steel, 0, H - 4, s * span / 2, crane);
+  }
+  block(1.3, 1.6, span + 2, MAT.blue, -3, H, 0, crane);
+  block(1.3, 1.6, span + 2, MAT.blue, 3, H, 0, crane);
+  const trolley = new THREE.Group();
+  block(7, 1.2, 3, MAT.yellow, 0, H + 1.6, 0, trolley);
+  block(0.15, 6, 0.15, MAT.dark, -2, H - 6, 0, trolley, false);
+  block(0.15, 6, 0.15, MAT.dark, 2, H - 6, 0, trolley, false);
+  block(12, 0.6, 2.6, MAT.yellow, 0, H - 6.6, 0, trolley);
+  crane.add(trolley); crane.userData.trolley = trolley;
+  crane.position.set(-20, 0, -43);
+  world.add(crane);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tank farm                                                           */
+/* ------------------------------------------------------------------ */
+{
+  const tanks = [[58, -48, 7, 14], [76, -46, 7, 14], [62, -66, 8, 16], [82, -64, 6.5, 12], [44, -66, 5, 10]];
+  for (const [x, z, r, h] of tanks) {
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 48), MAT.tank);
+    body.position.set(x, h / 2 + 0.1, z); world.add(shade(body));
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(r, 48, 12, 0, Math.PI * 2, 0, Math.PI / 2), MAT.wall);
+    dome.scale.y = 0.22; dome.position.set(x, h + 0.1, z); world.add(shade(dome));
+    const rail = new THREE.Mesh(new THREE.TorusGeometry(r + 0.1, 0.12, 6, 48), MAT.blueSoft);
+    rail.rotation.x = Math.PI / 2; rail.position.set(x, h + 0.9, z); world.add(rail);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.06, r + 0.06, 0.8, 48, 1, true), MAT.blueSoft);
+    band.position.set(x, h * 0.62, z); world.add(band);
+  }
+  const pipe = (a, b, y) => {
+    const d = new THREE.Vector3().subVectors(b, a); const len = d.length();
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, len, 10), MAT.steel);
+    m.position.copy(a).add(b).multiplyScalar(0.5); m.position.y = y;
+    m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize());
+    world.add(shade(m));
+  };
+  pipe(V(58, 0, -48), V(76, 0, -46), 3); pipe(V(58, 0, -48), V(62, 0, -66), 2.2); pipe(V(62, 0, -66), V(82, 0, -64), 3.4);
+  pipe(V(44, 0, -66), V(62, 0, -66), 1.6); pipe(V(76, 0, -46), V(76, 0, -28), 2.6);
+}
+
+/* ------------------------------------------------------------------ */
+/* Power pylons + wires                                                */
+/* ------------------------------------------------------------------ */
+{
+  const pylons = [V(-14, 0, -15), V(10, 0, -16), V(-14, 0, 12)];
+  const tops = [];
+  const g = new THREE.CylinderGeometry(0.7, 2.6, 26, 4, 7, true);
+  for (const p of pylons) {
+    const m = new THREE.Mesh(g, wireMat); m.position.set(p.x, 13, p.z); m.rotation.y = Math.PI / 4; world.add(m);
+    const ghost = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); // casts a lattice-ish shadow
+    ghost.position.copy(m.position); ghost.rotation.copy(m.rotation); ghost.castShadow = true; world.add(ghost);
+    block(9, 0.35, 0.35, MAT.steel, p.x, 20, p.z);
+    block(7, 0.35, 0.35, MAT.steel, p.x, 23.5, p.z);
+    tops.push([V(p.x - 4.3, 20, p.z), V(p.x + 4.3, 20, p.z), V(p.x - 3.3, 23.5, p.z), V(p.x + 3.3, 23.5, p.z)]);
+  }
+  const sag = (a, b) => {
+    const mid = a.clone().add(b).multiplyScalar(0.5); mid.y -= 3;
+    return new THREE.QuadraticBezierCurve3(a, mid, b).getPoints(20);
+  };
+  for (let k = 0; k < 4; k++) {
+    for (let i = 0; i < tops.length - 1; i++) world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sag(tops[i][k], tops[i + 1][k])), lineMat));
+    world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sag(tops[1][k], tops[1][k].clone().add(V(60, 0, -6)))), lineMat));
+    world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sag(tops[2][k], tops[2][k].clone().add(V(0, 0, 70)))), lineMat));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Vehicles                                                            */
+/* ------------------------------------------------------------------ */
+function truck(cabMat = MAT.blue) {
+  const t = new THREE.Group();
+  block(13, 0.5, 2.2, MAT.dark, -0.5, 0.9, 0, t);
+  block(10, 3.8, 2.9, MAT.trailer, -2.4, 1.3, 0, t);
+  block(3, 3, 2.7, cabMat, 4.2, 1.1, 0, t);
+  block(1.1, 1.4, 2.5, cabMat, 5.9, 1.1, 0, t);
+  block(0.2, 1.2, 2.3, MAT.glass, 5.75, 2.6, 0, t, false);
+  block(1.6, 1.1, 0.12, MAT.glass, 4.3, 2.7, 1.38, t, false);
+  block(1.6, 1.1, 0.12, MAT.glass, 4.3, 2.7, -1.38, t, false);
+  const wheel = new THREE.CylinderGeometry(0.75, 0.75, 0.5, 14);
+  for (const x of [-6, -4.6, 2.8, 5.2]) for (const s of [-1, 1]) {
+    const w = new THREE.Mesh(wheel, MAT.tyre); w.rotation.x = Math.PI / 2; w.position.set(x, 0.75, s * 1.25); t.add(shade(w));
+  }
+  return t;
+}
+function forklift() {
+  const f = new THREE.Group();
+  block(3, 1.6, 2, MAT.yellow, 0, 0.5, 0, f);
+  block(1.2, 0.8, 1.8, MAT.dark, -0.8, 2.1, 0, f);
+  for (const s of [-1, 1]) block(0.12, 2.4, 0.12, MAT.dark, 0.6, 2.1, s * 0.85, f);
+  block(1.8, 0.12, 1.9, MAT.yellow, 0, 4.4, 0, f);
+  block(0.25, 4, 1.4, MAT.dark, 1.65, 0.3, 0, f);
+  block(2.4, 0.3, 2.4, MAT.pallet, 3, 0.6, 0, f);
+  block(2.1, 1.6, 2.1, MAT.card, 3, 0.9, 0, f);
+  const wheel = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 12);
+  for (const x of [-1, 1]) for (const s of [-1, 1]) { const w = new THREE.Mesh(wheel, MAT.tyre); w.rotation.x = Math.PI / 2; w.position.set(x, 0.5, s * 1); f.add(w); }
+  return f;
+}
+
+// parked trucks at the gate, backed into bays
+for (let i = 0; i < 6; i++) {
+  if (i === 2) continue;
+  const t = truck(i % 3 === 1 ? MAT.blueSoft : MAT.blue); t.rotation.y = Math.PI / 2; t.position.set(-65 + i * 6, 0.1, 31 + 4); world.add(t);
+}
+for (let i = 0; i < 6; i++) {
+  if (i === 4) continue;
+  const t = truck(); t.rotation.y = -Math.PI / 2; t.position.set(-65 + i * 6, 0.1, 57 - 4); world.add(t);
+}
+// trucks docked at B and C (backed against the north doors)
+for (const [x, z] of [[-7, 31.5], [8, 31.5], [30, 31.5], [66, 32.4], [82, 32.4]]) { const t = truck(); t.rotation.y = Math.PI / 2; t.position.set(x, 0.1, z); world.add(t); }
+// a truck at the conveyor end, being loaded
+{ const t = truck(); t.position.set(45.5, 0.1, CONV.z); world.add(t); }
+
+const ROUTE = new THREE.CatmullRomCurve3((() => {
+  const pts = []; const [x0, x1] = ROAD_X; const [z0, z1] = ROAD_Z; const r = 7; const L = 1.6;
+  const corners = [[x0, z0, 1, 1], [x1, z0, -1, 1], [x1, z1, -1, -1], [x0, z1, 1, -1]];
+  pts.push(V(x0 + r, 0, z0 + L));
+  // clockwise loop (seen from above): N road east, E road south, S road west, W road north
+  pts.push(V(x1 - r, 0, z0 + L), V(x1 - L, 0, z0 + r));
+  pts.push(V(x1 - L, 0, z1 - r), V(x1 - r, 0, z1 - L));
+  pts.push(V(x0 + r, 0, z1 - L), V(x0 + L, 0, z1 - r));
+  pts.push(V(x0 + L, 0, z0 + r));
+  void corners;
+  return pts;
+})(), true, 'catmullrom', 0.08);
+const ROUTE_LEN = ROUTE.getLength();
+const movers = [];
+for (let i = 0; i < 5; i++) {
+  const t = truck(i === 0 ? MAT.orange : i % 2 ? MAT.blueSoft : MAT.blue);
+  world.add(t); movers.push({ obj: t, u: i / 5 + 0.03, speed: 7.5 + (i % 2) * 1.2 });
+}
+// outbound lane on the west road heading off-map, and a truck crossing at the far road
+const lifts = [
+  { obj: forklift(), a: V(-44, 0.1, 11.5), b: V(-32, 0.1, 11.5), speed: 0.11 },
+  { obj: forklift(), a: V(28, 0.1, 6), b: V(28, 0.1, 12), speed: 0.16, axis: 'z' },
+  { obj: forklift(), a: V(-53, 0.1, 30), b: V(-53, 0.1, 40), speed: 0.13, axis: 'z' }
+];
+lifts.forEach((l) => world.add(l.obj));
+
+function updateVehicles(t) {
+  const tan = new THREE.Vector3();
+  for (const m of movers) {
+    const u = (m.u + (t * m.speed) / ROUTE_LEN) % 1;
+    ROUTE.getPointAt(u, m.obj.position); ROUTE.getTangentAt(u, tan);
+    m.obj.position.y = 0.15;
+    m.obj.rotation.y = Math.atan2(-tan.z, tan.x);
+  }
+  for (const l of lifts) {
+    const k = (Math.sin(t * l.speed * Math.PI * 2) + 1) / 2;
+    l.obj.position.lerpVectors(l.a, l.b, k);
+    const dir = Math.cos(t * l.speed * Math.PI * 2) >= 0;
+    if (l.axis === 'z') l.obj.rotation.y = dir ? -Math.PI / 2 : Math.PI / 2;
+    else l.obj.rotation.y = dir ? 0 : Math.PI;
+  }
+  crane.position.x = -20 + Math.sin(t * 0.12) * 24;
+  crane.userData.trolley.position.z = Math.sin(t * 0.33) * 8;
+  MAT.belt.map.offset.x = -t * 3.2 / 2.2;
+  pinRing.scale.setScalar(1 + (Math.sin(t * 3) + 1) * 0.12);
+}
+
+/* ------------------------------------------------------------------ */
+/* Trees & lamps                                                       */
+/* ------------------------------------------------------------------ */
+{
+  const trees = [];
+  for (let x = -150; x <= 150; x += 11) for (const z of [-30, 26]) if (rand() > 0.35 && (x < -92 || x > 108)) trees.push([x + rand() * 3, z + rand() * 2]);
+  for (let z = -90; z <= 90; z += 10) for (const x of [-92, 108]) if (rand() > 0.3) trees.push([x + rand() * 2, z + rand() * 3]);
+  for (let i = 0; i < 26; i++) trees.push([-150 + rand() * 40, -80 + rand() * 160]);
+  for (let i = 0; i < 16; i++) trees.push([120 + rand() * 40, -60 + rand() * 140]);
+  const canopyGeo = new THREE.IcosahedronGeometry(1, 1);
+  const canopy = new THREE.InstancedMesh(canopyGeo, MAT.canopy, trees.length);
+  const trunk = new THREE.InstancedMesh(BOX, MAT.trunk, trees.length);
+  const o = new THREE.Object3D();
+  trees.forEach(([x, z], i) => {
+    const s = 1.6 + rand() * 1.1;
+    o.position.set(x, 1.4 + s, z); o.scale.set(s, s * 1.25, s); o.rotation.set(0, rand() * 3, 0); o.updateMatrix(); canopy.setMatrixAt(i, o.matrix);
+    o.position.set(x, 1, z); o.scale.set(0.35, 2, 0.35); o.rotation.set(0, 0, 0); o.updateMatrix(); trunk.setMatrixAt(i, o.matrix);
+  });
+  shade(canopy); shade(trunk); world.add(canopy, trunk);
+
+  const lamps = [];
+  for (let x = -76; x <= 92; x += 21) lamps.push([x, -18.5], [x, 14.5]);
+  const pole = new THREE.InstancedMesh(BOX, MAT.steel, lamps.length);
+  const head = new THREE.InstancedMesh(BOX, MAT.lamp, lamps.length);
+  lamps.forEach(([x, z], i) => {
+    o.position.set(x, 3.5, z); o.scale.set(0.3, 7, 0.3); o.updateMatrix(); pole.setMatrixAt(i, o.matrix);
+    o.position.set(x, 7, z); o.scale.set(1.6, 0.4, 0.7); o.updateMatrix(); head.setMatrixAt(i, o.matrix);
+  });
+  pole.castShadow = true; world.add(pole, head);
+}
+
+/* ------------------------------------------------------------------ */
+/* Lights                                                              */
+/* ------------------------------------------------------------------ */
+const hemi = new THREE.HemisphereLight(0xFFFFFF, 0xB8CAE0, 1.55);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xFFFFFF, 2.4);
+sun.position.set(-70, 130, 55);
+sun.castShadow = true;
+sun.shadow.mapSize.set(coarse ? 2048 : 4096, coarse ? 2048 : 4096);
+Object.assign(sun.shadow.camera, { left: -170, right: 170, top: 150, bottom: -150, near: 10, far: 420 });
+sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.4; sun.shadow.radius = 3;
+scene.add(sun, sun.target);
+
+/* ------------------------------------------------------------------ */
+/* Camera + controls                                                   */
+/* ------------------------------------------------------------------ */
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 3000);
+const DIST = 600, POLAR = 0.98;
+const HOME = { target: V(-2, 0, -8), zoom: 1, az: Math.PI / 4 };
+function viewHeight() { const a = stage.clientWidth / Math.max(1, stage.clientHeight); return a < 1 ? 150 : a < 1.6 ? 118 : 96; }
+function placeCamera(target, az, polar = POLAR) {
+  camera.position.set(
+    target.x + DIST * Math.sin(polar) * Math.sin(az),
+    target.y + DIST * Math.cos(polar),
+    target.z + DIST * Math.sin(polar) * Math.cos(az)
+  );
+  camera.lookAt(target);
+}
+placeCamera(HOME.target, HOME.az);
+
+const controls = new MapControls(camera, canvas);
+controls.target.copy(HOME.target);
+controls.enableDamping = !reduce; controls.dampingFactor = 0.08;
+controls.minZoom = 0.55; controls.maxZoom = 5;
+controls.minPolarAngle = 0.5; controls.maxPolarAngle = 1.22;
+controls.zoomToCursor = true;
+controls.zoomSpeed = 1.1;
+controls.update();
+canvas.style.touchAction = '';
+
+const BOUNDS = { x: [-130, 130], z: [-115, 95] };
+const _d = new THREE.Vector3();
+controls.addEventListener('change', () => {
+  const t = controls.target;
+  const cx = THREE.MathUtils.clamp(t.x, ...BOUNDS.x), cz = THREE.MathUtils.clamp(t.z, ...BOUNDS.z);
+  if (cx !== t.x || cz !== t.z) { _d.set(cx - t.x, 0, cz - t.z); t.add(_d); camera.position.add(_d); }
+  dirty = true;
+});
+
+/* ------------------------------------------------------------------ */
+/* Hotspots / anchors                                                  */
+/* ------------------------------------------------------------------ */
+const ANCHORS = {
+  pin: { at: V(12, CONV.y + 0.6, CONV.z), focus: V(8, 0, -4), zoom: 2.4, label: 'Live shipment #LX-2487', note: 'Conveyor line 2' },
+  atl02: { at: V(A.x, A.h + 3, A.z), focus: V(A.x + 4, 0, A.z + 4), zoom: 2.3, label: 'Warehouse ATL-02', note: '92% capacity' },
+  yard: { at: V(-26, 10, -47), focus: V(-18, 0, -44), zoom: 1.9, label: 'Container Yard', note: '1,284 TEU' },
+  depot: { at: V(64, 19, -58), focus: V(64, 0, -56), zoom: 2.1, label: 'Fuel Depot', note: '4 tanks · 71%' },
+  dock3: { at: V(B.x, B.h + 6, B.z), focus: V(B.x, 0, B.z - 8), zoom: 2, label: 'Dock 3', note: '78% utilised' },
+  gate: { at: V(-50, 6, 44), focus: V(-50, 0, 44), zoom: 2.2, label: 'Truck Gate', note: 'Congestion on I-95 N' }
+};
+window.LX_PLACES = Object.entries(ANCHORS).map(([key, a]) => ({ key, label: a.label, note: a.note }));
+document.dispatchEvent(new CustomEvent('lx:places'));
+const anchorEls = [...stage.querySelectorAll('[data-anchor]')].map((el) => ({ el, a: ANCHORS[el.dataset.anchor] })).filter((x) => x.a);
+const proj = new THREE.Vector3();
+let lastW = 0, lastH = 0;
+function placeAnchors() {
+  const w = lastW, h = lastH;
+  for (const { el, a } of anchorEls) {
+    proj.copy(a.at).project(camera);
+    const x = (proj.x + 1) / 2 * w, y = (1 - proj.y) / 2 * h;
+    const off = x < -30 || x > w + 30 || y < 20 || y > h + 30;
+    el.classList.toggle('is-off', off);
+    el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+    if (el.id === 'pin') {
+      // keep the callout card inside the stage while its leader line stays on the anchor
+      const card = el.firstElementChild, cw = card.offsetWidth;
+      const base = w < 640 ? -cw / 2 : -64;
+      const left = Math.max(12, Math.min(x + base, w - cw - 12)) - x;
+      card.style.left = left.toFixed(1) + 'px';
+    }
+  }
+}
+stage.querySelectorAll('.spot').forEach((el) => el.addEventListener('click', () => flyTo(el.dataset.anchor)));
+
+/* ------------------------------------------------------------------ */
+/* Camera flights                                                      */
+/* ------------------------------------------------------------------ */
+let flight = null;
+const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+function flyTo(key, opts = {}) {
+  const a = key === 'home' ? { focus: HOME.target, zoom: opts.zoom ?? HOME.zoom } : ANCHORS[key];
+  if (!a) return;
+  stage.querySelectorAll('.spot').forEach((s) => s.classList.toggle('is-active', s.dataset.anchor === key));
+  const offset = camera.position.clone().sub(controls.target);
+  let az0 = Math.atan2(offset.x, offset.z), az1 = opts.az ?? az0;
+  if (key === 'home' && opts.az === undefined) az1 = HOME.az;
+  let dAz = az1 - az0; dAz = Math.atan2(Math.sin(dAz), Math.cos(dAz));
+  flight = {
+    t0: performance.now(), dur: reduce ? 1 : opts.dur || 1400,
+    from: controls.target.clone(), to: a.focus.clone(),
+    z0: camera.zoom, z1: opts.zoom ?? a.zoom,
+    az0, dAz, polar: Math.acos(THREE.MathUtils.clamp(offset.y / offset.length(), -1, 1))
+  };
+}
+function stepFlight(now) {
+  if (!flight) return;
+  const k = Math.min(1, (now - flight.t0) / flight.dur), e = ease(k);
+  const t = new THREE.Vector3().lerpVectors(flight.from, flight.to, e);
+  // a little "lift" mid-flight: zoom out then in
+  const arc = Math.sin(Math.PI * e) * 0.18 * Math.abs(flight.z1 - flight.z0 + 0.6);
+  camera.zoom = THREE.MathUtils.lerp(flight.z0, flight.z1, e) - arc;
+  camera.updateProjectionMatrix();
+  controls.target.copy(t);
+  placeCamera(t, flight.az0 + flight.dAz * e, flight.polar);
+  dirty = true;
+  if (k >= 1) flight = null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Map tools, explore mode, wheel gating                               */
+/* ------------------------------------------------------------------ */
+const hint = document.getElementById('mapHint');
+let hintTimer;
+function showHint(msg) {
+  hint.textContent = msg; hint.classList.add('is-on');
+  clearTimeout(hintTimer); hintTimer = setTimeout(() => hint.classList.remove('is-on'), 1600);
+}
+const exploreBtn = stage.querySelector('[data-act="explore"]');
+function setExplore(on) {
+  document.body.classList.toggle('exploring', on);
+  exploreBtn.setAttribute('aria-pressed', String(on));
+  exploreBtn.setAttribute('aria-label', on ? 'Exit explore mode' : 'Explore site');
+  syncControls();
+  resize();
+  if (on) showHint(coarse ? 'Drag to pan · pinch to zoom · two-finger twist to rotate' : 'Drag to pan · scroll to zoom · right-drag to rotate');
+}
+function syncControls() {
+  const exploring = document.body.classList.contains('exploring');
+  controls.enabled = exploring || !coarse;
+  canvas.style.touchAction = exploring ? 'none' : 'pan-y';
+}
+syncControls();
+stage.addEventListener('wheel', (e) => {
+  const ok = document.body.classList.contains('exploring') || e.ctrlKey || e.metaKey;
+  controls.enableZoom = ok;
+  if (!ok) showHint(`Hold ${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} + scroll to zoom, or open Explore`);
+}, { capture: true, passive: true });
+stage.addEventListener('touchstart', (e) => {
+  if (coarse && !document.body.classList.contains('exploring') && e.target === canvas && e.touches.length > 1) showHint('Tap “Explore” to move around the site');
+}, { passive: true });
+
+function zoomBy(f) {
+  flight = { t0: performance.now(), dur: reduce ? 1 : 450, from: controls.target.clone(), to: controls.target.clone(), z0: camera.zoom,
+    z1: THREE.MathUtils.clamp(camera.zoom * f, controls.minZoom, controls.maxZoom), az0: Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z), dAz: 0,
+    polar: Math.acos((camera.position.y - controls.target.y) / camera.position.distanceTo(controls.target)) };
+}
+stage.querySelector('#mapTools').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'zoom-in') zoomBy(1.4);
+  else if (act === 'zoom-out') zoomBy(1 / 1.4);
+  else if (act === 'reset') flyTo('home');
+  else if (act === 'rotate') {
+    const off = camera.position.clone().sub(controls.target);
+    flight = { t0: performance.now(), dur: reduce ? 1 : 900, from: controls.target.clone(), to: controls.target.clone(), z0: camera.zoom, z1: camera.zoom,
+      az0: Math.atan2(off.x, off.z), dAz: Math.PI / 4, polar: Math.acos(off.y / off.length()) };
+  } else if (act === 'explore') setExplore(!document.body.classList.contains('exploring'));
+});
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('exploring')) setExplore(false); });
+
+document.addEventListener('lx:fly', (e) => {
+  const { key, zoom } = e.detail || {};
+  if (key === 'network') return flyTo('home', { zoom: 0.62 });
+  flyTo(key, zoom ? { zoom } : {});
+});
+
+/* ------------------------------------------------------------------ */
+/* Theme (day / night)                                                 */
+/* ------------------------------------------------------------------ */
+let night = root.classList.contains('dark');
+let themeK = night ? 1 : 0, themeTarget = themeK;
+const fogDay = new THREE.Color(0xEBF1F7), fogNight = new THREE.Color(0x0A1222);
+function applyTheme(k) {
+  for (const t of themed) {
+    t.m.color.copy(t.light).lerp(t.dark, k);
+    if (t.glow) t.m.emissiveIntensity = t.glow * k;
+  }
+  MAT.orange.emissiveIntensity = 0.35 + k * 0.8;
+  scene.fog.color.copy(fogDay).lerp(fogNight, k);
+  hemi.intensity = THREE.MathUtils.lerp(1.55, 1.05, k);
+  hemi.color.setHex(0xFFFFFF).lerp(new THREE.Color(0x8DA6D8), k);
+  hemi.groundColor.setHex(0xB8CAE0).lerp(new THREE.Color(0x0B1530), k);
+  sun.intensity = THREE.MathUtils.lerp(2.4, 1.5, k);
+  sun.color.setHex(0xFFFFFF).lerp(new THREE.Color(0x9DB8FF), k);
+  wireMat.color.setHex(0x7F93B2).lerp(new THREE.Color(0x5C76A6), k);
+  renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 1.2, k);
+}
+applyTheme(themeK);
+document.addEventListener('lx:theme', (e) => { themeTarget = e.detail.dark ? 1 : 0; if (reduce) themeK = themeTarget; dirty = true; });
+
+/* ------------------------------------------------------------------ */
+/* Thumbnail "CAM 04" — a second renderer orbiting the truck gate      */
+/* ------------------------------------------------------------------ */
+let thumb = null;
+if (thumbCanvas) {
+  try {
+    const r = new THREE.WebGLRenderer({ canvas: thumbCanvas, antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+    const cam = new THREE.PerspectiveCamera(32, 2, 1, 900);
+    thumb = { r, cam, w: 0, h: 0 };
+    thumbCanvas.closest('button').addEventListener('click', () => flyTo('gate'));
+  } catch { /* the thumbnail simply stays as its gradient */ }
+}
+function renderThumb(t) {
+  if (!thumb) return;
+  const w = thumbCanvas.clientWidth, h = thumbCanvas.clientHeight;
+  if (!w || !h) return;
+  if (w !== thumb.w || h !== thumb.h) { thumb.r.setSize(w, h, false); thumb.cam.aspect = w / h; thumb.cam.updateProjectionMatrix(); thumb.w = w; thumb.h = h; }
+  const a = 0.6 + Math.sin(t * 0.08) * 0.35;
+  thumb.cam.position.set(-50 + Math.sin(a) * 58, 34, 44 + Math.cos(a) * 58);
+  thumb.cam.lookAt(-48, 0, 42);
+  thumb.r.render(scene, thumb.cam);
+}
+
+/* ------------------------------------------------------------------ */
+/* Resize + loop                                                       */
+/* ------------------------------------------------------------------ */
+let dirty = true;
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  lastW = w; lastH = h;
+  const vh = viewHeight(), a = w / h;
+  camera.left = -vh * a / 2; camera.right = vh * a / 2; camera.top = vh / 2; camera.bottom = -vh / 2;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+  dirty = true;
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+let visible = true;
+new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(stage);
+const clock = new THREE.Clock();
+let simT = 6, frame = 0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (document.hidden) return;
+  stepFlight(now);
+  const moved = controls.update();
+  if (Math.abs(themeK - themeTarget) > 0.001) { themeK += (themeTarget - themeK) * Math.min(1, dt * 4); if (Math.abs(themeK - themeTarget) < 0.002) themeK = themeTarget; applyTheme(themeK); dirty = true; }
+  if (!reduce && visible) { simT += dt; updateBoxes(simT); updateVehicles(simT); dirty = true; }
+  if (dirty || moved) {
+    if (visible || document.body.classList.contains('exploring')) renderer.render(scene, camera);
+    placeAnchors();
+    dirty = false;
+  }
+  if (thumb && (frame++ % 2 === 0) && (!reduce || frame < 4)) renderThumb(simT);
+}
+updateVehicles(simT);
+requestAnimationFrame(loop);
+document.dispatchEvent(new CustomEvent('lx:ready'));
+  </script>
+</body>
+</html>

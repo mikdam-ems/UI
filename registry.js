@@ -197,5 +197,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/05-agentic-ops/",
     accent: "#8B5CF6",
     summary: "Dark violet command centre for AI agents: watch tasks pulse through the planner, filter missions by status, retry failures and tune autonomy."
+  },
+  {
+    id: "dash-06",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Logixor",
+    industry: "Supply chain & logistics",
+    tags: ["Three.js", "Explorable 3D site", "Glassmorphism", "Day / night", "Live camera feed"],
+    path: "dashboards/06-logixor-logistics/",
+    accent: "#2563EB",
+    summary: "Logistics command centre over a procedural 3D port: pan, zoom and fly to warehouses, docks and live shipments, with day and night modes."
   }
 ];
