@@ -204,9 +204,9 @@ window.EMS_REGISTRY = [
     type: "Dashboard",
     title: "Spotlane",
     industry: "Smart mobility",
-    tags: ["Generative street map", "Pan & zoom", "Live slot availability", "Navigation pass"],
+    tags: ["Full guest journey", "Slot picker & checkout", "QR pass + gate entry", "Live session", "Edge-case scenarios"],
     path: "dashboards/06-spotlane-parking/",
     accent: "#4F46E5",
-    summary: "Light glass parking finder over a DC street map: filter amenities, compare live lot availability, book Slot B-14 and simulate turn-by-turn navigation."
+    summary: "End-to-end guest parking journey over a DC street map: pick a slot, check out without an account, get a QR pass, navigate, open the gate, run a live session and rate the stay."
   }
 ];
