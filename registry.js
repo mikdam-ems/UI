@@ -197,5 +197,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/05-agentic-ops/",
     accent: "#8B5CF6",
     summary: "Dark violet command centre for AI agents: watch tasks pulse through the planner, filter missions by status, retry failures and tune autonomy."
+  },
+  {
+    id: "dash-06",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Volara Air Ops",
+    industry: "Drone logistics",
+    tags: ["Real Jordan terrain", "88k real Amman buildings", "Country ↔ city zoom", "Live drone camera", "Bilingual labels"],
+    path: "dashboards/06-volara-drone-ops/",
+    accent: "#3CC8FF",
+    summary: "Map-first drone delivery control over real Jordan: true elevation and border at country scale, 88,000 real Amman buildings and streets at city scale, and a live camera from the selected drone."
   }
 ];
