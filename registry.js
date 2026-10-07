@@ -208,5 +208,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/06-spotlane-parking/",
     accent: "#4F46E5",
     summary: "End-to-end guest parking journey over a generative map of Amman: pick a slot, check out without an account, get a QR pass, navigate, open the gate, run a live session and rate the stay."
+  },
+  {
+    id: "dash-07",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Spotlane Live",
+    industry: "Smart mobility · user testing",
+    tags: ["Real map (MapLibre)", "OpenStreetMap car parks", "GPS + place search", "Google Maps / Waze hand-off", "Tester feedback log"],
+    path: "dashboards/07-spotlane-live/",
+    accent: "#4F46E5",
+    summary: "Testable Spotlane on a real map of Jordan: real car parks, your location, search and routes, with simulated availability and payments plus built-in feedback for research sessions."
   }
 ];
