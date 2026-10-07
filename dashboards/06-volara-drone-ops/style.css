@@ -824,3 +824,30 @@ input[type="range"] { accent-color: var(--cyan); width: 180px; }
 .app[data-view="module"] .inset { opacity: 0; }
 @media (max-width: 1280px), (max-height: 760px) { .inset { display: none; } }
 @media (prefers-reduced-motion: reduce) { .inset .pulse { animation: none; } }
+
+/* ───────────────────────── Jordan edition (real geodata) ───────────────────────── */
+.inset { cursor: pointer; }
+.inset:hover { border-color: rgba(60,200,255,.5); }
+.inset:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.inset .inset-hint { display: block; margin-top: 2px; font: 600 9px/1 var(--mono); letter-spacing: .08em; color: var(--dim); text-transform: uppercase; }
+.inset .vp { fill: rgba(60,200,255,.15); stroke: var(--cyan); stroke-width: .6; }
+.lbl.place.city { color: rgba(225, 232, 240, .78); letter-spacing: .16em; font-size: 10.5px; text-shadow: 0 1px 3px #000; }
+.lbl.place.city.r1 { font-size: 12px; color: #fff; }
+.lbl.place.city.r3, .lbl.place.city.r4 { font-size: 9.5px; color: rgba(197,205,215,.6); }
+.lbl.place.city.r4 { color: rgba(120, 200, 255, .7); font-style: italic; letter-spacing: .1em; }
+.lbl.place { text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+.attrib {
+  position: absolute; z-index: 5; right: calc(var(--rw) + var(--gap) * 2); bottom: calc(var(--bh) + var(--gap) * 2);
+  max-width: 460px; text-align: right; font-size: 9.5px; line-height: 1.35; color: rgba(197,205,215,.45); pointer-events: none; text-shadow: 0 1px 2px #000;
+}
+.app.map-only .attrib { right: var(--gap); bottom: var(--gap); }
+.app[data-view="module"] .attrib { opacity: 0; }
+.map-loading {
+  position: absolute; z-index: 9; left: 50%; top: 42%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-radius: 10px; background: rgba(9,12,16,.86); border: 1px solid var(--line-2); font-size: 12.5px; color: var(--ink-2);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity .6s;
+}
+.map-loading.out { opacity: 0; }
+.map-loading .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(60,200,255,.25); border-top-color: var(--cyan); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 1024px) { .attrib { right: 10px; bottom: auto; top: 10px; left: 10px; max-width: none; text-align: left; font-size: 8.5px; padding-right: 56px; } }

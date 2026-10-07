@@ -85,7 +85,7 @@
   <!-- ───────────── Stage: map-first workspace ───────────── -->
   <main class="stage" id="stage">
     <div class="map" id="map" tabindex="0" role="application" aria-roledescription="3D map"
-         aria-label="3D fleet map. Drag to pan, right-drag or Shift-drag to rotate and tilt, scroll to zoom. F focuses the selected aircraft, 2 and 3 switch map modes, Space pauses live movement.">
+         aria-label="3D map of Jordan and Amman. Click an aircraft to show its telemetry, click empty map to release it. Drag to pan, right-drag or Shift-drag to rotate and tilt, scroll to zoom. F focuses the selected aircraft, 2 and 3 switch map modes, Space pauses live movement.">
       <div class="map-labels" id="labels"></div>
       <svg class="leader" id="leader" aria-hidden="true"><path id="leaderPath" d=""/><circle class="ping" id="leaderPing" r="10"/><circle class="dot" id="leaderDot" r="2.5"/></svg>
 
@@ -120,16 +120,22 @@
         <div class="grp">
           <button id="cLocate" aria-label="Focus selected aircraft"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span class="tip">Focus selected <kbd>F</kbd></span></button>
           <button id="cNorth" class="compass-btn" aria-label="Reset to north up"><svg viewBox="0 0 24 24" width="18" height="18" id="northIcon"><path d="M12 3 15 12H9z" fill="#FF5A5F"/><path d="M12 21 9 12h6z" fill="#8A94A1"/></svg><span class="tip">North up</span></button>
+          <button id="cCountry" aria-label="Country view: Jordan">JO<span class="tip">Country view · Jordan</span></button>
+          <button id="cCity" aria-label="City view: Amman">AMM<span class="tip">City view · Amman</span></button>
+        </div>
+        <div class="grp">
           <button id="c2d" aria-pressed="false" aria-label="Switch to 2D map">2D<span class="tip">2D / 3D <kbd>2</kbd> <kbd>3</kbd></span></button>
           <button id="cLayers" aria-expanded="false" aria-controls="layersPop" aria-label="Map layers"><svg class="i" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg><span class="tip">Layers</span></button>
         </div>
       </div>
       <div class="layers-pop" id="layersPop" hidden role="dialog" aria-label="Map layers"></div>
 
-      <figure class="inset" id="inset" aria-label="Location: Amman, Hashemite Kingdom of Jordan">
-        <figcaption><b>Amman</b><span lang="ar">عمّان</span><small>Hashemite Kingdom of Jordan</small></figcaption>
-        <svg viewBox="0 0 100 112" aria-hidden="true"><path class="jo" d="M15.2 19.1 L20.4 19.3 L26.7 24.9 L33.7 28.5 L43.3 30.3 L85.7 3.3 L96.7 32.3 L89.8 38.2 L46.7 50.9 L68.5 76.3 L57.6 89.0 L41.3 92.4 L26.5 109.7 L2.4 105.3 L6.5 89.0 L10.4 71.2 L12.4 61.1 L14.6 49.6 L15.2 40.7 L15.2 30.5 L15.7 22.4 Z"/><path class="ds" d="M12.0 62.1 L15.4 62.1 L16.3 53.4 L16.1 44.3 L13.9 44.3 L12.6 52.2 Z"/><circle class="pulse" cx="23.5" cy="39.4" r="5"/><circle class="amm" cx="23.5" cy="39.4" r="2.2"/><text x="28.0" y="40.9" class="amt">Amman</text><circle class="ct" cx="27.0" cy="36.4" r="1.1"/><text x="29.6" y="37.6">Zarqa</text><circle class="ct" cx="21.7" cy="24.2" r="1.1"/><text x="24.3" y="25.4">Irbid</text><circle class="ct" cx="29.6" cy="29.5" r="1.1"/><text x="32.2" y="30.7">Mafraq</text><circle class="ct" cx="19.1" cy="84.2" r="1.1"/><text x="21.7" y="85.4">Ma'an</text><circle class="ct" cx="3.3" cy="101.0" r="1.1"/><text x="5.9" y="102.2">Aqaba</text><text x="12.5" y="52.9" text-anchor="end" class="sea">Dead Sea</text></svg>
+      <figure class="inset" id="inset" role="button" tabindex="0" aria-label="Jordan overview map. Activate to switch between country and city view.">
+        <figcaption><b>Jordan</b><span lang="ar">الأردن</span><small>Hashemite Kingdom of Jordan</small></figcaption>
+        <svg></svg>
+        <span class="inset-hint">Country ↔ city</span>
       </figure>
+      <div class="attrib">Terrain © Mapzen / AWS Terrain Tiles · Buildings &amp; streets © Overture Maps, OpenStreetMap contributors (ODbL) · Borders: Natural Earth</div>
       <div class="legend" id="legend" aria-label="Route legend">
         <span><i class="l-active"></i>Active</span>
         <span><i class="l-plan"></i>Planned</span>
@@ -320,6 +326,7 @@
 <div class="sr-only" id="sr" role="status" aria-live="polite"></div>
 <noscript><p style="position:fixed;inset:auto 16px 16px;z-index:999;padding:12px 16px;border-radius:10px;background:#111;color:#eee;font:14px system-ui">Volara Air Ops is a live, interactive operations console and needs JavaScript and WebGL to show the fleet map.</p></noscript>
 
+<script src="geo-data.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { MapControls } from 'three/addons/controls/MapControls.js';
@@ -406,57 +413,63 @@ const THUMB = {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   1 · World + fleet data — Amman, Hashemite Kingdom of Jordan
-   Real district positions projected from lat/lon. 1 world unit ≈ 5 m horizontally;
-   altitudes are true metres above ground (AGL).
+   1 · World + fleet data — Hashemite Kingdom of Jordan, operations over Amman
+   Real geography: terrain from elevation tiles, real building footprints and streets
+   (geo-data.js). 1 world unit = 10 m. Terrain height ×1.6, flight altitude ×2.5 for legibility.
    ════════════════════════════════════════════════════════════════════ */
-const KM_PER_U = 0.005;
-const LAT0 = 31.975, LON0 = 35.905;
-const PLACES = {
-  sweifieh:  { name: 'Sweifieh', ar: 'الصويفية', x: -700, z: 520, hub: true, label: 'Sweifieh Hub' },
-  tabarbour: { name: 'Tabarbour', ar: 'طبربور', x: 755, z: -557, hub: true, label: 'Tabarbour Depot' },
-  albalad:   { name: 'Al-Balad', ar: 'البلد', x: 566, z: 523, addr: ['King Faisal St, Bldg 14', 'Al-Balad, Amman'], drop: 'Rooftop pad R2' },
-  shmeisani: { name: 'Shmeisani', ar: 'الشميساني', x: -95, z: 0, addr: ['Abdel Hamid Sharaf St 22', 'Shmeisani, Amman'], drop: 'Smart locker L4' },
-  abdali:    { name: 'Abdali', ar: 'العبدلي', x: 132, z: 245, addr: ['Abdali Boulevard, Gate 4', 'Al-Abdali, Amman'], drop: 'Rooftop pad R4' },
-  abdoun:    { name: 'Abdoun', ar: 'عبدون', x: -378, z: 700, addr: ['Villa 9, Cairo St', 'Abdoun, Amman'], drop: 'Garden pad' },
-  khalda:    { name: 'Khalda', ar: 'خلدا', x: -1227, z: -512, addr: ['Wasfi Al-Tal St, Tower B', 'Khalda, Amman'], drop: 'Rooftop pad R1' },
-  jubeiha:   { name: 'Al-Jubeiha', ar: 'الجبيهة', x: -623, z: -891, addr: ['University District, Block 7', 'Al-Jubeiha, Amman'], drop: 'Campus locker C3' },
-  marka:     { name: 'Marka', ar: 'ماركا', x: 1416, z: -223, addr: ['Marka Industrial Park, Unit 31', 'Marka, Amman'], drop: 'Loading bay 2' },
-  wadiseer:  { name: 'Wadi Al-Seer', ar: 'وادي السير', x: -1450, z: 640, addr: ['Wadi Al-Seer Clinic, Bay 3', 'Wadi Al-Seer, Amman'], drop: 'Clinic drop bay' },
-};
-const DESTS = Object.keys(PLACES).filter(k => !PLACES[k].hub);
-const HUBS = Object.keys(PLACES).filter(k => PLACES[k].hub);
-const ZONE = { id: 'NFZ-01', name: 'Raghadan Palace', x: 760, z: 380, r: 190, ceil: 300 };
-const CIRCLES = [['1st', 415, 490], ['2nd', 245, 416], ['3rd', 38, 423], ['4th', -170, 401], ['5th', -378, 356], ['6th', -585, 300], ['7th', -812, 334], ['8th', -1114, 334]];
-const LANDMARKS = [
-  { name: 'Citadel', ar: 'جبل القلعة', x: 560, z: 440 },
-  { name: 'Roman Theatre', ar: 'المدرج الروماني', x: 650, z: 525 },
-  { name: 'Raghadan Flagpole', ar: 'سارية رغدان', x: 800, z: 350 },
-  { name: 'Jordan Gate', ar: 'أبراج بوابة الأردن', x: -560, z: 255 },
-];
-const ROADS = [
-  { name: 'Zahran St', w: 11, pts: [[470, 520], ...CIRCLES.map(c => [c[1], c[2]]), [-1450, 330], [-1800, 300]] },
-  { name: 'Queen Rania St', w: 11, pts: [[-60, 120], [-150, -267], [-420, -600], [-623, -860], [-760, -1150], [-900, -1800]] },
-  { name: 'Airport Rd', w: 13, pts: [[-1114, 334], [-1050, 800], [-980, 1300], [-940, 1800]] },
-  { name: 'Amman–Zarqa Hwy', w: 13, pts: [[566, 523], [900, 260], [1200, 20], [1416, -223], [1800, -560]] },
-  { name: 'Al-Urdun St', w: 10, pts: [[132, 245], [250, -150], [500, -380], [755, -557], [900, -1100], [1000, -1800]] },
-  { name: 'Wasfi Al-Tal St', w: 10, pts: [[-95, 0], [-500, -200], [-900, -380], [-1227, -512], [-1800, -700]] },
-  { name: 'Al-Quds St', w: 9, pts: [[-378, 356], [-378, 700], [-300, 1100], [-200, 1800]] },
-];
-/* hills of Amman (the jabals) and its valleys, in metres */
-const JABALS = [[340, 560, 38, 230], [0, 110, 30, 260], [378, 356, 24, 170], [560, 440, 34, 120], [-378, 356, 26, 320], [-900, -300, 34, 520], [-600, -900, 28, 420], [900, -500, 26, 380], [-1300, 500, 30, 360], [100, -700, 22, 360]];
-function terrainH(x, z) {
-  let h = 18 + 9 * Math.sin(x / 330 + 1.3) * Math.cos(z / 290 - .4) + 5 * Math.sin((x - z) / 170 + .7);
-  for (const [cx, cz, a, r] of JABALS) h += a * Math.exp(-((x - cx) ** 2 + (z - cz) ** 2) / (r * r));
-  h -= 30 * Math.exp(-((x - 600) ** 2 / 120 ** 2 + (z - 540) ** 2 / 220 ** 2));   // Al-Balad valley
-  h -= 16 * Math.exp(-((z - 820 - 120 * Math.sin(x / 400)) ** 2) / 90 ** 2);      // Wadi Abdoun
-  const r = Math.hypot(x, z);
-  return Math.max(0, h) * smooth(clamp((2350 - r) / 500, 0, 1));
+const GEO = window.JO_GEO;
+const KM_PER_U = 0.01;
+const LAT0 = GEO.proj.lat0, LON0 = GEO.proj.lon0, KX = GEO.proj.kx, KZ = GEO.proj.kz;
+const LL = (lat, lon) => ({ x: (lon - LON0) * KX, z: -(lat - LAT0) * KZ });
+const AIRK = .25;                      // world units per metre of flight altitude
+const TERR_EX = 1.6, TERR_BASE = 800;  // terrain exaggeration, reference elevation (m)
+const b64bytes = b => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+const GRIDS = ['amman', 'country'].map(k => { const g = GEO[k]; return { k, n: g.n, d: new Int16Array(b64bytes(g.dem).buffer), x0: g.xz[0], z0: g.xz[1], x1: g.xz[2], z1: g.xz[3] }; });
+function gridElev(g, x, z) {
+  const fx = clamp((x - g.x0) / (g.x1 - g.x0), 0, 1) * (g.n - 1), fz = clamp((z - g.z0) / (g.z1 - g.z0), 0, 1) * (g.n - 1);
+  const i = Math.min(g.n - 2, Math.floor(fx)), j = Math.min(g.n - 2, Math.floor(fz)), u = fx - i, v = fz - j, d = g.d, n = g.n;
+  return (d[j * n + i] * (1 - u) + d[j * n + i + 1] * u) * (1 - v) + (d[(j + 1) * n + i] * (1 - u) + d[(j + 1) * n + i + 1] * u) * v;
 }
+function elevAt(x, z) { for (const g of GRIDS) if (x >= g.x0 && x <= g.x1 && z >= g.z0 && z <= g.z1) return gridElev(g, x, z); return 0; }
+const groundY = elev => (elev - TERR_BASE) * TERR_EX / 10;
+function terrainH(x, z) { return groundY(elevAt(x, z)); }
+const P = (o) => Object.assign(o, LL(o.ll[0], o.ll[1]));
+const PLACES = {
+  sweifieh:  P({ name: 'Sweifieh', ar: 'الصويفية', ll: [31.9505, 35.8620], hub: true, label: 'Sweifieh Hub' }),
+  tabarbour: P({ name: 'Tabarbour', ar: 'طبربور', ll: [32.0010, 35.9480], hub: true, label: 'Tabarbour Depot' }),
+  albalad:   P({ name: 'Al-Balad', ar: 'البلد', ll: [31.9518, 35.9349], addr: ['King Faisal St, Bldg 14', 'Al-Balad, Amman'], drop: 'Rooftop pad R2' }),
+  shmeisani: P({ name: 'Shmeisani', ar: 'الشميساني', ll: [31.9747, 35.9010], addr: ['Abdel Hamid Sharaf St 22', 'Shmeisani, Amman'], drop: 'Smart locker L4' }),
+  abdali:    P({ name: 'Abdali', ar: 'العبدلي', ll: [31.9634, 35.9101], addr: ['Abdali Boulevard, Gate 4', 'Al-Abdali, Amman'], drop: 'Rooftop pad R4' }),
+  abdoun:    P({ name: 'Abdoun', ar: 'عبدون', ll: [31.9463, 35.8867], addr: ['Villa 9, Cairo St', 'Abdoun, Amman'], drop: 'Garden pad' }),
+  khalda:    P({ name: 'Khalda', ar: 'خلدا', ll: [31.9997, 35.8380], addr: ['Wasfi Al-Tal St, Tower B', 'Khalda, Amman'], drop: 'Rooftop pad R1' }),
+  jubeiha:   P({ name: 'Al-Jubeiha', ar: 'الجبيهة', ll: [32.0137, 35.8726], addr: ['University of Jordan, Gate 3', 'Al-Jubeiha, Amman'], drop: 'Campus locker C3' }),
+  marka:     P({ name: 'Marka', ar: 'ماركا', ll: [31.9930, 35.9850], addr: ['Marka Industrial Park, Unit 31', 'Marka, Amman'], drop: 'Loading bay 2' }),
+  wadiseer:  P({ name: 'Wadi Al-Seer', ar: 'وادي السير', ll: [31.9550, 35.8180], addr: ['Wadi Al-Seer Clinic, Bay 3', 'Wadi Al-Seer, Amman'], drop: 'Clinic drop bay' }),
+  salt:      P({ name: 'As-Salt', ar: 'السلط', ll: [32.0392, 35.7272], addr: ['Al-Hussein Hospital, Pad H', 'As-Salt'], drop: 'Hospital helipad', far: true }),
+  zarqa:     P({ name: 'Zarqa', ar: 'الزرقاء', ll: [32.0728, 36.0880], addr: ['Zarqa Medical Depot', 'Zarqa'], drop: 'Depot pad Z1', far: true }),
+  madaba:    P({ name: 'Madaba', ar: 'مادبا', ll: [31.7167, 35.7939], addr: ['Madaba Health Centre', 'Madaba'], drop: 'Clinic pad M2', far: true }),
+};
+const DESTS = Object.keys(PLACES).filter(k => !PLACES[k].hub && !PLACES[k].far);
+const HUBS = Object.keys(PLACES).filter(k => PLACES[k].hub);
+const ZONE = P({ id: 'NFZ-01', name: 'Raghadan Palace', ll: [31.9563, 35.9478], r: 120, ceil: 300 });
+const CIRCLES = [['1st', 31.9521, 35.9214], ['2nd', 31.9563, 35.9116], ['3rd', 31.9568, 35.9030], ['4th', 31.9580, 35.8940], ['5th', 31.9590, 35.8853], ['6th', 31.9614, 35.8717], ['7th', 31.9590, 35.8605], ['8th', 31.9625, 35.8400]].map(([n, la, lo]) => { const p = LL(la, lo); return [n, p.x, p.z]; });
+const LANDMARKS = [
+  P({ name: 'Citadel', ar: 'جبل القلعة', ll: [31.9540, 35.9348] }),
+  P({ name: 'Roman Theatre', ar: 'المدرج الروماني', ll: [31.9516, 35.9394] }),
+  P({ name: 'Raghadan Flagpole', ar: 'سارية رغدان', ll: [31.9548, 35.9492] }),
+  P({ name: 'King Abdullah I Mosque', ar: 'مسجد الملك عبدالله الأول', ll: [31.9622, 35.9131] }),
+  P({ name: 'Jordan Gate', ar: 'أبراج بوابة الأردن', ll: [31.9636, 35.8717] }),
+];
+const CITIES = [
+  ['Amman', 'عمّان', 31.9539, 35.9106, 1], ['Zarqa', 'الزرقاء', 32.0728, 36.0880, 1], ['Irbid', 'إربد', 32.5556, 35.85, 1], ['As-Salt', 'السلط', 32.0392, 35.7272, 2],
+  ['Madaba', 'مادبا', 31.7167, 35.7939, 2], ['Jerash', 'جرش', 32.2800, 35.8994, 2], ['Ajloun', 'عجلون', 32.3326, 35.7517, 3], ['Mafraq', 'المفرق', 32.3434, 36.2080, 2],
+  ['Karak', 'الكرك', 31.1853, 35.7048, 2], ['Tafilah', 'الطفيلة', 30.8375, 35.6044, 3], ["Ma'an", 'معان', 30.1962, 35.7341, 2], ['Aqaba', 'العقبة', 29.5267, 35.0078, 1],
+  ['Petra', 'البتراء', 30.3285, 35.4444, 2], ['Wadi Rum', 'وادي رم', 29.5764, 35.4196, 3], ['Dead Sea', 'البحر الميت', 31.55, 35.48, 4], ['Azraq', 'الأزرق', 31.8800, 36.8300, 3], ['Ruwaished', 'الرويشد', 32.5000, 38.2000, 3],
+].map(([n, ar, la, lo, rank]) => ({ name: n, ar, rank, ...LL(la, lo) }));
 const CORRIDORS = [
-  { id: 'A', name: 'Corridor A · Zahran east–west', pts: [[-1700, 560], [-800, 470], [100, 600], [1000, 700], [1700, 640]] },
-  { id: 'B', name: 'Corridor B · University north–south', pts: [[-900, -1700], [-520, -700], [-160, -220], [120, 700], [260, 1700]] },
-  { id: 'C', name: 'Corridor C · Marka east', pts: [[-1600, -900], [-400, -360], [700, -420], [1700, -260]] },
+  { id: 'A', name: 'Corridor A · Zahran east–west', pts: [CIRCLES[7], CIRCLES[5], CIRCLES[3], CIRCLES[1]].map(c => [c[1], c[2] + 18]) },
+  { id: 'B', name: 'Corridor B · University north–south', pts: [[PLACES.jubeiha.x - 60, PLACES.jubeiha.z - 200], [PLACES.jubeiha.x, PLACES.jubeiha.z], [PLACES.shmeisani.x, PLACES.shmeisani.z], [PLACES.abdali.x - 30, PLACES.abdali.z + 160], [-60, 380]] },
+  { id: 'C', name: 'Corridor C · Tabarbour–Marka–Zarqa', pts: [[PLACES.abdali.x + 60, PLACES.abdali.z - 260], [PLACES.tabarbour.x, PLACES.tabarbour.z], [PLACES.marka.x, PLACES.marka.z], [PLACES.zarqa.x, PLACES.zarqa.z]] },
 ];
 const TYPES = {
   carrier:    { cls: 'Mobile Carrier Aircraft', kts: 58, maxPayload: 2.5, cap: 6000, span: '1.9 m', mtow: '9.8 kg', rotors: '6 rotors' },
@@ -474,7 +487,7 @@ const DEFS = [
   { id: 'R431MS', name: 'Sena 2', code: 'SNA07', type: 'multirotor', hub: 'tabarbour', sig: 4, wind: 2.1, health: 92, hours: 655, cycles: 402,
     leg: { kind: 'delivery', from: 'jubeiha', to: 'abdoun', p: .3, cruise: 138, bend: -.08, courier: 'Paxio', payload: .8 }, bat: { mAh: 2900, min: 41 } },
   { id: 'K/7QX2A', name: 'Alder 1', code: 'ALD03', type: 'vtol', hub: 'sweifieh', sig: 3, wind: 6.8, health: 89, hours: 920, cycles: 351,
-    leg: { kind: 'delivery', from: 'khalda', to: 'marka', p: .4, cruise: 152, bend: .06, delay: 2, courier: 'Lintasa', payload: 1.6 }, bat: { mAh: 5200, min: 52 } },
+    leg: { kind: 'delivery', from: 'khalda', to: 'salt', p: .4, cruise: 152, bend: .06, delay: 2, courier: 'Lintasa', payload: 1.6 }, bat: { mAh: 5200, min: 52 } },
   { id: 'T/22VPN', name: 'Yun Huo 2', code: 'GYO14', type: 'carrier', hub: 'tabarbour', sig: 3, wind: 7.4, health: 81, hours: 1180, cycles: 529,
     leg: { kind: 'delivery', from: 'tabarbour', to: 'wadiseer', p: .35, cruise: 140, bend: -.1, courier: 'Entravo', payload: 2.3 }, bat: { mAh: 1690, min: 18, knee: -60 } },
   { id: 'M/5ZK8C', name: 'Kite 6', code: 'KIT06', type: 'multirotor', hub: 'sweifieh', sig: 1, wind: 3.0, health: 90, hours: 388, cycles: 240, script: 'linkloss',
@@ -482,11 +495,11 @@ const DEFS = [
   { id: 'B/9HT4L', name: 'Sena 5', code: 'SNA11', type: 'multirotor', hub: 'tabarbour', sig: 4, wind: 1.6, health: 94, hours: 501, cycles: 297,
     leg: { kind: 'return', from: 'shmeisani', to: 'tabarbour', p: .3, cruise: 128, bend: .05 }, bat: { mAh: 2200, min: 30 } },
   { id: 'P/3LW0E', name: 'Alder 3', code: 'ALD09', type: 'vtol', hub: 'tabarbour', sig: 4, wind: 2.4, health: 97, hours: 233, cycles: 96,
-    leg: { kind: 'delivery', from: 'tabarbour', to: 'albalad', p: .15, cruise: 156, via: [[600, -150], [470, 240]], rerouted: true, courier: 'Kurira', payload: 1.1 }, bat: { mAh: 6100, min: 61 } },
+    leg: { kind: 'delivery', from: 'tabarbour', to: 'albalad', p: .12, cruise: 156, via: [[250, -250], [195, -60]], rerouted: true, courier: 'Kurira', payload: 1.1 }, bat: { mAh: 6100, min: 61 } },
   { id: 'N/6RD1F', name: 'Kite 2', code: 'KIT02', type: 'multirotor', hub: 'sweifieh', sig: 3, wind: 2.8, health: 88, hours: 702, cycles: 455,
     leg: { kind: 'transfer', from: 'sweifieh', to: 'tabarbour', p: .2, cruise: 126, bend: -.08, payload: 1.1, cargo: 'Spare battery packs ×2' }, bat: { mAh: 3900, min: 46 } },
-  { id: 'H/4CM7J', name: 'Yun Huo 7', code: 'GYO30', type: 'carrier', hub: 'tabarbour', sig: 4, wind: 1.2, health: 95, hours: 344, cycles: 160,
-    leg: { kind: 'delivery', from: 'tabarbour', to: 'shmeisani', p: .6, cruise: 148, bend: .09, courier: 'Lintasa', payload: 1.9 }, bat: { mAh: 2600, min: 33 } },
+  { id: 'H/4CM7J', name: 'Yun Huo 7', code: 'GYO30', type: 'vtol', hub: 'tabarbour', sig: 4, wind: 1.2, health: 95, hours: 344, cycles: 160,
+    leg: { kind: 'delivery', from: 'tabarbour', to: 'zarqa', p: .35, cruise: 160, bend: .05, courier: 'Lintasa', payload: 1.9 }, bat: { mAh: 5600, min: 58 } },
   { id: 'A/8GV3Y', name: 'Sena 1', code: 'SNA01', type: 'multirotor', hub: 'sweifieh', sig: 4, wind: 1, health: 93, hours: 811, cycles: 512, state: 'idle', bat: { mAh: 4500 } },
   { id: 'E/2PX9Q', name: 'Kite 4', code: 'KIT04', type: 'multirotor', hub: 'tabarbour', sig: 4, wind: 1, health: 91, hours: 596, cycles: 377, state: 'idle', bat: { mAh: 4180 } },
   { id: 'C/0FN6U', name: 'Alder 2', code: 'ALD05', type: 'vtol', hub: 'sweifieh', sig: 4, wind: 1, health: 64, hours: 1402, cycles: 610, state: 'maint', bat: { mAh: 7600 },
@@ -504,7 +517,7 @@ const mins = s => Math.max(0, Math.round(s / 60));
 const fmtDist = km => PREFS.dist === 'mi' ? `${(km * .6214).toFixed(km * .6214 < 10 ? 1 : 0)} mi` : `${km.toFixed(km < 10 ? 1 : 0)} km`;
 const fmtSpeed = kts => PREFS.speed === 'kts' ? [kts.toFixed(1), 'kts'] : [(kts * 1.852).toFixed(0), 'km/h'];
 const compass16 = h => ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'][Math.round(h / 22.5) % 16];
-function toLatLon(x, z) { const lat = LAT0 - (z * KM_PER_U) / 111.32; const lon = LON0 + (x * KM_PER_U) / (111.32 * Math.cos(LAT0 * Math.PI / 180)); return [lat, lon]; }
+function toLatLon(x, z) { return [LAT0 - z / KZ, LON0 + x / KX]; }
 function fmtCoord(x, z, f = PREFS.coords) {
   const [lat, lon] = toLatLon(x, z);
   if (f === 'dd') return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
@@ -513,11 +526,11 @@ function fmtCoord(x, z, f = PREFS.coords) {
 }
 
 const placeVec = k => new THREE.Vector3(PLACES[k].x, 0, PLACES[k].z);
-const hubSlot = (hub, i) => { const p = PLACES[hub]; const a = i * 2.1 + .6; const x = p.x + Math.cos(a) * 30, z = p.z + Math.sin(a) * 30; return new THREE.Vector3(x, terrainH(x, z) + 3, z); };
+const hubSlot = (hub, i) => { const p = PLACES[hub]; const a = i * 2.1 + .6; const x = p.x + Math.cos(a) * 7, z = p.z + Math.sin(a) * 7; return new THREE.Vector3(x, terrainH(x, z) + 3 * AIRK, z); };
 
 let legSeq = 820, delSeq = 84930;
 function altProfile(u, len, cruise, a0, a1) {
-  const c = Math.min(.2, 170 / len), d = Math.min(.2, 200 / len);
+  const c = Math.min(.2, 60 / len), d = Math.min(.2, 70 / len);
   if (u < c) return lerp(a0, cruise, smooth(u / c));
   if (u > 1 - d) return lerp(a1, cruise, smooth((1 - u) / d));
   return cruise + 5 * Math.sin(u * 11 + cruise);
@@ -532,9 +545,9 @@ function makeLeg(ac, o) {
   const cruise = o.cruise ?? Math.round(128 + rnd() * 26);
   const a0 = o.startAlt ?? 3;
   const agl = pts.map((v, i) => o.kind === 'land' ? lerp(a0, 3, smooth(i / N)) : altProfile(i / N, len, cruise, a0, 3));
-  pts.forEach((v, i) => { v.y = agl[i] + terrainH(v.x, v.z); });
+  pts.forEach((v, i) => { v.y = agl[i] * AIRK + terrainH(v.x, v.z); });
   let blocked = null;
-  if (o.rerouted) { const s = new THREE.LineCurve3(A, B).getSpacedPoints(60); s.forEach((v, i) => v.y = altProfile(i / 60, len, cruise, a0, 3) + terrainH(v.x, v.z)); blocked = s; }
+  if (o.rerouted) { const s = new THREE.LineCurve3(A, B).getSpacedPoints(60); s.forEach((v, i) => v.y = altProfile(i / 60, len, cruise, a0, 3) * AIRK + terrainH(v.x, v.z)); blocked = s; }
   const kts = TYPES[ac.type].kts;
   const planned = (len * KM_PER_U) / (kts * 1.852) * 3600;
   const delay = (o.delay || 0) * 60;
@@ -641,7 +654,7 @@ function noise(ac, t) { return Math.sin(t * .13 + ac.seed) * .6 + Math.sin(t * .
 function altAt(L, u) { u = clamp(u, 0, 1); const f = u * L.N, i = Math.min(L.N - 1, Math.floor(f)); return lerp(L.agl[i], L.agl[i + 1], f - i); }
 function speedAt(ac, L, u, t) {
   const base = (L.len * KM_PER_U) / (L.dur / 3600) / 1.852;
-  const c = Math.min(.2, 170 / L.len), d = Math.min(.2, 200 / L.len);
+  const c = Math.min(.2, 60 / L.len), d = Math.min(.2, 70 / L.len);
   const ph = u < c ? lerp(.45, 1, smooth(u / c)) : u > 1 - d ? lerp(.35, 1, smooth((1 - u) / d)) : 1;
   return Math.max(0, base * ph * 1.0 + noise(ac, t + 7) * 1.1);
 }
@@ -753,7 +766,7 @@ function newDelivery(ac) {
 function startReturn(ac, fromPos, reason) {
   const prev = ac.leg;
   if (prev && !prev.done) { prev.aborted = true; prev.done = true; ac.completed.push(prev); }
-  ac.leg = makeLeg(ac, { kind: 'return', fromPos: fromPos.clone(), fromLabel: reason ? 'current position' : PLACES[prev?.to]?.name, to: ac.hub, p: 0, startAlt: Math.max(3, fromPos.y - terrainH(fromPos.x, fromPos.z)), bend: .02 });
+  ac.leg = makeLeg(ac, { kind: 'return', fromPos: fromPos.clone(), fromLabel: reason ? 'current position' : PLACES[prev?.to]?.name, to: ac.hub, p: 0, startAlt: Math.max(3, (fromPos.y - terrainH(fromPos.x, fromPos.z)) / AIRK), bend: .02 });
   if (reason) ac.leg.events.unshift({ t: SIM.t, k: 'fail', label: reason, det: [['Operator', 'Nadia K.'], ['Mission', prev?.mission || '—']] });
   ac.state = 'flying'; ac.hold = false; ac.hist = ac.hist.slice(-1);
   routesDirty = true;
@@ -791,8 +804,8 @@ function stepSim(dt) {
     const prevA = ac.alt;
     const h = sampleLeg(L, p, ac.pos);
     if (!ac.hold) ac.heading = ((h * 180 / Math.PI) + 360) % 360;
-    ac.pos.y += noise(ac, SIM.t) * .8;
-    ac.alt = ac.pos.y - terrainH(ac.pos.x, ac.pos.z);
+    ac.pos.y += noise(ac, SIM.t) * .8 * AIRK;
+    ac.alt = (ac.pos.y - terrainH(ac.pos.x, ac.pos.z)) / AIRK;
     ac.kts = ac.hold ? Math.abs(noise(ac, SIM.t) * 1.2) : speedAt(ac, L, p, SIM.t);
     ac.vs = dt > 0 ? lerp(ac.vs, (ac.alt - prevA) / dt, .1) : ac.vs;
     ac.windNow = Math.max(0, ac.wind + Math.sin(SIM.t * .05 + ac.seed) * Math.min(1.2, ac.wind * .3) + .05);
@@ -808,7 +821,7 @@ function stepSim(dt) {
     }
     if (p >= 1) {
       L.done = true; ac.completed.push(L);
-      ac.state = 'landed'; ac.landedUntil = SIM.t + 50; ac.pos.y = terrainH(ac.pos.x, ac.pos.z) + 3; ac.alt = 3; ac.emergencyLanding = false;
+      ac.state = 'landed'; ac.landedUntil = SIM.t + 50; ac.pos.y = terrainH(ac.pos.x, ac.pos.z) + 3 * AIRK; ac.alt = 3; ac.emergencyLanding = false;
       if (L.kind === 'transfer' || L.kind === 'return') ac.hub = L.to;
       completedLog.unshift({ ac: ac.id, leg: L, t: SIM.t });
       routesDirty = true;
@@ -818,7 +831,7 @@ function stepSim(dt) {
   // displayed (last-known) position
   for (const ac of fleet) {
     if (ac.sig === 0 && ac.lastKnown) ac.shown.copy(ac.lastKnown.pos);
-    else ac.shown.lerp(ac.pos, ac.shown.distanceToSquared(ac.pos) > 4e4 ? .08 : 1);
+    else ac.shown.lerp(ac.pos, ac.shown.distanceToSquared(ac.pos) > 400 ? .08 : 1);
   }
 }
 const completedLog = [];
@@ -849,139 +862,91 @@ renderer.domElement.setAttribute('aria-hidden', 'true');
 const scene = new THREE.Scene();
 const BG = 0x070A0E;
 scene.background = new THREE.Color(BG);
-scene.fog = new THREE.Fog(BG, 3600, 8200);
-const camera = new THREE.PerspectiveCamera(36, 1, 4, 16000);
-camera.position.set(-1400, 3600, 3900);
+scene.fog = new THREE.Fog(BG, 6000, 20000);
+const camera = new THREE.PerspectiveCamera(36, 1, 1, 200000);
+camera.position.set(0, 30000, 30000);
 
-const hemi = new THREE.HemisphereLight(0xB8C6D8, 0x07090C, 1.15);
-const sun = new THREE.DirectionalLight(0xEAF1FF, 1.9);
-sun.position.set(-1, 1.5, .55);
+const hemi = new THREE.HemisphereLight(0xC8D2E0, 0x1A1712, 1.25);
+const sun = new THREE.DirectionalLight(0xFFF1DE, 2.3);
+sun.position.set(-1, 1.25, .7);
 scene.add(hemi, sun);
 
 const cityGroup = new THREE.Group();
 const airGroup = new THREE.Group();
 scene.add(cityGroup, airGroup);
 
-/* ─── Amman: low-rise limestone city draped over the jabals (seeded, deterministic) ─── */
-function polyDist(x, z, pts) {
-  let best = 1e9;
-  for (let i = 1; i < pts.length; i++) {
-    const [ax, az] = pts[i - 1], [bx, bz] = pts[i], dx = bx - ax, dz = bz - az;
-    const t = clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1), 0, 1);
-    best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t));
-  }
-  return best;
-}
-const roadDist = (x, z) => Math.min(...ROADS.map(r => polyDist(x, z, r.pts) - r.w));
-/* streets wrap around the hills: contour lines of the terrain become local roads */
-const contourStreet = (x, z) => { const f = (terrainH(x, z) / 6.5 + Math.sin(x / 90) * .15) % 1; return Math.abs(f - .5) > .43; };
-const city = (() => {
-  const r = mulberry32(962);
-  const CELL = 29, HALF = 1780;
-  const bld = [];
-  const towers = [[132, 245, 4, 120], [90, 200, 3, 96], [175, 300, 3, 88], [-95, 0, 3, 62], [-60, 60, 2, 54], [-1227, -512, 2, 58]];
-  for (let gx = -HALF; gx < HALF; gx += CELL) for (let gz = -HALF; gz < HALF; gz += CELL) {
-    const x = gx + CELL / 2 + (r() - .5) * 7, z = gz + CELL / 2 + (r() - .5) * 7;
-    const rad = Math.hypot(x * .92, z * 1.04);
-    if (rad > HALF - 40 + Math.sin(Math.atan2(z, x) * 5) * 140 + r() * 120) continue;
-    if (r() < .14 + clamp((rad - 1300) / 900, 0, .5)) continue;              // gaps, thinning suburbs
-    if (roadDist(x, z) < 7) continue;
-    if (contourStreet(x, z)) continue;
-    if (Math.hypot(x - ZONE.x, z - ZONE.z) < ZONE.r * .62) continue;             // palace grounds
-    if (Object.values(PLACES).some(p => Math.hypot(p.x - x, p.z - z) < (p.hub ? 70 : 34))) continue;
-    if (LANDMARKS.some(l => Math.hypot(l.x - x, l.z - z) < 36)) continue;
-    const e = 1.5, gxH = terrainH(x + e, z) - terrainH(x - e, z), gzH = terrainH(x, z + e) - terrainH(x, z - e);
-    const rot = Math.atan2(gzH, gxH) + (r() < .5 ? 0 : Math.PI / 2) + (r() - .5) * .25;   // align to the slope
-    const w = 14 + r() * 10, d = 11 + r() * 9;
-    let h = 5 + Math.floor(r() * 4) * 2.6 + (r() < .07 ? 6 : 0);                 // low-rise, flat roofs
-    let core = 0;
-    for (const [tx, tz, n, th] of towers) { const k = Math.exp(-(((x - tx) ** 2 + (z - tz) ** 2) / 150 ** 2)); if (k > core) core = k; if (k > .55 && r() < .18 * n / 3) h = Math.max(h, th * (.55 + r() * .45)); }
-    h += core * 10;
-    bld.push({ x, z, w, d, h, rot, base: terrainH(x, z) - 2, core });
-  }
-  // landmark towers: Abdali and the twin Jordan Gate towers
-  [[120, 260, 18, 20, 128], [160, 205, 16, 16, 112], [70, 230, 14, 14, 96], [-575, 245, 15, 15, 122], [-545, 270, 15, 15, 122]].forEach(([x, z, w, d, h]) =>
-    bld.push({ x, z, w, d, h, rot: .35, base: terrainH(x, z) - 2, core: 1, glass: true }));
-  return { bld };
-})();
-
-function buildGround() {
-  const S = 4800, PX = 2048, k = PX / S, X = x => (x + S / 2) * k;
-  const cv = document.createElement('canvas'); cv.width = cv.height = PX;
-  const g = cv.getContext('2d');
-  // contour streets sampled at half resolution
-  const M = 1024, img = g.createImageData(M, M);
-  for (let j = 0; j < M; j++) for (let i = 0; i < M; i++) {
-    const x = i / M * S - S / 2, z = j / M * S - S / 2, o = (j * M + i) * 4;
-    const rad = Math.hypot(x, z), inCity = rad < 1900;
-    const street = inCity && contourStreet(x, z);
-    const h = terrainH(x, z);
-    const base = 24 + h * .32;
-    const v = street ? base + 10 : base;
-    img.data[o] = v + 2; img.data[o + 1] = v + 1; img.data[o + 2] = v; img.data[o + 3] = 255;
-  }
-  const tmp = document.createElement('canvas'); tmp.width = tmp.height = M; tmp.getContext('2d').putImageData(img, 0, 0);
-  g.imageSmoothingEnabled = true; g.drawImage(tmp, 0, 0, PX, PX);
-  // arterials + the circles (dawwar) of Zahran Street
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  for (const rd of ROADS) {
-    g.beginPath(); rd.pts.forEach(([x, z], i) => i ? g.lineTo(X(x), X(z)) : g.moveTo(X(x), X(z)));
-    g.strokeStyle = '#26282C'; g.lineWidth = rd.w * 1.6 * k + 1; g.stroke();
-    g.strokeStyle = 'rgba(255,240,215,.07)'; g.lineWidth = 1; g.stroke();
-  }
-  for (const [, x, z] of CIRCLES) { g.beginPath(); g.arc(X(x), X(z), 22 * k, 0, 7); g.strokeStyle = '#2E3035'; g.lineWidth = 9 * k; g.stroke(); g.fillStyle = '#16171A'; g.fill(); }
-  for (const p of Object.values(PLACES)) {
-    if (!p.hub) continue;
-    g.fillStyle = '#1A1C20'; g.beginPath(); g.arc(X(p.x), X(p.z), 60 * k, 0, 7); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1.2; g.stroke();
-  }
-  const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  const geo = new THREE.PlaneGeometry(S, S, 220, 220).rotateX(-Math.PI / 2);
+/* ─── terrain: Jordan (country) + Amman (city) patches from real elevation, baked shaded textures ─── */
+const texLoader = new THREE.TextureLoader();
+function terrainPatch(key, segs, order) {
+  const g = GRIDS.find(q => q.k === key), W = g.x1 - g.x0, H = g.z1 - g.z0;
+  const geo = new THREE.PlaneGeometry(W, H, segs, segs).rotateX(-Math.PI / 2).translate(g.x0 + W / 2, 0, g.z0 + H / 2);
   const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) pos.setY(i, terrainH(pos.getX(i), pos.getZ(i)));
-  geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex }));
-  const far = new THREE.Mesh(new THREE.PlaneGeometry(40000, 40000), new THREE.MeshBasicMaterial({ color: 0x0A0B0D }));
-  far.rotation.x = -Math.PI / 2; far.position.y = -.5;
-  scene.add(far); cityGroup.add(ground);
+  for (let i = 0; i < pos.count; i++) pos.setY(i, groundY(gridElev(g, pos.getX(i), pos.getZ(i))));
+  geo.computeBoundingSphere();
+  const tex = texLoader.load(GEO[key].tex); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const mat = new THREE.MeshBasicMaterial({ map: tex });
+  if (key === 'country') Object.assign(mat, { polygonOffset: true, polygonOffsetFactor: 4, polygonOffsetUnits: 8 });
+  const m = new THREE.Mesh(geo, mat); m.renderOrder = order;
+  return m;
+}
+function buildGround() {
+  const far = new THREE.Mesh(new THREE.PlaneGeometry(400000, 400000), new THREE.MeshBasicMaterial({ color: 0x0B0E12 }));
+  far.rotation.x = -Math.PI / 2; far.position.y = groundY(-600);
+  scene.add(far);
+  cityGroup.add(terrainPatch('country', 320, 0), terrainPatch('amman', 399, 1));
 }
 
-function buildBuildings() {
-  const geo = new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0);
-  const pos = geo.attributes.position, col = [];
-  for (let i = 0; i < pos.count; i++) { const y = pos.getY(i); const c = y > .99 ? 1 : .36 + y * .5; col.push(c, c, c); }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-  const mesh = new THREE.InstancedMesh(geo, mat, city.bld.length);
-  const m = new THREE.Matrix4(), c = new THREE.Color(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
-  const rr = mulberry32(5);
-  city.bld.forEach((b, i) => {
-    q.setFromAxisAngle(up, b.rot);
-    m.compose(new THREE.Vector3(b.x, b.base, b.z), q, new THREE.Vector3(b.w, b.h + 2, b.d));
-    mesh.setMatrixAt(i, m);
-    const g = b.glass ? .16 : .1 + rr() * .045;
-    if (b.glass) c.setRGB(g * .9, g * 1.02, g * 1.18);            // glass towers read slightly cooler
-    else c.setRGB(g * 1.1, g * 1.04, g * .93);                     // Amman limestone, kept muted
-    mesh.setColorAt(i, c);
-  });
+/* ─── real building footprints (Overture / OpenStreetMap), extruded on the terrain ─── */
+async function buildBuildings() {
+  const bin = b64bytes(GEO.bld);
+  const buf = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+  const dv = new DataView(buf), N = dv.getUint32(0, true);
+  const cnt = new Uint8Array(buf, 4, N);
+  let o = 4 + N; const hts = new Uint16Array(buf.slice(o, o + 2 * N)); o += 2 * N;
+  const kind = new Uint8Array(buf, o, N); o += N;
+  const xy = new Int16Array(buf.slice(o));
+  let nv = 0; for (let i = 0; i < N; i++) nv += cnt[i] * 2;
+  const pos = new Float32Array(nv * 3), col = new Uint8Array(nv * 3), idx = [];
+  const rr = mulberry32(11);
+  let v = 0, k = 0;
+  const ring = [];
+  for (let b = 0; b < N; b++) {
+    const n = cnt[b]; let x = 0, z = 0, minY = 1e9;
+    ring.length = 0;
+    for (let i = 0; i < n; i++) { x += xy[k++]; z += xy[k++]; const wx = x / 10, wz = z / 10; ring.push(new THREE.Vector2(wx, wz)); minY = Math.min(minY, terrainH(wx, wz)); }
+    const h = hts[b] / 100, base = minY - .4, top = minY + h;
+    const glass = kind[b] === 1, t = rr();
+    const c = glass ? [92, 104, 118] : [128 + t * 22 | 0, 121 + t * 20 | 0, 108 + t * 16 | 0];   // limestone vs glass towers
+    const v0 = v;
+    for (let i = 0; i < n; i++) {
+      const p = ring[i];
+      pos.set([p.x, base, p.y], v * 3); col.set([c[0] * .5, c[1] * .5, c[2] * .52], v * 3); v++;
+      pos.set([p.x, top, p.y], v * 3); col.set(c, v * 3); v++;
+    }
+    for (let i = 0; i < n; i++) { const a = v0 + i * 2, bb = v0 + ((i + 1) % n) * 2; idx.push(a, bb, bb + 1, a, bb + 1, a + 1); }
+    const tri = THREE.ShapeUtils.triangulateShape(ring, []);
+    for (const [p0, p1, p2] of tri) idx.push(v0 + p0 * 2 + 1, v0 + p1 * 2 + 1, v0 + p2 * 2 + 1);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3, true));
+  geo.setIndex(new THREE.BufferAttribute(new Uint32Array(idx), 1));
+  geo.computeBoundingSphere();
+  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide }));
+  mesh.renderOrder = 2;
   cityGroup.add(mesh);
-  // aviation obstruction lights on the tallest towers + the flagpole
-  const tall = [...city.bld].sort((a, b) => (b.base + b.h) - (a.base + a.h)).slice(0, 8);
-  const lp = tall.map(b => new THREE.Vector3(b.x, b.base + b.h + 4, b.z));
-  lp.push(new THREE.Vector3(LANDMARKS[2].x, terrainH(LANDMARKS[2].x, LANDMARKS[2].z) + 128, LANDMARKS[2].z));
-  const lights = new THREE.Points(new THREE.BufferGeometry().setFromPoints(lp), new THREE.PointsMaterial({ color: 0xFF4048, size: 3, sizeAttenuation: false, transparent: true, depthWrite: false, fog: false }));
+  const L = LANDMARKS[2];
+  const lights = new THREE.Points(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(L.x, terrainH(L.x, L.z) + 12.8, L.z)]), new THREE.PointsMaterial({ color: 0xFF4048, size: 3, sizeAttenuation: false, transparent: true, depthWrite: false, fog: false }));
   cityGroup.add(lights);
   buildFlag();
-  return { mesh, lights };
+  return { mesh, lights, count: N };
 }
 
 /* Raghadan Flagpole (126 m) flying the flag of Jordan */
 let flag = null;
 function buildFlag() {
   const L = LANDMARKS[2], base = terrainH(L.x, L.z);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.6, 1.1, 126, 8).translate(0, 63, 0), new THREE.MeshLambertMaterial({ color: 0x9AA0A8 }));
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .14, 12.6, 8).translate(0, 6.3, 0), new THREE.MeshLambertMaterial({ color: 0xB4BAC2 }));
   pole.position.set(L.x, base, L.z);
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const g = cv.getContext('2d');
   [['#000000', 0], ['#FFFFFF', 1], ['#007A3D', 2]].forEach(([c, i]) => { g.fillStyle = c; g.fillRect(0, i * 128 / 3, 256, 128 / 3 + 1); });
@@ -990,16 +955,16 @@ function buildFlag() {
   for (let i = 0; i < 14; i++) { const a = -Math.PI / 2 + i * Math.PI / 7, rr = i % 2 ? 5.2 : 12; g.lineTo(42 + Math.cos(a) * rr, 64 + Math.sin(a) * rr); }
   g.closePath(); g.fill();
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-  const fg = new THREE.PlaneGeometry(60, 30, 24, 6).translate(30, 0, 0);
+  const fg = new THREE.PlaneGeometry(6, 3, 24, 6).translate(3, 0, 0);
   const fm = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true, opacity: .92 });
-  flag = new THREE.Mesh(fg, fm); flag.position.set(L.x, base + 110, L.z); flag.rotation.y = -.6;
+  flag = new THREE.Mesh(fg, fm); flag.position.set(L.x, base + 11, L.z); flag.rotation.y = -.6;
   flag.userData.base = fg.attributes.position.array.slice();
   cityGroup.add(pole, flag);
 }
 function waveFlag(now) {
   if (!flag || reduce) return;
   const p = flag.geometry.attributes.position, b = flag.userData.base;
-  for (let i = 0; i < p.count; i++) { const x = b[i * 3]; p.setZ(i, Math.sin(x * .16 - now / 260) * x * .06 + Math.sin(b[i * 3 + 1] * .2 + now / 400) * x * .015); }
+  for (let i = 0; i < p.count; i++) { const x = b[i * 3]; p.setZ(i, Math.sin(x * 1.6 - now / 260) * x * .06 + Math.sin(b[i * 3 + 1] * 2 + now / 400) * x * .015); }
   p.needsUpdate = true;
 }
 
@@ -1022,11 +987,11 @@ function buildCorridors() {
   });
   for (const c of CORRIDORS) {
     const curve = new THREE.CatmullRomCurve3(c.pts.map(([x, z]) => new THREE.Vector3(x, 0, z)));
-    const P = curve.getSpacedPoints(80), W = 70, pos = [], uv = [], idx = [];
+    const P = curve.getSpacedPoints(120), W = 22, pos = [], uv = [], idx = [];
     P.forEach((p, i) => {
       const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)];
       const n = new THREE.Vector3(-(b.z - a.z), 0, b.x - a.x).normalize().multiplyScalar(W);
-      pos.push(p.x + n.x, 146 + terrainH(p.x + n.x, p.z + n.z), p.z + n.z, p.x - n.x, 146 + terrainH(p.x - n.x, p.z - n.z), p.z - n.z);
+      pos.push(p.x + n.x, 146 * AIRK + terrainH(p.x + n.x, p.z + n.z), p.z + n.z, p.x - n.x, 146 * AIRK + terrainH(p.x - n.x, p.z - n.z), p.z - n.z);
       uv.push(i / (P.length - 1), 0, i / (P.length - 1), 1);
       if (i) { const k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
     });
@@ -1042,8 +1007,8 @@ function buildCorridors() {
 /* restricted zone (geofence) */
 let zoneGroup;
 function buildZone() {
-  zoneGroup = new THREE.Group(); zoneGroup.position.set(ZONE.x, terrainH(ZONE.x, ZONE.z) - 4, ZONE.z);
-  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(ZONE.r, ZONE.r, ZONE.ceil, 64, 1, true).translate(0, ZONE.ceil / 2, 0), new THREE.ShaderMaterial({
+  zoneGroup = new THREE.Group(); zoneGroup.position.set(ZONE.x, terrainH(ZONE.x, ZONE.z) - 2, ZONE.z);
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(ZONE.r, ZONE.r, ZONE.ceil * AIRK, 64, 1, true).translate(0, ZONE.ceil * AIRK / 2, 0), new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
     uniforms: { uTime: { value: 0 } },
     vertexShader: 'varying vec2 vUv; varying vec3 vP; void main(){ vUv = uv; vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
@@ -1051,9 +1016,9 @@ function buildZone() {
   }));
   cyl.renderOrder = 1;
   const ring = new THREE.Mesh(new THREE.RingGeometry(ZONE.r - 3, ZONE.r, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xFF5A5F, transparent: true, opacity: .55, depthWrite: false }));
-  ring.position.y = 1.2;
+  ring.position.y = 2.4;
   const disc = new THREE.Mesh(new THREE.CircleGeometry(ZONE.r, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xFF5A5F, transparent: true, opacity: .05, depthWrite: false }));
-  disc.position.y = 1;
+  disc.position.y = 2.2;
   zoneGroup.add(cyl, ring, disc);
   airGroup.add(zoneGroup);
   zoneGroup.userData.mat = cyl.material;
@@ -1076,16 +1041,17 @@ const dashedRing = (() => { const g = new THREE.Group(); for (let i = 0; i < 14;
 
 function makeMarker(ac) {
   const g = new THREE.Group();
-  const bodyMat = new THREE.MeshBasicMaterial({ color: 0xC9D2DC, transparent: true });
-  const rotorMat = new THREE.MeshBasicMaterial({ color: 0x9AA5B2, transparent: true, opacity: .85, side: THREE.DoubleSide });
+  const model = droneModel(ac.type, false);
+  const bodyMat = model.mats.shell, rotorMat = model.mats.carbon;
+  bodyMat.transparent = rotorMat.transparent = true;
   const noseMat = new THREE.MeshBasicMaterial({ color: 0x3CC8FF, transparent: true, side: THREE.DoubleSide });
   const craft = new THREE.Group();
-  const body = new THREE.Mesh(SHARED.body, bodyMat);
-  const a1 = new THREE.Mesh(SHARED.arm, bodyMat); a1.rotation.y = Math.PI / 4;
-  const a2 = new THREE.Mesh(SHARED.arm, bodyMat); a2.rotation.y = -Math.PI / 4;
-  craft.add(body, a1, a2);
-  [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([x, z]) => { const r = new THREE.Mesh(SHARED.rotor, rotorMat); r.position.set(x * .955, .12, z * .955); craft.add(r); });
-  const nose = new THREE.Mesh(SHARED.nose, noseMat); nose.position.y = .1; craft.add(nose);
+  const box = new THREE.Box3().setFromObject(model.g), size = box.getSize(new THREE.Vector3());
+  model.g.scale.multiplyScalar(3.4 / Math.max(size.x, size.z));
+  if (ac.type === 'multirotor') model.g.rotation.y = Math.PI;          // camera pod faces forward (−z)
+  model.g.position.y = .35;
+  craft.add(model.g);
+  const nose = new THREE.Mesh(SHARED.nose, noseMat); nose.position.y = -.2; nose.scale.setScalar(1.15); craft.add(nose);
   const ringMat = new THREE.MeshBasicMaterial({ color: SEV_HEX.ok, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false });
   const ring = new THREE.Mesh(SHARED.ring, ringMat);
   const dashed = dashedRing(); dashed.children.forEach(m => m.material = ringMat); dashed.visible = false;
@@ -1102,7 +1068,7 @@ function makeMarker(ac) {
   const drop = new THREE.Line(dropGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .14, depthWrite: false }));
   const shadow = new THREE.Mesh(SHARED.shadow, new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .45, depthWrite: false }));
   airGroup.add(g, drop, shadow);
-  const mk = { g, craft, bodyMat, rotorMat, noseMat, ring, ringMat, dashed, halo, haloMat, sel, selMat, glow, drop, shadow, hover: 0, selK: 0 };
+  const mk = { g, craft, bodyMat, rotorMat, noseMat, ring, ringMat, dashed, halo, haloMat, sel, selMat, glow, drop, shadow, hover: 0, selK: 0, props: model.props };
   markers.set(ac.id, mk);
   return mk;
 }
@@ -1113,7 +1079,7 @@ function fatLine(points, o = {}) {
   const g = new LineGeometry(); const arr = [];
   (o.reverse ? [...points].reverse() : points).forEach(v => arr.push(v.x, v.y, v.z));
   g.setPositions(arr);
-  const m = new LineMaterial({ color: o.color ?? 0x3CC8FF, linewidth: o.width ?? 2, transparent: true, opacity: o.opacity ?? 1, dashed: !!o.dashed, dashSize: o.dash ?? 26, gapSize: o.gap ?? 18, depthWrite: false, worldUnits: false });
+  const m = new LineMaterial({ color: o.color ?? 0x3CC8FF, linewidth: o.width ?? 2, transparent: true, opacity: o.opacity ?? 1, dashed: !!o.dashed, dashSize: o.dash ?? 9, gapSize: o.gap ?? 6, depthWrite: false, worldUnits: false });
   m.resolution.set(mapEl.clientWidth || 1, mapEl.clientHeight || 1);
   lineMats.add(m);
   const l = new Line2(g, m);
@@ -1131,24 +1097,24 @@ function buildRoute(ac) {
   const L = ac.leg, group = new THREE.Group();
   const ret = L.kind === 'return' || L.kind === 'land';
   const baseCol = ret ? 0x8A94A1 : 0x3CC8FF;
-  const planned = fatLine(L.pts, { color: baseCol, width: 1.4, opacity: ret ? .35 : .42, dashed: L.rerouted, dash: 22, gap: 16 });
+  const planned = fatLine(L.pts, { color: baseCol, width: 1.6, opacity: ret ? .4 : .55, dashed: L.rerouted, dash: 8, gap: 6 });
   const done = fatLine(L.pts, { color: 0x6B7480, width: 2, opacity: .7 });
-  const rem = fatLine(L.pts, { color: ret ? 0xBAC3CE : 0x3CC8FF, width: 3.2, opacity: 1, reverse: true, dashed: L.rerouted, dash: 26, gap: 14, order: 4 });
-  const flow = fatLine(L.pts, { color: 0xffffff, width: 2.4, opacity: .55, reverse: true, dashed: true, dash: 7, gap: 46, order: 4 });
-  const groundPts = L.pts.map(v => new THREE.Vector3(v.x, terrainH(v.x, v.z) + 2, v.z));
+  const rem = fatLine(L.pts, { color: ret ? 0xBAC3CE : 0x3CC8FF, width: 3.2, opacity: 1, reverse: true, dashed: L.rerouted, dash: 9, gap: 5, order: 4 });
+  const flow = fatLine(L.pts, { color: 0xffffff, width: 2.4, opacity: .55, reverse: true, dashed: true, dash: 2.5, gap: 16, order: 4 });
+  const groundPts = L.pts.map(v => new THREE.Vector3(v.x, terrainH(v.x, v.z) + .6, v.z));
   const shadow = fatLine(groundPts, { color: baseCol, width: 1.2, opacity: .16, order: 2 });
   let blocked = null;
-  if (L.blocked) blocked = fatLine(L.blocked, { color: 0xFF5A5F, width: 1.6, opacity: .7, dashed: true, dash: 16, gap: 14 });
+  if (L.blocked) blocked = fatLine(L.blocked, { color: 0xFF5A5F, width: 1.6, opacity: .7, dashed: true, dash: 6, gap: 5 });
   const end = L.pts[L.N];
   const destMat = new THREE.MeshBasicMaterial({ color: baseCol, transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide });
-  const dest = new THREE.Group(); dest.position.set(end.x, terrainH(end.x, end.z) + 1.6, end.z);
+  const dest = new THREE.Group(); dest.position.set(end.x, terrainH(end.x, end.z) + .5, end.z); dest.userData.k = .35;
   const dring = new THREE.Mesh(destGeo.ring, destMat), ddot = new THREE.Mesh(destGeo.dot, destMat);
   const pulseMat = new THREE.MeshBasicMaterial({ color: baseCol, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
   const pulse = new THREE.Mesh(destGeo.pulse, pulseMat);
   const beamMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, uniforms: { uC: { value: new THREE.Color(baseCol) }, uA: { value: 0 } },
     vertexShader: 'varying float vY; void main(){ vY = position.y; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }',
     fragmentShader: 'uniform vec3 uC; uniform float uA; varying float vY; void main(){ gl_FragColor = vec4(uC, (1.-vY)*.7*uA); }' });
-  const beam = new THREE.Mesh(destGeo.beam, beamMat); beam.scale.set(1, 240, 1);
+  const beam = new THREE.Mesh(destGeo.beam, beamMat); beam.scale.set(1, 170, 1);
   dest.add(dring, ddot, pulse, beam);
   group.add(planned, done, rem, flow, shadow, dest);
   if (blocked) group.add(blocked);
@@ -1171,20 +1137,26 @@ function syncRoutes() {
 function buildHubs() {
   for (const p of Object.values(PLACES)) {
     if (!p.hub) continue;
-    const m = new THREE.Mesh(new THREE.RingGeometry(52, 56, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8A94A1, transparent: true, opacity: .4, depthWrite: false }));
-    m.position.set(p.x, terrainH(p.x, p.z) + 1.4, p.z); scene.add(m);
+    const m = new THREE.Mesh(new THREE.RingGeometry(12, 13.2, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8A94A1, transparent: true, opacity: .4, depthWrite: false }));
+    m.position.set(p.x, terrainH(p.x, p.z) + .5, p.z); scene.add(m);
   }
 }
 
 /* ─── controls + camera choreography ─── */
 const controls = new MapControls(camera, mapEl);
 controls.enableDamping = true; controls.dampingFactor = .08;
-controls.minDistance = 160; controls.maxDistance = 7000;
+controls.minDistance = 25; controls.maxDistance = 90000;
 controls.maxPolarAngle = 1.32; controls.zoomSpeed = 1.1; controls.panSpeed = 1.1; controls.rotateSpeed = .6;
 controls.zoomToCursor = true;
 controls.target.set(60, 0, -60);
 controls.listenToKeyEvents(mapEl);
 controls.keyPanSpeed = 22;
+const VIEWS = {
+  city: { target: new THREE.Vector3(-60, 0, -120), dist: 2700, polar: .92, azim: -.38 },
+  country: { target: new THREE.Vector3(5200, 0, 7600), dist: 70000, polar: .62, azim: -.12 },
+};
+VIEWS.city.target.y = terrainH(-60, -120);
+function goView(k, dur = 2200) { CAM.follow = false; flyTo({ ...VIEWS[k], dur }); }
 
 const CAM = { tween: null, follow: false, mode2d: false, scaleAnim: null, cityScale: 1 };
 function sph(target, r, phi, theta) { return new THREE.Vector3(r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.cos(theta)).add(target); }
@@ -1213,13 +1185,17 @@ function stepCamera(dtReal) {
     controls.target.add(d); camera.position.add(d);
   }
   controls.update();
+  // near/far + fog track the zoom so both country and street level render cleanly
+  const r = camera.position.distanceTo(controls.target);
+  camera.near = clamp(r * .004, .3, 400); camera.far = Math.max(8000, r * 12); camera.updateProjectionMatrix();
+  scene.fog.near = r * 1.4; scene.fog.far = r * 6;
 }
 function focusAircraft(id, { chase = false, follow = true } = {}) {
   const ac = byId(id); if (!ac) return;
   const st = camState();
   const target = new THREE.Vector3(ac.shown.x, ac.shown.y * airGroup.scale.y, ac.shown.z);
-  if (chase) flyTo({ target, dist: 900, polar: 1.0, azim: -ac.heading * Math.PI / 180 + .55, dur: 1500, followId: follow ? id : null });
-  else flyTo({ target, dist: Math.min(st.r, 2300), polar: Math.min(st.p, 1.05), dur: 1100, followId: follow ? id : null });
+  if (chase) flyTo({ target, dist: 240, polar: 1.0, azim: -ac.heading * Math.PI / 180 + .55, dur: 1500, followId: follow ? id : null });
+  else flyTo({ target, dist: clamp(st.r, 260, 900), polar: Math.min(st.p, 1.05), dur: 1300, followId: follow ? id : null });
   CAM.follow = follow;
 }
 function set2D(on) {
@@ -1228,7 +1204,7 @@ function set2D(on) {
   controls.enableRotate = !on;
   controls.minPolarAngle = 0; controls.maxPolarAngle = on ? 0.0001 : 1.32;
   const st = camState();
-  if (on) flyTo({ polar: 0.0001, azim: 0, dist: Math.max(st.r, 1400), dur: 900 });
+  if (on) flyTo({ polar: 0.0001, azim: 0, dist: Math.max(st.r, 600), dur: 900 });
   else flyTo({ polar: 1.0, azim: -.42, dur: 900 });
   const b = $('#modeBadge'); b.textContent = on ? '2D · PLAN VIEW · NORTH UP' : '3D · PERSPECTIVE'; b.classList.add('show');
   clearTimeout(set2D.t); set2D.t = setTimeout(() => b.classList.remove('show'), 1800);
@@ -1284,13 +1260,13 @@ function toScreen(v, out = {}) {
 }
 
 /* ─── live camera feed: a second renderer looking through the selected aircraft ─── */
-const pov = { renderer: new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' }), cam: new THREE.PerspectiveCamera(56, 16 / 9, 1, 7000), el: null, frame: 0, w: 0, h: 0 };
+const pov = { renderer: new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' }), cam: new THREE.PerspectiveCamera(56, 16 / 9, .2, 3000), el: null, frame: 0, w: 0, h: 0 };
 pov.renderer.setPixelRatio(1);
 pov.renderer.domElement.setAttribute('aria-hidden', 'true');
 const camEl = $('#camTpl').content.firstElementChild.cloneNode(true);
 $('#camSlotOv').append(camEl);
 camEl.prepend(pov.renderer.domElement);
-const povFog = new THREE.Fog(0x0B0F14, 500, 3600);
+const povFog = new THREE.Fog(0x0B0F14, 90, 900);
 function renderPOV() {
   if (!UI.sel || !camEl.isConnected || !camEl.offsetParent) return;
   const ac = byId(UI.sel);
@@ -1299,14 +1275,14 @@ function renderPOV() {
   if (r.bottom < 0 || r.top > innerHeight || r.width < 10) return;
   const w = Math.round(r.width), h = Math.round(r.height);
   if (w !== pov.w || h !== pov.h) { pov.w = w; pov.h = h; pov.renderer.setSize(w, h, false); pov.cam.aspect = w / h; pov.cam.updateProjectionMatrix(); }
-  const p = ac.pos.clone(); p.y = p.y * airGroup.scale.y - 1.5;
+  const p = ac.pos.clone(); p.y = p.y * airGroup.scale.y - .3;
   const hd = ac.heading * Math.PI / 180;
   pov.cam.position.copy(p);
-  pov.cam.lookAt(p.x + Math.sin(hd) * 120, p.y - 62, p.z - Math.cos(hd) * 120);
+  pov.cam.lookAt(p.x + Math.sin(hd) * 50, p.y - 28, p.z - Math.cos(hd) * 50);
   pov.cam.rotateZ(Math.sin(SIM.t * .4 + ac.seed) * .012);
   const mk = markers.get(ac.id);
   mk.g.visible = false; mk.drop.visible = false; mk.shadow.visible = false;
-  for (const [id, m] of markers) if (id !== ac.id) m.g.scale.setScalar(Math.max(1.4, m.g.position.distanceTo(pov.cam.position) * .0075));
+  for (const [id, m] of markers) if (id !== ac.id) m.g.scale.setScalar(Math.max(.3, m.g.position.distanceTo(pov.cam.position) * .0075));
   lineMats.forEach(m => m.resolution.set(w, h));
   const fog = scene.fog; scene.fog = povFog; scene.background.setHex(0x0B0F14);
   pov.renderer.render(scene, pov.cam);
@@ -1315,35 +1291,18 @@ function renderPOV() {
   mk.g.visible = true; mk.drop.visible = true; mk.shadow.visible = true;
 }
 
-/* ─── aircraft identity viewer (detail page) ─── */
-const viewer = (() => {
-  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  r.setPixelRatio(Math.min(devicePixelRatio, 2));
-  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
-  r.domElement.setAttribute('aria-hidden', 'true');
-  const s = new THREE.Scene();
-  const pm = new THREE.PMREMGenerator(r);
-  s.environment = pm.fromScene(new RoomEnvironment(r), .04).texture;
-  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 4);
-  const rim = new THREE.DirectionalLight(0x3CC8FF, 2.4); rim.position.set(-4, 2, -5);
-  s.add(key, rim, new THREE.AmbientLight(0x8899aa, .4));
-  const cam = new THREE.PerspectiveCamera(28, 2, .1, 100);
-  cam.position.set(0, 3.1, 9.4); cam.lookAt(0, -.15, 0);
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(3.2, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTex([[0, 'rgba(0,0,0,.75)'], [1, 'rgba(0,0,0,0)']]), transparent: true, depthWrite: false }));
-  shadow.position.y = -1.55; s.add(shadow);
-  const holder = new THREE.Group(); s.add(holder);
-  let model = null, props = [], type = null, rotY = -.6, vel = 0, drag = null, el = null, w = 0, h = 0;
-  function build(t) {
-    if (model) { holder.remove(model); model.traverse(o => { o.geometry?.dispose(); }); }
-    type = t; props = [];
+/* ─── aircraft models: the same geometry drives the identity viewer and the map markers ─── */
+function droneModel(t, std) {
+  const MAT = o => std ? new THREE.MeshStandardMaterial(o) : new THREE.MeshLambertMaterial({ color: o.color, emissive: o.emissive ?? 0x000000, emissiveIntensity: o.emissiveIntensity ?? 1 });
+  const props = [];
     const g = new THREE.Group();
-    const shell = new THREE.MeshStandardMaterial({ color: 0xE9EDF2, metalness: .25, roughness: .32 });
-    const carbon = new THREE.MeshStandardMaterial({ color: 0x1B2028, metalness: .5, roughness: .45 });
-    const acc = new THREE.MeshStandardMaterial({ color: 0x3CC8FF, emissive: 0x3CC8FF, emissiveIntensity: 2.2 });
-    const red = new THREE.MeshStandardMaterial({ color: 0xFF5A5F, emissive: 0xFF5A5F, emissiveIntensity: 2 });
-    const grn = new THREE.MeshStandardMaterial({ color: 0x3DDC97, emissive: 0x3DDC97, emissiveIntensity: 2 });
+    const shell = MAT({ color: 0xE9EDF2, metalness: .25, roughness: .32 });
+    const carbon = MAT({ color: 0x1B2028, metalness: .5, roughness: .45 });
+    const acc = MAT({ color: 0x3CC8FF, emissive: 0x3CC8FF, emissiveIntensity: 2.2 });
+    const red = MAT({ color: 0xFF5A5F, emissive: 0xFF5A5F, emissiveIntensity: 2 });
+    const grn = MAT({ color: 0x3DDC97, emissive: 0x3DDC97, emissiveIntensity: 2 });
     const disc = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .07, side: THREE.DoubleSide, depthWrite: false });
-    const blade = new THREE.MeshStandardMaterial({ color: 0x0E1217, metalness: .2, roughness: .6 });
+    const blade = MAT({ color: 0x0E1217, metalness: .2, roughness: .6 });
     const rotor = (x, y, z, R = .62) => {
       const m = new THREE.Mesh(new THREE.CylinderGeometry(.13, .15, .22, 20), carbon); m.position.set(x, y, z); g.add(m);
       const pg = new THREE.Group(); pg.position.set(x, y + .15, z);
@@ -1392,6 +1351,31 @@ const viewer = (() => {
       navLights([[-3.2, .2, -.1], [3.2, .2, -.1]]);
       g.scale.setScalar(.82);
     }
+  return { g, props, mats: { shell, carbon } };
+}
+
+/* ─── aircraft identity viewer (detail page) ─── */
+const viewer = (() => {
+  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  r.setPixelRatio(Math.min(devicePixelRatio, 2));
+  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+  r.domElement.setAttribute('aria-hidden', 'true');
+  const s = new THREE.Scene();
+  const pm = new THREE.PMREMGenerator(r);
+  s.environment = pm.fromScene(new RoomEnvironment(r), .04).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 4);
+  const rim = new THREE.DirectionalLight(0x3CC8FF, 2.4); rim.position.set(-4, 2, -5);
+  s.add(key, rim, new THREE.AmbientLight(0x8899aa, .4));
+  const cam = new THREE.PerspectiveCamera(28, 2, .1, 100);
+  cam.position.set(0, 3.1, 9.4); cam.lookAt(0, -.15, 0);
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(3.2, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTex([[0, 'rgba(0,0,0,.75)'], [1, 'rgba(0,0,0,0)']]), transparent: true, depthWrite: false }));
+  shadow.position.y = -1.55; s.add(shadow);
+  const holder = new THREE.Group(); s.add(holder);
+  let model = null, props = [], type = null, rotY = -.6, vel = 0, drag = null, el = null, w = 0, h = 0;
+  function build(t) {
+    if (model) { holder.remove(model); model.traverse(o => { o.geometry?.dispose(); }); }
+    type = t; props = [];
+    const m = droneModel(t, true); props = m.props; const g = m.g;
     model = g; holder.add(g);
   }
   function attach(container) { el = container; if (r.domElement.parentNode !== el) el.prepend(r.domElement); }
@@ -1418,7 +1402,7 @@ const viewer = (() => {
    4 · UI state + shell
    ════════════════════════════════════════════════════════════════════ */
 const app = $('#app');
-const UI = { view: 'overview', module: null, tab: null, sel: 'D/1M2KS', hover: null, filter: null, dfilter: 'all', layers: { labels: true, districts: true, corridors: true, zones: true, routes: 'all' }, pop: null, ready: false };
+const UI = { view: 'overview', module: null, tab: null, sel: 'D/1M2KS', popup: false, hover: null, filter: null, dfilter: 'all', layers: { labels: true, districts: true, corridors: true, zones: true, routes: 'all' }, pop: null, ready: false };
 const srEl = $('#sr');
 function sr(msg) { srEl.textContent = ''; setTimeout(() => srEl.textContent = msg, 30); }
 function toast(title, sub = '', sev = 'cyan', ms = 4200) {
@@ -1551,7 +1535,7 @@ function setView(v, arg, tab) {
   if (v === 'detail') {
     setNav('missions');
     const changed = UI.sel !== arg || prev !== 'detail';
-    UI.sel = arg;
+    UI.sel = arg; UI.popup = true;
     $('#camSlotDt').append(camEl);
     viewer.attach($('#visual'));
     if (viewer.type !== byId(arg).type) viewer.build(byId(arg).type);
@@ -1572,8 +1556,9 @@ function setView(v, arg, tab) {
 }
 
 /* ─── selection: map aircraft ↔ telemetry ↔ selected card ↔ detail ─── */
-function select(id, { fly = true, follow = true } = {}) {
+function select(id, { fly = true, follow = true, popup = true } = {}) {
   if (!byId(id)) return;
+  UI.popup = popup;
   const changed = UI.sel !== id;
   UI.sel = id;
   if (UI.view === 'detail' && changed) { location.hash = `#/delivery/${encodeURIComponent(id)}`; return; }
@@ -1582,7 +1567,7 @@ function select(id, { fly = true, follow = true } = {}) {
   renderSelection();
   if (changed) { const ac = byId(id); sr(`Selected ${id}, ${statusOf(ac).label}${ac.leg && flying(ac) ? `, ${routeText(ac)}` : ''}`); }
 }
-function clearSelection() { UI.sel = null; CAM.follow = false; dirty.sel = true; dirty.lists = true; renderSelection(); sr('Selection cleared'); }
+function clearSelection() { UI.sel = null; UI.popup = false; CAM.follow = false; dirty.sel = true; dirty.lists = true; renderSelection(); sr('Selection cleared'); }
 
 function renderSelection() {
   const ac = UI.sel && byId(UI.sel);
@@ -1631,8 +1616,8 @@ function applyFilter(k) {
     chip.hidden = false;
     chip.innerHTML = `Showing ${FILTER_NAME[UI.filter]} aircraft · ${n}${UI.filter === 'maint' ? `<a class="chip-link" href="#/fleet/maint">Open maintenance ${icon('chev')}</a>` : ''}<button aria-label="Clear filter">${icon('x')}</button>`;
     CAM.follow = false;
-    if (UI.filter === 'idle') flyTo({ target: new THREE.Vector3(30, 30, 0), dist: 3300, polar: .9, dur: 1200 });
-    if (UI.filter === 'maint' && list[0]) { select(list[0].id, { fly: false }); flyTo({ target: list[0].pos.clone(), dist: 700, polar: .95, dur: 1300 }); }
+    if (UI.filter === 'idle') { const a = PLACES.sweifieh, b = PLACES.tabarbour; flyTo({ target: new THREE.Vector3((a.x + b.x) / 2, terrainH(a.x, a.z), (a.z + b.z) / 2), dist: 1500, polar: .9, dur: 1200 }); }
+    if (UI.filter === 'maint' && list[0]) { select(list[0].id, { fly: false, popup: true }); flyTo({ target: list[0].pos.clone(), dist: 120, polar: .95, dur: 1600 }); }
   } else chip.hidden = true;
   sr(UI.filter ? `Map filtered to ${FILTER_NAME[UI.filter]} aircraft` : 'Map filter cleared');
   dirty.lists = true; renderMetrics(); renderLists();
@@ -1770,7 +1755,7 @@ function altitudeChart(el, ac, { big = false } = {}) {
   for (let i = 0; i <= 40; i++) { const u = lerp(u0, 1, i / 40); fut.push(`${X(t0 + u * (t1 - t0)).toFixed(1)},${Y(altAt(L, u)).toFixed(1)}`); }
   const ticksY = [0, 60, 120, 180];
   const nT = W > 360 ? 5 : 3, ticksX = Array.from({ length: nT }, (_, i) => t0 + (t1 - t0) * i / (nT - 1));
-  const c = Math.min(.2, 170 / L.len), d = Math.min(.2, 200 / L.len);
+  const c = Math.min(.2, 60 / L.len), d = Math.min(.2, 70 / L.len);
   const ph = [['Climb', c / 2], ['Cruise', .5], ['Descent', 1 - d / 2]];
   const id = 'ag' + (big ? 'b' : 's');
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
@@ -1965,7 +1950,8 @@ const mkLbl = (cls, html, x, z, p) => { const l = document.createElement('div');
 const placeLabels = [
   ...Object.values(PLACES).map(p => mkLbl(`lbl place ${p.hub ? 'hub' : ''}`, `${p.hub ? p.label : p.name}<span class="ar" lang="ar">${p.ar}</span>`, p.x, p.z, p)),
   ...LANDMARKS.map(l => mkLbl('lbl place lm', `${l.name}<span class="ar" lang="ar">${l.ar}</span>`, l.x, l.z, { lm: true })),
-  ...CIRCLES.filter((c, i) => i % 2 === 0 || i === 7).map(([n, x, z]) => mkLbl('lbl place circ', `${n} Circle`, x, z, { circ: true })),
+  ...CIRCLES.map(([n, x, z]) => mkLbl('lbl place circ', `${n} Circle`, x, z, { circ: true })),
+  ...CITIES.map(c => mkLbl(`lbl place city r${c.rank}`, `${c.name}<span class="ar" lang="ar">${c.ar}</span>`, c.x, c.z, { city: c })),
 ];
 const zoneLabel = Object.assign(document.createElement('div'), { className: 'lbl zone', textContent: `${ZONE.id} · ${ZONE.name} · Restricted` }); labelsEl.append(zoneLabel);
 const destLabel = Object.assign(document.createElement('div'), { className: 'lbl dest' }); labelsEl.append(destLabel);
@@ -1978,7 +1964,7 @@ function updateOverlay(now) {
     const l = acLabels.get(ac.id), mk = markers.get(ac.id);
     const s = toScreen(ac.shown, ac._scr || (ac._scr = {}));
     const vis = s.on && mk.g.visible && s.x > -40 && s.x < SAFE.w + 40 && s.y > -40 && s.y < SAFE.h + 40;
-    if (!vis || !showLabels) { l.style.opacity = 0; continue; }
+    if (!vis || !showLabels || (camera.position.distanceTo(controls.target) > 26000 && ac.id !== UI.sel)) { l.style.opacity = 0; continue; }
     const ind = indicatorOf(ac);
     const cls = `lbl ac ${ac.id === UI.sel ? 'sel' : ''} ${ac.id === UI.hover ? 'hov' : ''} ${visibleByFilter(ac) ? '' : 'dim'} ${SEV_RANK[ind] >= 2 ? ind : ''} ${ac.sig === 0 && flying(ac) ? 'lost' : ''}`;
     if (l._c !== cls) { l.className = cls; l._c = cls; }
@@ -1987,12 +1973,15 @@ function updateOverlay(now) {
     l.style.opacity = '';
     place(l, s.x + 14, s.y - 9);
   }
+  const camR = camera.position.distanceTo(controls.target);
   for (const pl of placeLabels) {
-    const s = toScreen(pl.v, scr);
-    pl.l.style.opacity = s.on && UI.layers.districts && showLabels ? '' : 0;
+    const s = toScreen(pl.v, scr), p = pl.p;
+    const zoomOk = p.city ? camR > (p.city.rank <= 1 ? 4500 : p.city.rank === 2 ? 9000 : 16000) && !(p.city.name === 'Amman' && camR < 9000)
+      : p.circ ? camR < 1300 : p.lm ? camR < 1900 : p.far ? camR < 14000 : camR < 9000;
+    pl.l.style.opacity = s.on && zoomOk && UI.layers.districts && showLabels ? '' : 0;
     place(pl.l, s.x - pl.l.offsetWidth / 2, s.y + (pl.p.hub ? 14 : pl.p.lm ? -22 : 4));
   }
-  { const s = toScreen(new THREE.Vector3(ZONE.x, ZONE.ceil + terrainH(ZONE.x, ZONE.z), ZONE.z), scr); zoneLabel.style.opacity = s.on && UI.layers.zones ? '' : 0; place(zoneLabel, s.x - zoneLabel.offsetWidth / 2, s.y - 24); }
+  { const s = toScreen(new THREE.Vector3(ZONE.x, ZONE.ceil * AIRK + terrainH(ZONE.x, ZONE.z), ZONE.z), scr); zoneLabel.style.opacity = s.on && UI.layers.zones && camR < 12000 ? '' : 0; place(zoneLabel, s.x - zoneLabel.offsetWidth / 2, s.y - 24); }
   // selected destination
   const ac = UI.sel && byId(UI.sel);
   if (ac && flying(ac) && ac.leg && ac.leg.kind !== 'land') {
@@ -2000,11 +1989,11 @@ function updateOverlay(now) {
     const toP = PLACES[ac.leg.to];
     const html = `${toP.hub ? toP.label : toP.name}<small>${fmtClock(ac.leg.depart + ac.leg.dur)}</small>`;
     if (destLabel._t !== html) { destLabel.innerHTML = html; destLabel._t = html; }
-    destLabel.style.opacity = s.on ? '' : 0; place(destLabel, s.x + 14, s.y - 10);
+    destLabel.style.opacity = s.on && camR < 12000 ? '' : 0; place(destLabel, s.x + 14, s.y - 10);
   } else destLabel.style.opacity = 0;
 
   // telemetry card spatially attached to the selected aircraft
-  if (!ac || app.dataset.view === 'module') { tele.style.opacity = 0; tele.style.pointerEvents = 'none'; leaderPath.setAttribute('d', ''); leaderDot.style.opacity = leaderPing.style.opacity = 0; }
+  if (!ac || !UI.popup || app.dataset.view === 'module') { tele.style.opacity = 0; tele.style.pointerEvents = 'none'; leaderPath.setAttribute('d', ''); leaderDot.style.opacity = leaderPing.style.opacity = 0; }
   else {
     const s = ac._scr;
     const w = tele.offsetWidth, h = tele.offsetHeight, m = 12;
@@ -2078,12 +2067,13 @@ function updateMarkers(now, dt) {
     mk.selK = lerp(mk.selK, sel ? 1 : 0, reduce ? 1 : .15); mk.hover = lerp(mk.hover, hov ? 1 : 0, reduce ? 1 : .2);
     const wp = p.clone(); wp.y *= airGroup.scale.y;
     const d = wp.distanceTo(camPos);
-    const s = d * .0095 * (1 + mk.selK * .5 + mk.hover * .15) * (flying(ac) ? 1 : .72);
+    const s = d * .0062 * (1 + mk.selK * .5 + mk.hover * .15) * (flying(ac) ? 1 : .72);
     mk.g.scale.setScalar(s);
     const ind = indicatorOf(ac);
     mk.ringMat.color.setHex(SEV_HEX[ind]);
     mk.ringMat.opacity = .55 + mk.selK * .4;
-    mk.bodyMat.color.setHex(sel ? 0xFFFFFF : flying(ac) ? 0xC9D2DC : 0x8A94A1);
+    mk.bodyMat.color.setHex(sel ? 0xFFFFFF : flying(ac) ? 0xD9DFE6 : 0x8A94A1);
+    if (flying(ac) && !reduce) mk.props.forEach((p, i) => { if (p.axis === 'z') p.rotation.z += dt * 30; else p.rotation.y += dt * (i % 2 ? 36 : -36); });
     mk.bodyMat.opacity = mk.rotorMat.opacity = mk.noseMat.opacity = lost ? (reduce ? .35 : .25 + .2 * Math.sin(now / 250)) : 1;
     mk.noseMat.color.setHex(sel ? 0x3CC8FF : 0x7FDBFF);
     mk.ring.visible = !lost; mk.dashed.visible = lost;
@@ -2124,7 +2114,7 @@ function updateRoutes(now, dt) {
     v.planned.material.opacity = UI.hover === ac.id ? .8 : (v.ret ? .32 : .42);
     if (v.blocked) v.blocked.visible = UI.layers.zones && (sel || UI.layers.routes === 'all');
     v.destMat.opacity = sel ? .95 : .35; v.destMat.color.setHex(sel ? col : v.ret ? 0x8A94A1 : 0x3CC8FF);
-    v.dest.scale.setScalar(sel ? 1.6 : 1);
+    v.dest.scale.setScalar((sel ? 1.6 : 1) * .35);
     const pk = reduce ? .5 : (now / 1600) % 1;
     v.pulse.scale.setScalar(1 + pk * 3); v.pulseMat.opacity = sel ? (1 - pk) * .8 : 0; v.pulseMat.color.setHex(col);
     v.beamMat.uniforms.uA.value = sel ? 1 : 0; v.beamMat.uniforms.uC.value.setHex(col);
@@ -2145,7 +2135,7 @@ function segDist2(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; co
 function pick(x, y, dronesOnly = false) {
   let best = null, bd = isMobile() ? 26 : 20;
   for (const ac of fleet) { if (!visibleByFilter(ac) || !ac._scr?.on) continue; const d = Math.hypot(ac._scr.x - x, ac._scr.y - y); if (d < bd) { bd = d; best = { kind: 'ac', id: ac.id }; } }
-  if (best || dronesOnly) return best;
+  return best;
   for (const ac of fleet) {
     const v = routeVis.get(ac.id); if (!v || !v.group.visible) continue;
     const e = toScreen(ac.leg.pts[ac.leg.N], {}); if (e.on && Math.hypot(e.x - x, e.y - y) < 16) return { kind: 'dest', id: ac.id };
@@ -2176,33 +2166,11 @@ function openPop(anchor, html, extra = {}) {
 }
 function onMapClick(x, y) {
   const h = pick(x, y);
-  if (!h) {
-    // empty map: release the camera and the selection
-    CAM.follow = false; CAM.tween = null;
-    if (UI.pop) { closePop(); return; }
-    if (UI.view === 'overview' && UI.sel) clearSelection();
-    return;
-  }
-  if (h.kind === 'ac') { closePop(); select(h.id, { fly: true }); return; }
-  const ac = h.id && byId(h.id), L = ac?.leg;
-  if (h.kind === 'dest') {
-    const to = PLACES[L.to];
-    openPop(L.pts[L.N], `<h4>${icon('pin')}${esc(to.hub ? to.label : to.name)}</h4><div class="sub">${L.kind === 'delivery' ? esc(to.addr.join(', ')) : 'Fleet hub'}</div>
-      <dl><dt>Delivery</dt><dd>${L.del || '—'}</dd><dt>Aircraft</dt><dd>${ac.id}</dd><dt>Drop point</dt><dd>${esc(to.drop || 'Pad')}</dd><dt>ETA</dt><dd>${fmtClock(L.depart + L.dur)}</dd><dt>Coordinates</dt><dd style="font-size:10.5px">${fmtCoord(to.x, to.z, 'dd')}</dd></dl>
-      <div class="acts"><button class="chipbtn" data-pa="select|${ac.id}">Select aircraft</button>${L.kind !== 'return' ? `<button class="chipbtn primary" data-pa="open|${ac.id}">Open delivery ${icon('chev')}</button>` : ''}</div>`);
-  } else if (h.kind === 'route') {
-    const maxAlt = Math.max(...L.pts.map(p => p.y));
-    openPop(L.pts[h.i], `<h4>${icon('route')}${esc(routeText(ac))}</h4><div class="sub">${ac.id} · ${L.rerouted ? 'Rerouted around ' + ZONE.id : L.kind === 'return' ? 'Return leg' : 'Active route'}</div>
-      <dl><dt>Distance</dt><dd>${fmtDist(legKm(L))}</dd><dt>Completed</dt><dd>${Math.round(ac.p * 100)}%</dd><dt>Cruise</dt><dd>${L.cruise} m · max ${Math.round(maxAlt)} m</dd><dt>Corridor</dt><dd>${L.corridor.id}</dd><dt>Duration</dt><dd>${mins(L.dur)} min${L.delay >= 60 ? ` (+${mins(L.delay)})` : ''}</dd></dl>
-      <div class="acts"><button class="chipbtn primary" data-pa="select|${ac.id}">Select aircraft</button></div>`);
-  } else if (h.kind === 'zone') {
-    openPop(new THREE.Vector3(ZONE.x, ZONE.ceil, ZONE.z), `<h4 style="color:#FFB3B5">${icon('shield')}${ZONE.id} · Restricted</h4><div class="sub">${ZONE.name} · permanent royal no-fly zone</div>
-      <dl><dt>Radius</dt><dd>${(ZONE.r * KM_PER_U * 1000).toFixed(0)} m</dd><dt>Ceiling</dt><dd>${ZONE.ceil} m AGL</dd><dt>Active reroutes</dt><dd>${fleet.filter(a => flying(a) && a.leg?.rerouted).length}</dd><dt>Authority</dt><dd>Royal Hashemite Court</dd></dl>`);
-  } else if (h.kind === 'corridor') {
-    const n = fleet.filter(a => flying(a) && a.leg?.corridor.id === h.c.id).length;
-    openPop(h.at, `<h4>${icon('route')}${esc(h.c.name)}</h4><div class="sub">Shared air corridor · 120–170 m band</div>
-      <dl><dt>Aircraft using</dt><dd>${n}</dd><dt>Separation</dt><dd>60 m lateral</dd><dt>Direction</dt><dd>Bidirectional</dd><dt>Status</dt><dd style="color:var(--green)">Open</dd></dl>`, { corridor: h.c.id });
-  }
+  closePop();
+  if (h?.kind === 'ac') { select(h.id, { fly: true, follow: true, popup: true }); return; }
+  // empty map: hide the popup, stop following and release the selection
+  CAM.follow = false; CAM.tween = null; UI.popup = false;
+  if (UI.view === 'overview' && UI.sel) clearSelection();
 }
 let down = null;
 mapEl.addEventListener('pointerdown', e => {
@@ -2233,12 +2201,27 @@ mapEl.addEventListener('contextmenu', e => e.preventDefault());
 // overlay UI inside the map must not start a map drag (MapControls captures the pointer)
 ['.map-ctrl', '#tele', '#mapPop', '#layersPop', '#filterChip', '#legend'].forEach(s => { $(s).addEventListener('pointerdown', e => e.stopPropagation()); $(s).addEventListener('wheel', e => e.stopPropagation(), { passive: true }); });
 
+/* ─── Jordan inset, drawn from the real border; click to switch country ↔ city ─── */
+function buildInset() {
+  const B = GEO.border, xs = B.map(p => p[0]), zs = B.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs), k = 100 / (x1 - x0), H = (z1 - z0) * k;
+  const T = (x, z) => `${((x - x0) * k).toFixed(1)} ${((z - z0) * k).toFixed(1)}`;
+  const cities = CITIES.filter(c => c.rank <= 2 && c.name !== 'Amman').map(c => { const [x, y] = T(c.x, c.z).split(' '); return `<circle class="ct" cx="${x}" cy="${y}" r="1.1"/><text x="${+x + 2.4}" y="${+y + 1.4}">${c.name}</text>`; }).join('');
+  const [ax, ay] = T(0, 0).split(' ');
+  $('#inset svg').outerHTML = `<svg viewBox="-2 -2 104 ${(H + 4).toFixed(0)}" aria-hidden="true"><path class="jo" d="M${B.map(p => T(...p)).join(' L')} Z"/>${cities}<rect class="vp" id="insetVp" x="0" y="0" width="0" height="0"/><circle class="pulse" cx="${ax}" cy="${ay}" r="5"/><circle class="amm" cx="${ax}" cy="${ay}" r="2.2"/><text x="${+ax + 4.5}" y="${+ay + 1.6}" class="amt">Amman</text></svg>`;
+  const go = () => goView(camera.position.distanceTo(controls.target) > 12000 ? 'city' : 'country');
+  $('#inset').addEventListener('click', go);
+  $('#inset').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+}
+
 /* ─── map controls ─── */
 $('#cIn').addEventListener('click', () => zoomBy(.65));
 $('#cOut').addEventListener('click', () => zoomBy(1.5));
 $('#cLocate').addEventListener('click', () => { if (UI.sel) focusAircraft(UI.sel, { follow: true }); else toast('No aircraft selected', 'Select an aircraft first'); });
 $('#cNorth').addEventListener('click', () => flyTo({ azim: 0, dur: 700 }));
 $('#c2d').addEventListener('click', () => set2D(!CAM.mode2d));
+$('#cCountry').addEventListener('click', () => goView('country'));
+$('#cCity').addEventListener('click', () => goView('city'));
 $('#cExpand').addEventListener('click', () => toggleExpand());
 function toggleExpand(force) {
   const on = force ?? !app.classList.contains('map-only');
@@ -2405,7 +2388,7 @@ const MODBIND = {
       const [act, id] = b.dataset.m.split('|'), ac = byId(id);
       if (act === 'done') confirmDialog('Return to service?', `Sign off ${ac.maint.wo} for ${ac.id}. The aircraft becomes available for dispatch.`, 'Return to service', 'primary', () => finishMaintenance(ac, true));
       if (act === 'start') confirmDialog('Ground for service?', `${ac.id} (health ${ac.health}) is taken out of the dispatch pool for a scheduled inspection.`, 'Ground now', 'primary', () => startMaintenance(ac, 'Scheduled inspection · props and motors'));
-      if (act === 'locate') { location.hash = '#/overview'; setTimeout(() => { select(id, { fly: false }); flyTo({ target: ac.pos.clone(), dist: 700, polar: .95, dur: 1300 }); }, 30); }
+      if (act === 'locate') { location.hash = '#/overview'; setTimeout(() => { select(id, { fly: false }); flyTo({ target: ac.pos.clone(), dist: 120, polar: .95, dur: 1600 }); }, 30); }
     }));
     el.querySelectorAll('tr[data-ac]').forEach(tr => {
       const go = e => { if (e.target.closest('a')) return; location.hash = '#/overview'; setTimeout(() => select(tr.dataset.ac, { fly: true }), 30); };
@@ -2493,7 +2476,7 @@ function searchIndex() {
       items.push({ g: 'Routes', ic: 'route', t: routeText(ac), s: `${ac.id} · ${fmtDist(legKm(L))}`, hay: routeText(ac), go: () => { location.hash = '#/overview'; setTimeout(() => { select(ac.id); onMapRoute(ac); }, 30); } });
     }
   }
-  for (const [k, p] of Object.entries(PLACES)) items.push({ g: 'Destinations', ic: 'pin', t: p.hub ? p.label : p.name, s: p.addr ? p.addr.join(', ') : 'Fleet hub', hay: `${p.name} ${p.label || ''} ${(p.addr || []).join(' ')}`, go: () => { location.hash = '#/overview'; CAM.follow = false; flyTo({ target: new THREE.Vector3(p.x, 0, p.z), dist: 1300, polar: .95, dur: 1200 }); } });
+  for (const [k, p] of Object.entries(PLACES)) items.push({ g: 'Destinations', ic: 'pin', t: p.hub ? p.label : p.name, s: p.addr ? p.addr.join(', ') : 'Fleet hub', hay: `${p.name} ${p.label || ''} ${(p.addr || []).join(' ')}`, go: () => { location.hash = '#/overview'; CAM.follow = false; flyTo({ target: new THREE.Vector3(p.x, terrainH(p.x, p.z), p.z), dist: p.far ? 900 : 420, polar: .95, dur: 1600 }); } });
   return items;
 }
 function onMapRoute(ac) { const L = ac.leg; onMapClickRoute(ac, Math.floor(L.N * .5)); }
@@ -2541,7 +2524,7 @@ addEventListener('keydown', e => {
     if (modalOpen) { $('#modalRoot')._close(); return; }
     if (!$('#alertMenu').hidden || !$('#userMenu').hidden) { $$('.menu').forEach(m => m.hidden = true); return; }
     if (!$('#layersPop').hidden) { $('#layersPop').hidden = true; return; }
-    if (UI.pop) { closePop(); return; }
+    if (UI.popup && UI.sel) { UI.popup = false; CAM.follow = false; return; }
     if (app.classList.contains('map-only')) { toggleExpand(false); return; }
     if (UI.view === 'module' || UI.view === 'detail') { location.hash = '#/overview'; return; }
     if (UI.sel) clearSelection();
@@ -2613,10 +2596,11 @@ function slowUI() {
 bus.on('fleet', () => { dirty.lists = true; if (UI.view === 'detail') renderDetail(true); if (UI.view === 'module' && UI.module !== 'settings' && !$('#modalRoot')._close) renderModule(); });
 
 let buildings;
-function start() {
+async function start() {
+  if (!GEO) throw new Error('geo-data.js missing');
   initFleet(); seedHistory();
   stepSim(0); for (const ac of fleet) ac.shown.copy(ac.pos);
-  buildGround(); buildings = buildBuildings(); buildCorridors(); buildZone(); buildHubs();
+  buildGround(); buildCorridors(); buildZone(); buildHubs(); buildInset();
   fleet.forEach(makeMarker); syncRoutes();
   compassSVG(); setPaused(false);
   evaluateAlerts(); refreshAlerts();
@@ -2625,11 +2609,18 @@ function start() {
   new ResizeObserver(() => { computeSafe(); slowUI(); }).observe($('#sheet'));
   addEventListener('resize', () => { computeSafe(); if (!isMobile()) sheet.style.removeProperty('--sheet-y'); else setSheet(sheetY); });
   route();
-  // opening shot: settle from high orbit onto the fleet
-  const fin = { target: new THREE.Vector3(-40, 30, -60), dist: 3500, polar: .98, azim: -.42 };
-  if (reduce) { camera.position.copy(sph(fin.target, fin.dist, fin.polar, fin.azim)); controls.target.copy(fin.target); }
-  else { camera.position.copy(sph(fin.target, 6200, .55, -1.1)); controls.target.copy(fin.target); camera.lookAt(fin.target); flyTo({ ...fin, dur: 2600 }); }
-  if (UI.view === 'detail') setTimeout(() => focusAircraft(UI.sel, { chase: true }), 50);
+  // opening shot: the whole kingdom, then down into Amman once the city is built
+  const C = VIEWS.country;
+  camera.position.copy(sph(C.target, C.dist, C.polar, C.azim)); controls.target.copy(C.target); camera.lookAt(C.target);
+  const loading = document.createElement('div'); loading.className = 'map-loading'; loading.innerHTML = '<span class="spin"></span>Building Amman · real terrain and buildings…';
+  mapEl.append(loading);
+  setTimeout(async () => {
+    try { buildings = await buildBuildings(); loading.innerHTML = `${buildings.count.toLocaleString()} buildings · Amman`; }
+    catch (e) { console.error(e); loading.textContent = 'Buildings unavailable in this browser'; }
+    setTimeout(() => loading.classList.add('out'), 1400); setTimeout(() => loading.remove(), 2200);
+    if (UI.view !== 'detail') flyTo({ ...VIEWS.city, dur: reduce ? 1 : 4200 });
+  }, 400);
+  if (UI.view === 'detail') setTimeout(() => focusAircraft(UI.sel, { chase: true }), 900);
   if (isMobile()) setSheet(.62);
   fastUI(); slowUI();
   UI.ready = true;
@@ -2652,11 +2643,10 @@ function start() {
   }
   requestAnimationFrame(loop);
 }
-try { start(); }
-catch (err) {
+start().catch(err => {
   console.error(err);
-  mapEl.insertAdjacentHTML('beforeend', `<div class="empty-state" style="position:absolute;inset:0;display:grid;place-items:center">WebGL is unavailable in this browser. The operations panels still show live fleet data.</div>`);
-}
+  mapEl.insertAdjacentHTML('beforeend', `<div class="empty-state" style="position:absolute;inset:0;display:grid;place-items:center">The 3D map could not start in this browser (WebGL or geodata unavailable). The operations panels still show live fleet data.</div>`);
+});
 
 </script>
 </body>
