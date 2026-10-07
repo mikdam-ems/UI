@@ -537,7 +537,7 @@
     .scn { position: relative; justify-self: end; }
     .scn-btn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 999px; font-weight: 700; font-size: 12.5px; color: var(--ink-2); }
     .scn-btn:hover, .scn.open .scn-btn { color: var(--indigo); }
-    .scn-menu { position: absolute; right: 0; bottom: calc(100% + 8px); width: 250px; padding: 6px; border-radius: 16px; display: none; z-index: 10; }
+    .scn-menu { position: absolute; right: calc(100% + 8px); top: 0; width: 250px; padding: 6px; border-radius: 16px; display: none; z-index: 10; }
     .scn.open .scn-menu { display: grid; }
     .scn-menu small { padding: 8px 10px 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); font-weight: 700; }
     .scn-menu button { display: flex; align-items: center; gap: 10px; text-align: left; border: 0; background: none; padding: 9px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
@@ -683,7 +683,6 @@
       body.sheet-open .toast, body.sheet-open .notice { left: 50%; }
       body.sheet-open .toast { z-index: 40; bottom: auto; top: 12px; }
       .locoff { left: 50%; }
-      .scn-menu { bottom: auto; top: 0; right: calc(100% + 8px); }
       .scn-btn { width: 48px; padding: 0; justify-content: center; }
       .scn-btn span { display: none; }
       .sheet {
