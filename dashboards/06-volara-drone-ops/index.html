@@ -1288,6 +1288,7 @@ const pov = { renderer: new THREE.WebGLRenderer({ antialias: false, powerPrefere
 pov.renderer.setPixelRatio(1);
 pov.renderer.domElement.setAttribute('aria-hidden', 'true');
 const camEl = $('#camTpl').content.firstElementChild.cloneNode(true);
+$('#camSlotOv').append(camEl);
 camEl.prepend(pov.renderer.domElement);
 const povFog = new THREE.Fog(0x0B0F14, 500, 3600);
 function renderPOV() {
@@ -2585,9 +2586,9 @@ function fastUI() {
   for (const k of ['Ov', 'Dt']) { const c = $(`#camConn${k}`); const h = ac ? conn(ac.sig) : ''; if (c._h !== h) { c.innerHTML = h; c._h = h; } }
   camEl.classList.toggle('lost', !!ac && ac.sig === 0 && flying(ac));
   if (ac) {
-    $('#camTr').textContent = `${Math.round(ac.alt)} m · ${Math.round(ac.heading)}°`;
-    $('#camBl').textContent = `${fmtClock(SIM.t, true)} · EO · ${flying(ac) ? 'GIMBAL −30°' : 'ON GROUND'}`;
-    $('#camBr').textContent = ac.id;
+    $('#camTr', camEl).textContent = `${Math.round(ac.alt)} m · ${Math.round(ac.heading)}°`;
+    $('#camBl', camEl).textContent = `${fmtClock(SIM.t, true)} · EO · ${flying(ac) ? 'GIMBAL −30°' : 'ON GROUND'}`;
+    $('#camBr', camEl).textContent = ac.id;
     if (!flying(ac)) camEl.classList.add('lost');
     const ns = !flying(ac) ? `CAMERA STANDBY<br><span style="color:var(--mute);font-weight:500">${ac.state === 'maint' ? 'Aircraft in maintenance' : 'Aircraft on the ground'}</span>` : 'NO SIGNAL<br><span style="color:var(--mute);font-weight:500">Video link lost · retrying</span>';
     const nsEl = $('#camNoSig', camEl); if (nsEl._h !== ns) { nsEl.innerHTML = ns; nsEl._h = ns; }
