@@ -204,9 +204,9 @@ window.EMS_REGISTRY = [
     type: "Dashboard",
     title: "Volara Air Ops",
     industry: "Drone logistics",
-    tags: ["Three.js 3D city", "Live drone camera", "Mission timeline", "2D / 3D map", "Live alerts"],
+    tags: ["Amman, Jordan", "Three.js 3D terrain", "Live drone camera", "Mission timeline", "Bilingual labels"],
     path: "dashboards/06-volara-drone-ops/",
     accent: "#3CC8FF",
-    summary: "Map-first mission control for a drone delivery fleet: a live 3D city, a camera view rendered from the selected drone, telemetry pinned to each aircraft, and full delivery detail."
+    summary: "Map-first drone delivery control over a 3D Amman: hills, Zahran Street circles, the Raghadan no-fly zone, a live camera from the selected drone and full delivery detail."
   }
 ];
