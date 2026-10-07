@@ -554,6 +554,58 @@
     .car.lost svg { fill: var(--amber); }
     .scrim { display: none; }
 
+    /* ---------- Country view (all of Jordan) ---------- */
+    .world, .markers { transition: opacity .45s; }
+    .mode-country .world, .mode-country .markers { opacity: 0; pointer-events: none; }
+    .country { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .45s, visibility 0s .45s; }
+    .mode-country .country { opacity: 1; visibility: visible; transition: opacity .45s; }
+    .cworld { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+    .cworld svg { display: block; max-width: none; }
+    .cmarks { position: absolute; inset: 0; pointer-events: none; }
+    .cmarks > * { position: absolute; left: 0; top: 0; }
+    .cpin { pointer-events: auto; border: 0; background: none; padding: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; z-index: 2; }
+    .cpin.live { z-index: 3; }
+    .cpin i { position: absolute; left: 6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--ink-2); box-shadow: 0 2px 6px rgba(15,23,42,.25); }
+    .cpin.t3 i { left: 7px; top: 7px; width: 10px; height: 10px; border-width: 2.5px; border-color: #64748B; }
+    .cpin.live i { left: 2px; top: 2px; width: 20px; height: 20px; background: var(--indigo); border-color: #fff; box-shadow: 0 0 0 5px rgba(79,70,229,.22), 0 4px 10px rgba(79,70,229,.5); }
+    .cpin.live i::after { content: ""; position: absolute; inset: -12px; border-radius: 50%; border: 2px solid rgba(79,70,229,.45); animation: halo 2.2s var(--ease) infinite; }
+    .cpin > span {
+      position: absolute; top: -3px; left: 24px; display: grid; white-space: nowrap; text-align: left; line-height: 1.2;
+      padding: 4px 9px; border-radius: 10px; background: rgba(255,255,255,.94); border: 1px solid var(--line);
+      box-shadow: 0 6px 14px -8px rgba(15,23,42,.4); transition: border-color .2s, transform .2s var(--ease);
+    }
+    .cpin.side-l > span { left: auto; right: 24px; text-align: right; }
+    .cpin.side-b > span { left: 12px; top: 30px; transform: translateX(-50%); text-align: center; }
+    .cpin b { font-size: 12.5px; color: var(--ink); }
+    .cpin.t3 b { font-size: 11.5px; }
+    .cpin em { font-style: normal; font-size: 10.5px; font-weight: 600; color: var(--mute); }
+    .cpin.live > span { background: var(--indigo); border-color: var(--indigo); padding: 6px 12px; box-shadow: 0 10px 22px -10px rgba(79,70,229,.9); }
+    .cpin.live b { color: #fff; font-size: 15px; }
+    .cpin.live em { color: #C7D2FE; }
+    .cpin:hover > span { border-color: #A5B4FC; }
+    .clabel { white-space: nowrap; pointer-events: none; }
+    .c-country { font-size: 12px; font-weight: 800; letter-spacing: .32em; color: #94A3B8; }
+    .c-region { font-size: 10.5px; font-weight: 700; letter-spacing: .24em; color: #A8B5C6; }
+    .c-water { font-size: 11.5px; font-style: italic; font-weight: 600; color: #6F9BC6; }
+    .c-shield { font-size: 10px; font-weight: 800; color: #fff; background: #64748B; padding: 2px 6px; border-radius: 5px; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(15,23,42,.25); }
+    .cinfo {
+      position: absolute; z-index: 5; left: calc(var(--panel-w) + 48px); top: var(--ot, 16px); max-width: 400px;
+      display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px;
+      opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .35s, transform .4s var(--ease);
+    }
+    .mode-country .cinfo { opacity: 1; transform: none; pointer-events: auto; }
+    .lod-2 .cpin.t3 > span { opacity: 0; transform: scale(.9); pointer-events: none; }
+    .lod-1 .cpin.t2 em, .lod-1 .c-shield, .lod-1 .c-region, .lod-1 .c-water { display: none; }
+    .lod-1 .cpin.t3 i { width: 8px; height: 8px; left: 8px; top: 8px; border-width: 2px; }
+    .cpin.live i::after { pointer-events: none; }
+    .cinfo b { display: block; font-size: 14px; }
+    .cinfo p { margin: 2px 0 0; font-size: 12px; color: var(--mute); line-height: 1.4; }
+    .cinfo .btn { height: 36px; padding: 0 12px; font-size: 12.5px; border-radius: 10px; flex: none; }
+    .legend { transition: opacity .3s; }
+    .mode-country .legend { opacity: 0; pointer-events: none; }
+    #jordan[aria-pressed="false"] { color: var(--ink-2); }
+    #jordan[aria-pressed="true"] { color: var(--indigo); background: var(--indigo-soft); }
+
     /* ---------- Map SVG styling ---------- */
     .m-block { fill: #E4E9F0; }
     .m-bld { fill: #D9E0E9; }
@@ -612,6 +664,9 @@
       .pop-foot { margin-top: 10px; } .pop-foot .btn { flex: 1; }
       #cap-lot { overflow: hidden; text-overflow: ellipsis; }
       .legend { display: none; }
+      .cinfo { left: 10px; right: 68px; top: auto; bottom: 10px; max-width: none; padding: 10px 12px; }
+      .cinfo b { font-size: 13px; }
+      .cinfo p { display: none; }
       .pop { width: auto; right: 10px; transform: translateY(10px); }
       .pop .slot-hero { margin-top: 8px; }
       .capsule {
@@ -661,7 +716,7 @@
       .m-route-flow { animation: none; }
       .plan .route-p { animation: none; stroke-dashoffset: 0; }
       .gate.scan .beam { animation: none; }
-      .me i::before, .live i { animation: none; }
+      .me i::before, .live i, .cpin.live i::after { animation: none; }
     }
   </style>
 </head>
@@ -702,6 +757,7 @@
     <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
     <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 3.5v5h5"/></symbol>
   </svg>
 
@@ -709,6 +765,15 @@
     <!-- Fullscreen map -->
     <div class="map" id="map" aria-label="Map of parking lots near Zahran St, Amman" role="region">
       <div class="world" id="world"></div>
+      <div class="country" id="country" aria-hidden="true">
+        <div class="cworld" id="cworld"></div>
+        <div class="cmarks" id="cmarks"></div>
+      </div>
+      <div class="cinfo glass" id="cinfo">
+        <span class="ic-box indigo"><svg class="i"><use href="#i-globe"/></svg></span>
+        <div><b>Spotlane across Jordan</b><p><span class="num">322</span> partner lots in 16 cities. Amman is live in this demo.</p></div>
+        <button type="button" class="btn primary" id="c-back">Back to Amman</button>
+      </div>
       <div class="markers" id="markers">
         <div class="me" id="me"><i></i><b>You · 3rd Circle</b></div>
         <div class="car" id="car"><i><svg viewBox="0 0 24 24"><use href="#i-car"/></svg></i></div>
@@ -734,6 +799,9 @@
           <span class="med"><i></i>Medium availability</span>
           <span class="low"><i></i>Low availability</span>
           <span class="route"><i></i>Your route</span>
+        </div>
+        <div class="ctrl-stack glass">
+          <button type="button" id="jordan" aria-pressed="false" aria-label="Show all of Jordan" title="All of Jordan"><svg class="i"><use href="#i-globe"/></svg></button>
         </div>
         <div class="ctrl-stack glass">
           <button type="button" id="zin" aria-label="Zoom in"><svg class="i"><use href="#i-plus"/></svg></button>
@@ -1196,28 +1264,184 @@
       animateTo({ s, tx: cx - (cx - view.tx) * k, ty: cy - (cy - view.ty) * k }, dur);
     }
 
-    // drag + wheel
-    let drag = null;
+    /* ---------------- Country view: all of Jordan ---------------- */
+    // Semantic zoom: zoom out past Amman (or tap the Jordan button) to see the whole country; tap Amman to dive back in.
+    const LON0 = 34.6, LAT0 = 33.6, KM = 600, COSL = .854;
+    const proj = (lon, lat) => [+((lon - LON0) * KM * COSL).toFixed(1), +((LAT0 - lat) * KM).toFixed(1)];
+    const CW = proj(39.6, 0)[0], CH = proj(0, 29.0)[1];
+    const JORDAN = [[35.546, 32.394], [35.72, 32.709], [36.834, 32.313], [38.792, 33.379], [39.195, 32.161], [39.005, 32.01], [37.002, 31.508],
+      [37.999, 30.509], [37.668, 30.339], [37.504, 30.004], [36.741, 29.865], [36.501, 29.505], [36.069, 29.197], [34.956, 29.357],
+      [34.923, 29.501], [35.421, 31.1], [35.398, 31.489], [35.545, 31.783]];
+    const HIGHLANDS = [[35.75, 32.65], [36.0, 32.3], [36.08, 31.9], [35.98, 31.3], [35.88, 30.6], [35.72, 30.0], [35.35, 29.62], [35.12, 29.6], [35.42, 30.3], [35.6, 31.0], [35.66, 31.8], [35.6, 32.4]];
+    const DEAD_SEA = [[35.49, 31.77], [35.58, 31.75], [35.6, 31.55], [35.56, 31.3], [35.52, 31.12], [35.45, 31.07], [35.4, 31.3], [35.43, 31.55], [35.47, 31.7]];
+    const GULF = [[34.93, 29.565], [35.0, 29.54], [34.99, 29.4], [34.93, 29.2], [34.82, 28.6], [34.6, 27.8], [34.4, 27.8], [34.6, 28.6], [34.7, 29.2]];
+    const HIGHWAYS = [
+      { n: '15', pts: [[35.93, 31.95], [35.99, 31.72], [36.04, 31.25], [35.93, 30.75], [35.73, 30.2], [35.49, 29.99], [35.3, 29.8], [35.08, 29.6], [35.01, 29.53]] },
+      { n: '35', pts: [[35.85, 32.55], [35.9, 32.28], [35.93, 31.95], [35.79, 31.72], [35.75, 31.45], [35.7, 31.18], [35.6, 30.84], [35.53, 30.52], [35.48, 30.32], [35.55, 30.1], [35.49, 29.99]] },
+      { n: '65', pts: [[35.57, 32.6], [35.58, 32.3], [35.55, 32.0], [35.6, 31.76], [35.6, 31.55], [35.57, 31.3], [35.5, 31.05], [35.35, 30.7], [35.2, 30.2], [35.08, 29.75], [35.01, 29.53]] },
+      { n: '10', pts: [[36.09, 32.07], [36.21, 32.34], [37.13, 32.2], [38.2, 32.5], [39.05, 32.98]] },
+      { n: '40', pts: [[35.93, 31.95], [36.3, 31.88], [36.82, 31.83], [37.12, 31.57], [37.3, 31.38]] },
+      { pts: [[35.93, 31.95], [36.09, 32.07]] }, { pts: [[35.85, 32.55], [36.21, 32.34]] },
+      { pts: [[35.73, 32.04], [35.93, 31.95]] }, { pts: [[35.93, 31.95], [35.72, 31.84], [35.6, 31.76]] }
+    ];
+    const RIVER = [[35.57, 32.64], [35.58, 32.45], [35.55, 32.3], [35.57, 32.1], [35.53, 31.95], [35.53, 31.77]];
+    // name, lon, lat, partner lots, tier, label side
+    const CITIES = [
+      ['Amman', 35.93, 31.95, 128, 1, 'b'], ['Zarqa', 36.09, 32.07, 31, 2, 'r'], ['Irbid', 35.85, 32.55, 46, 2, 'r'], ['Aqaba', 35.01, 29.53, 38, 2, 'l'],
+      ['Salt', 35.73, 32.04, 9, 3, 'l'], ['Madaba', 35.79, 31.72, 11, 3, 'r'], ['Jerash', 35.9, 32.28, 7, 3, 'r'], ['Ajloun', 35.75, 32.33, 4, 3, 'l'],
+      ['Mafraq', 36.21, 32.34, 5, 3, 'r'], ['Karak', 35.7, 31.18, 6, 3, 'r'], ['Tafilah', 35.6, 30.84, 3, 3, 'r'], ["Ma'an", 35.73, 30.2, 4, 3, 'r'],
+      ['Petra', 35.48, 30.32, 14, 3, 'l'], ['Wadi Rum', 35.42, 29.58, 2, 3, 'r'], ['Dead Sea', 35.59, 31.72, 12, 3, 'l'], ['Azraq', 36.82, 31.83, 2, 3, 'r']
+    ];
+    const CLABELS = [['SYRIA', 36.5, 33.05, 'c-country'], ['IRAQ', 39.35, 33.15, 'c-country'], ['SAUDI ARABIA', 38.3, 30.0, 'c-country'],
+      ['EASTERN DESERT · BADIA', 38.0, 32.62, 'c-region'], ['WADI ARABA', 35.18, 30.42, 'c-region c-rot'], ['Jordan River', 35.47, 32.25, 'c-water c-rot'],
+      ['Gulf of Aqaba', 34.82, 29.3, 'c-water'], ['Dead Sea', 35.37, 31.42, 'c-water c-rot']];
+    const SHIELDS = [['15', 36.08, 30.95], ['35', 35.6, 30.66], ['65', 35.3, 30.62], ['10', 37.05, 32.24], ['40', 36.62, 31.78]];
+
+    const country = $('#country'), cworld = $('#cworld'), cmarks = $('#cmarks');
+    const cview = { s: .3, tx: 0, ty: 0 };
+    let mode = 'city', ctween = null;
+    (function buildCountry() {
+      const pts = a => 'M' + a.map(p => proj(p[0], p[1]).join(' ')).join('L');
+      const svg = el('svg', { width: CW, height: CH, viewBox: `0 0 ${CW} ${CH}`, 'aria-hidden': 'true' });
+      svg.style.overflow = 'visible';
+      const defs = el('defs', {}, svg);
+      const cp = el('clipPath', { id: 'jo-clip' }, defs); el('path', { d: pts(JORDAN) + 'Z' }, cp);
+      el('path', { d: pts(JORDAN) + 'Z', fill: '#FBFCFE', stroke: '#E0E7FF', 'stroke-width': 18, 'stroke-linejoin': 'round' }, svg);
+      el('path', { d: pts(JORDAN) + 'Z', fill: '#FBFCFE' }, svg);
+      const inner = el('g', { 'clip-path': 'url(#jo-clip)' }, svg);
+      el('path', { d: pts(HIGHLANDS) + 'Z', fill: '#EEF2F8' }, inner);
+      for (let k = 1; k <= 4; k++) {        // highland contours, shrinking inwards
+        const c = [35.75, 31.2], sh = HIGHLANDS.map(([x, y]) => [c[0] + (x - c[0]) * (1 - k * .14), c[1] + (y - c[1]) * (1 - k * .1)]);
+        el('path', { d: pts(sh) + 'Z', fill: 'none', stroke: 'rgba(100,116,139,.13)', 'stroke-width': 1.6 }, inner);
+      }
+      el('path', { d: pts(DEAD_SEA) + 'Z', fill: '#CFE3F3', stroke: '#B9D5EE', 'stroke-width': 2 }, svg);
+      el('path', { d: pts(GULF) + 'Z', fill: '#CFE3F3', stroke: '#B9D5EE', 'stroke-width': 2 }, svg);
+      el('path', { d: pts(RIVER), fill: 'none', stroke: '#A9CBEA', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
+      HIGHWAYS.forEach(h => el('path', { d: pts(h.pts), fill: 'none', stroke: '#CBD5E1', 'stroke-width': h.n ? 9 : 6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg));
+      HIGHWAYS.forEach(h => el('path', { d: pts(h.pts), fill: 'none', stroke: '#fff', 'stroke-width': h.n ? 5 : 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg));
+      el('path', { d: pts(JORDAN) + 'Z', fill: 'none', stroke: '#818CF8', 'stroke-width': 2.5, 'stroke-dasharray': '10 6', 'stroke-linejoin': 'round' }, svg);
+      const [ax, ay] = proj(35.93, 31.95);
+      el('circle', { cx: ax, cy: ay, r: 34, fill: 'rgba(79,70,229,.1)', stroke: 'rgba(79,70,229,.35)', 'stroke-width': 1.5 }, svg);
+      cworld.appendChild(svg);
+
+      CITIES.forEach(([name, lon, lat, n, tier, side]) => {
+        const b = document.createElement('button');
+        const [x, y] = proj(lon, lat);
+        b.type = 'button'; b.className = `cpin t${tier} side-${side}${tier === 1 ? ' live' : ''}`;
+        b.dataset.x = x; b.dataset.y = y; b.dataset.city = name;
+        b.setAttribute('aria-label', `${name}: ${n} partner lots${tier === 1 ? ', live in this demo' : ''}`);
+        b.innerHTML = `<i></i><span><b>${name}</b><em class="num">${tier === 1 ? '3 near you · ' : ''}${n} lots</em></span>`;
+        b.onclick = () => name === 'Amman' ? enterCity() : toast(`${name}: ${n} partner lots · booking opens soon — Amman is live in this demo`, 'pin');
+        cmarks.appendChild(b);
+      });
+      CLABELS.forEach(([t, lon, lat, cls]) => {
+        const s = document.createElement('span'); const [x, y] = proj(lon, lat);
+        s.className = `clabel ${cls}`; s.dataset.x = x; s.dataset.y = y; s.textContent = t; cmarks.appendChild(s);
+      });
+      SHIELDS.forEach(([n, lon, lat]) => {
+        const s = document.createElement('span'); const [x, y] = proj(lon, lat);
+        s.className = 'clabel c-shield num'; s.dataset.x = x; s.dataset.y = y; s.textContent = n; cmarks.appendChild(s);
+      });
+    })();
+
+    function renderCountry() {
+      cworld.style.transform = `translate3d(${cview.tx}px, ${cview.ty}px, 0) scale(${cview.s})`;
+      cmarks.classList.toggle('lod-1', cview.s < .16);    // level of detail: towns appear as you zoom in
+      cmarks.classList.toggle('lod-2', cview.s < .3);
+      $$('[data-x]', cmarks).forEach(m => {
+        const extra = m.classList.contains('clabel') ? ` translate(-50%, -50%)${m.classList.contains('c-rot') ? ' rotate(-72deg)' : ''}` : '';
+        m.style.transform = `translate3d(${m.dataset.x * cview.s + cview.tx}px, ${m.dataset.y * cview.s + cview.ty}px, 0)${extra}`;
+      });
+    }
+    function cAvail() {
+      const mw = map.clientWidth, mh = map.clientHeight;
+      if (isStacked()) return { l: 14, t: 14, r: mw - 70, b: mh - 78 };
+      const a = availRect(); return { l: a.l, t: a.t + 76, r: a.r, b: a.b };
+    }
+    // frame Jordan's borders (plus a little air), not the whole canvas
+    const JB = (() => { const p = JORDAN.map(([lo, la]) => proj(lo, la)), xs = p.map(q => q[0]), ys = p.map(q => q[1]);
+      return { x0: Math.min(...xs) - 60, x1: Math.max(...xs) + 110, y0: Math.min(...ys) - 70, y1: Math.max(...ys) + 40 }; })();
+    const cfitScale = () => { const a = cAvail(); return Math.min((a.r - a.l) / (JB.x1 - JB.x0), (a.b - a.t) / (JB.y1 - JB.y0)); };
+    const clampC = s => Math.min(cfitScale() * 4, Math.max(cfitScale() * .8, s));
+    function animateC(t, dur = 500) {
+      cancelAnimationFrame(ctween);
+      if (reduceMotion || !dur) { Object.assign(cview, t); return renderCountry(); }
+      const from = { ...cview }, t0 = performance.now();
+      const step = now => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        cview.s = from.s + (t.s - from.s) * e; cview.tx = from.tx + (t.tx - from.tx) * e; cview.ty = from.ty + (t.ty - from.ty) * e;
+        renderCountry(); if (k < 1) ctween = requestAnimationFrame(step);
+      };
+      ctween = requestAnimationFrame(step);
+    }
+    function fitCountry(dur) {
+      const a = cAvail(), s = cfitScale();
+      animateC({ s, tx: a.l + ((a.r - a.l) - (JB.x1 - JB.x0) * s) / 2 - JB.x0 * s, ty: a.t + ((a.b - a.t) - (JB.y1 - JB.y0) * s) / 2 - JB.y0 * s }, dur);
+    }
+    function zoomCountry(f, cx = map.clientWidth / 2, cy = map.clientHeight / 2, dur = 260) {
+      const s = clampC(cview.s * f), k = s / cview.s;
+      animateC({ s, tx: cx - (cx - cview.tx) * k, ty: cy - (cy - cview.ty) * k }, dur);
+    }
+    function setModeUI() {
+      const c = mode === 'country';
+      map.classList.toggle('mode-country', c);
+      country.setAttribute('aria-hidden', !c);
+      $('#jordan').setAttribute('aria-pressed', c);
+      $('#jordan').setAttribute('aria-label', c ? 'Back to Amman streets' : 'Show all of Jordan');
+    }
+    function enterCountry() {
+      if (mode === 'country') return;
+      if (nav.on) return toast('Stop navigation to see all of Jordan', 'nav');
+      mode = 'country'; pop.classList.remove('on'); hideNotice();
+      fitCountry(0);
+      // start slightly zoomed into Amman, then pull back to the whole country
+      const [ax, ay] = proj(35.93, 31.95), end = { ...cview };
+      if (!reduceMotion) { cview.s = end.s * 3; cview.tx = map.clientWidth / 2 - ax * cview.s; cview.ty = map.clientHeight / 2 - ay * cview.s; renderCountry(); }
+      setModeUI(); animateC(end, 700);
+    }
+    function enterCity() {
+      if (mode === 'city') return;
+      mode = 'city';
+      const [ax, ay] = proj(35.93, 31.95);
+      if (!reduceMotion) animateC({ s: cview.s * 3, tx: map.clientWidth / 2 - ax * cview.s * 3, ty: map.clientHeight / 2 - ay * cview.s * 3 }, 450);
+      setModeUI(); fitView(reduceMotion ? 0 : 600);
+      setTimeout(() => select(selected), reduceMotion ? 0 : 450);
+    }
+    $('#jordan').onclick = () => mode === 'city' ? enterCountry() : enterCity();
+    $('#c-back').onclick = enterCity;
+
+    // drag + wheel (both views)
+    let drag = null, wheelOutAtMin = 0;
     map.addEventListener('pointerdown', e => {
-      if (e.target.closest('.pin, .pop, .ctrls, .toast')) return;
-      cancelAnimationFrame(tween);
-      drag = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty };
+      if (e.target.closest('.pin, .pop, .ctrls, .toast, .cpin, .cinfo, .notice, .locoff')) return;
+      cancelAnimationFrame(tween); cancelAnimationFrame(ctween);
+      const v = mode === 'city' ? view : cview;
+      drag = { x: e.clientX, y: e.clientY, tx: v.tx, ty: v.ty };
       map.setPointerCapture(e.pointerId); map.classList.add('dragging');
     });
     map.addEventListener('pointermove', e => {
       if (!drag) return;
-      view.tx = drag.tx + e.clientX - drag.x; view.ty = drag.ty + e.clientY - drag.y; render();
+      const v = mode === 'city' ? view : cview;
+      v.tx = drag.tx + e.clientX - drag.x; v.ty = drag.ty + e.clientY - drag.y;
+      mode === 'city' ? render() : renderCountry();
     });
     const endDrag = () => { drag = null; map.classList.remove('dragging'); };
     map.addEventListener('pointerup', endDrag); map.addEventListener('pointercancel', endDrag);
     map.addEventListener('wheel', e => {
       e.preventDefault();
-      const r = map.getBoundingClientRect();
-      zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top, 160);
+      const r = map.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, out = e.deltaY > 0;
+      if (mode === 'country') return zoomCountry(out ? 1 / 1.15 : 1.15, x, y, 160);
+      if (out && view.s <= clampS(0) + .001) { if (++wheelOutAtMin > 3) { wheelOutAtMin = 0; enterCountry(); } return; }
+      wheelOutAtMin = 0;
+      zoomAt(out ? 1 / 1.15 : 1.15, x, y, 160);
     }, { passive: false });
-    $('#zin').onclick = () => zoomAt(1.3);
-    $('#zout').onclick = () => zoomAt(1 / 1.3);
-    $('#recenter').onclick = () => fitView();
+    $('#zin').onclick = () => mode === 'city' ? zoomAt(1.3) : zoomCountry(1.3);
+    $('#zout').onclick = () => {
+      if (mode === 'country') return zoomCountry(1 / 1.3);
+      if (view.s <= clampS(0) + .001) return enterCountry();
+      zoomAt(1 / 1.3);
+    };
+    $('#recenter').onclick = () => mode === 'city' ? fitView() : fitCountry();
     $('#layers').onclick = e => {
       const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
       e.currentTarget.setAttribute('aria-pressed', on);
@@ -1311,6 +1535,7 @@
     }
 
     function select(id, { pan = false } = {}) {
+      if (mode === 'country') { selected = id; return enterCity(); }
       selected = id;
       Object.entries(pins).forEach(([k, p]) => p.classList.toggle('is-active', k === id));
       $$('.lot').forEach(c => c.classList.toggle('is-active', c.dataset.id === id));
@@ -1844,6 +2069,7 @@
     }
     function startNav() {
       closeSheet();
+      if (mode === 'country') { mode = 'city'; setModeUI(); fitView(0); }
       if (locOff) setLocOff(false);
       if (selected !== S.lot) select(S.lot, { pan: true });
       drawRoute(S.lot);
@@ -2086,8 +2312,8 @@
     renderCapsule();
     layout();
     fitView(0);
-    let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layout(); fitView(0); }, 120); });
-    if (document.fonts) document.fonts.ready.then(() => { layout(); fitView(0); placePop(); });
+    let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layout(); mode === 'city' ? fitView(0) : fitCountry(0); }, 120); });
+    if (document.fonts) document.fonts.ready.then(() => { layout(); if (mode === 'city') { fitView(0); placePop(); } });
   })();
   </script>
 </body>
