@@ -197,5 +197,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/05-agentic-ops/",
     accent: "#8B5CF6",
     summary: "Dark violet command centre for AI agents: watch tasks pulse through the planner, filter missions by status, retry failures and tune autonomy."
+  },
+  {
+    id: "dash-06",
+    kind: "dashboard",
+    type: "Dashboard",
+    title: "Finexa",
+    industry: "Corporate finance",
+    tags: ["Executive overview", "Interactive area chart", "Budget tracking", "AI co-pilot"],
+    path: "dashboards/06-finexa-finance/",
+    accent: "#8155F6",
+    summary: "Executive finance board on a violet canvas: scrub the cash-flow curve, switch periods, inspect spend by category and ask the Finexa co-pilot."
   }
 ];
