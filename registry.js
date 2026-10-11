@@ -208,5 +208,16 @@ window.EMS_REGISTRY = [
     path: "dashboards/06-finexa-finance/",
     accent: "#8155F6",
     summary: "Executive finance board on a violet canvas: scrub the cash-flow curve, switch periods, inspect spend by category and ask the Finexa co-pilot."
+  },
+  {
+    id: "landing-01",
+    kind: "landing",
+    type: "Landing page",
+    title: "Paystra",
+    industry: "Fintech",
+    tags: ["Full landing page", "Generative SVG clouds", "Pointer parallax", "Pricing toggle"],
+    path: "landing/01-paystra/",
+    accent: "#0288D1",
+    summary: "Sky-blue wallet landing page: cards float over a code-made cloud bank, then why-us, stats, feature visuals, pricing and a cloud CTA."
   }
 ];
