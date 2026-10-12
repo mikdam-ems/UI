@@ -13,6 +13,9 @@ for fictional brands across industries. Not production code; visual impact first
 - `dashboards/NN-slug/index.html` — full product dashboards (registry `kind: "dashboard"`, `type: "Dashboard"`).
 - `iot/NN-slug/index.html` — smart home / IoT control interfaces (registry `kind: "iot"`, `type: "IoT"`).
 - `automation/NN-slug/index.html` — workflow / automation builders (registry `kind: "automation"`, `type: "Automation"`).
+- `landing/NN-slug/index.html` — full multi-section landing pages (registry `kind: "landing"`, `type: "Landing page"`).
+- `experiments/NN-slug/index.html` — interactive / 3D experiments and the models they use (registry `kind: "experiment"`).
+- `mobile/NN-slug/index.html` — mobile app screens shown as live phones on a stage (registry `kind: "mobile"`, `type: "Mobile"`).
 
 ## Rules for each piece
 - Self-contained: its own `index.html` (+ optional local `style.css`, `main.js`, assets). Opens directly in a browser, no build step.
