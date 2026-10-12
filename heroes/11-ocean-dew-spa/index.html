@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ocean Dew Spa — Peace &amp; Relax</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:wght@500&family=Pinyon+Script&family=Great+Vibes&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: generated water-caustic backdrop → aqua-white card. Inside the card (desktop, absolute):
+       logo top-left, stepped vertical nav left, bag top-right, PEACE & RELAX headline centre,
+       5 stadium capsules on a rotating track, arrows + round BOOK NOW, @2025 + socials.
+       Below 900px the card becomes a vertical flow and the track shows three capsules. */
+    :root {
+      --ink: #111111;
+      --card: #F2F9F9;
+      --aqua: #9ED8EE;
+      --aqua-deep: #4FB3DD;
+      --mute: #5B6B70;
+      --display: "Italiana", "Didot", serif;
+      --serif: "Cormorant Garamond", Georgia, serif;
+      --script: "Pinyon Script", cursive;
+      --sans: "Jost", system-ui, sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      --gutter: clamp(12px, 5vw, 80px);
+    }
+    html, body { min-height: 100%; }
+    body { background: #7CCBEA; color: var(--ink); font-family: var(--sans); font-weight: 300; overflow-x: hidden; }
+    button { background: none; border: 0; padding: 0; }
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
+    .ico { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ---------- Water backdrop ---------- */
+    .water { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: linear-gradient(160deg, #A9E1F4, #6EC3E6 55%, #8AD3EE); }
+    .water svg { position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; max-width: none; animation: drift 28s ease-in-out infinite alternate; }
+    .water::after { /* sun sparkle */
+      content: ""; position: absolute; inset: 0; mix-blend-mode: screen;
+      background: radial-gradient(40% 30% at 85% 10%, rgba(255,255,255,.45), transparent 70%), radial-gradient(30% 25% at 10% 90%, rgba(255,255,255,.25), transparent 70%);
+    }
+    @keyframes drift { to { transform: translate3d(-3%, 2%, 0) scale(1.04); } }
+
+    /* ---------- Card ---------- */
+    .card {
+      position: relative; overflow: hidden; isolation: isolate;
+      margin: clamp(16px, 8vh, 150px) var(--gutter);
+      height: calc(100svh - 2 * clamp(16px, 8vh, 150px)); min-height: 640px; max-height: 960px;
+      background: linear-gradient(180deg, #F2FBFC 0%, #FAFEFE 55%, #FFFFFF 100%);
+      box-shadow: 0 30px 80px -30px rgba(10, 70, 100, .45);
+    }
+    .card::before { /* soft aqua wash behind the capsules, as in a pool's edge */
+      content: ""; position: absolute; z-index: -1; left: -10%; right: -10%; top: 62%; height: 30%;
+      background: radial-gradient(60% 100% at 50% 0%, rgba(158, 216, 238, .28), transparent 70%);
+    }
+
+    .logo { position: absolute; left: 4.2%; top: 6.5%; text-align: center; line-height: 1; }
+    .logo b { display: block; font-family: var(--serif); font-weight: 500; font-size: 19px; letter-spacing: .14em; }
+    .logo i { display: block; font-family: var(--script); font-style: normal; font-size: 17px; letter-spacing: .08em; margin-top: 2px; }
+
+    .bag { position: absolute; right: 4.2%; top: 6.2%; width: 40px; height: 40px; display: grid; place-items: center; transition: transform .3s var(--ease); }
+    .bag:hover { transform: translateY(-2px); }
+    .bag .count { position: absolute; top: 0; right: 0; width: 17px; height: 17px; border-radius: 99px; border: 1px solid var(--ink); background: var(--card); font-size: 10px; line-height: 15px; text-align: center; font-weight: 400; }
+    .bag .count.pop { animation: pop .5s var(--ease); }
+    @keyframes pop { 40% { transform: scale(1.5); } }
+
+    .nav { position: absolute; left: 0; top: 26%; display: grid; gap: 22px; padding-left: 1.6%; z-index: 3; }
+    .nav a { position: relative; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; width: max-content; transition: opacity .25s; }
+    .nav a:nth-child(2) { margin-left: 36px; }
+    .nav a:nth-child(3) { margin-left: 50px; }
+    .nav a:nth-child(4) { margin-left: 36px; }
+    .nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+    .nav a:hover::after, .nav a[aria-current="page"]::after { transform: scaleX(1); }
+    .glow { /* light-blue sun behind the active item */
+      position: absolute; left: -96px; top: 0; width: 170px; height: 170px; margin-top: -85px; border-radius: 50%; pointer-events: none; z-index: -1;
+      background: radial-gradient(circle, rgba(195, 236, 250, .95) 0 34%, rgba(195,236,250,.55) 42%, transparent 66%);
+      transition: transform .55s var(--ease);
+    }
+    .glow::before { /* fine rays */
+      content: ""; position: absolute; inset: 8%; border-radius: 50%; opacity: .7;
+      background: repeating-conic-gradient(from 0deg, rgba(160, 220, 245, .9) 0 1.2deg, transparent 1.2deg 6deg);
+      -webkit-mask: radial-gradient(circle, transparent 0 46%, #000 47% 60%, transparent 66%); mask: radial-gradient(circle, transparent 0 46%, #000 47% 60%, transparent 66%);
+      animation: spin 60s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(1turn); } }
+
+    /* ---------- Headline ---------- */
+    .headline { position: absolute; left: 0; right: 0; top: 13%; text-align: center; pointer-events: none; }
+    .headline h1 { margin: 0; display: inline-grid; grid-template-columns: auto auto auto; align-items: center; font-family: var(--display); font-weight: 400; font-size: clamp(56px, 6.4vw, 104px); line-height: 1; letter-spacing: .01em; }
+    .headline .amp { font-family: "Great Vibes", var(--script); font-size: 1.9em; line-height: .5; margin: 0 .04em 0 .06em; transform: translateY(.1em); }
+    .tags { display: flex; justify-content: center; gap: clamp(120px, 17vw, 250px); margin-top: 6px; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; }
+    .tags span:first-child { margin-right: 10px; }
+
+    /* ---------- Capsule track ---------- */
+    .track { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .cap {
+      position: absolute; border-radius: 999px; overflow: hidden; pointer-events: auto; cursor: pointer;
+      background: #E8F2F3; box-shadow: 0 20px 40px -26px rgba(20, 60, 80, .45);
+      transition: left .9s var(--ease), top .9s var(--ease), width .9s var(--ease), height .9s var(--ease), opacity .5s, transform .5s var(--ease);
+    }
+    .cap svg { position: absolute; inset: 0; width: 100%; height: 100%; transition: transform 1.2s var(--ease); }
+    .cap:hover svg { transform: scale(1.06); }
+    .cap .label {
+      position: absolute; left: 50%; bottom: 12%; transform: translate(-50%, 8px); padding: 6px 12px; border-radius: 99px; white-space: nowrap;
+      background: rgba(255,255,255,.88); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: 0; transition: opacity .3s, transform .3s var(--ease);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .cap:hover .label, .cap:focus-visible .label, .cap[data-pos="2"] .label { opacity: 1; transform: translate(-50%, 0); }
+    .cap[data-pos="0"] { left: -1%;   top: 50%;   width: 15%;   height: 34.5%; }
+    .cap[data-pos="1"] { left: 15.5%; top: 36.5%; width: 22.2%; height: 41.5%; }
+    .cap[data-pos="2"] { left: 41.7%; top: 33.5%; width: 16.6%; height: 41.8%; }
+    .cap[data-pos="3"] { left: 60%;   top: 36.5%; width: 22.2%; height: 41.5%; }
+    .cap[data-pos="4"] { left: 86%;   top: 50%;   width: 15%;   height: 34.5%; }
+    .cap.wrap { transition: none; opacity: 0; }
+
+    /* ---------- Controls ---------- */
+    .controls { position: absolute; left: 0; right: 0; bottom: 4.5%; display: flex; justify-content: center; align-items: center; gap: clamp(28px, 4vw, 56px); z-index: 2; }
+    .arrow { width: 112px; height: 24px; color: var(--ink); transition: transform .35s var(--ease); }
+    .arrow svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; }
+    .arrow.prev:hover { transform: translateX(-6px); }
+    .arrow.next:hover { transform: translateX(6px); }
+    .book {
+      position: relative; width: 160px; height: 160px; border-radius: 50%; border: 1px solid var(--ink); overflow: hidden; isolation: isolate;
+      font-size: 15px; letter-spacing: .04em; color: var(--ink); transition: color .45s var(--ease);
+    }
+    .book::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%; background: var(--ink); transform: scale(0); transition: transform .55s var(--ease); }
+    .book:hover { color: #fff; }
+    .book:hover::before { transform: scale(1); }
+
+    .foot-l { position: absolute; left: 4.2%; bottom: 7%; font-size: 13px; color: var(--mute); }
+    .socials { position: absolute; right: 4.2%; bottom: 6%; display: flex; gap: 14px; }
+    .socials a { width: 32px; height: 32px; display: grid; place-items: center; transition: transform .3s var(--ease); }
+    .socials a:hover { transform: translateY(-2px); }
+
+    /* ---------- Booking sheet ---------- */
+    .sheet { position: absolute; z-index: 10; inset: 0; display: grid; place-items: center; background: rgba(242, 249, 249, .7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .35s; }
+    .sheet.open { opacity: 1; pointer-events: auto; }
+    .sheet-box { width: min(420px, calc(100% - 32px)); background: #fff; border: 1px solid var(--ink); border-radius: 220px 220px 28px 28px; padding: 64px 32px 32px; text-align: center; transform: translateY(16px); transition: transform .45s var(--ease); }
+    .sheet.open .sheet-box { transform: none; }
+    .sheet h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 34px; }
+    .sheet .sub { margin: 6px 0 22px; color: var(--mute); font-size: 14px; }
+    .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+    .chips button { padding: 8px 14px; border: 1px solid rgba(17,17,17,.25); border-radius: 99px; font-size: 13px; transition: background .2s, color .2s, border-color .2s; }
+    .chips button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .confirm { margin-top: 12px; width: 100%; height: 48px; border-radius: 99px; background: var(--ink); color: #fff; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+    .close { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 99px; border: 1px solid var(--ink); display: grid; place-items: center; }
+    .close .ico { width: 18px; height: 18px; }
+    .done { display: none; }
+    .sheet.ok .form { display: none; }
+    .sheet.ok .done { display: block; }
+
+    /* Entrance */
+    .js .in { opacity: 0; transform: translateY(14px); animation: rise 1s var(--ease) forwards; animation-delay: calc(var(--d, 0) * 90ms + 150ms); }
+    .js .cap.in { animation-name: capIn; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @keyframes capIn { from { opacity: 0; transform: translateY(30px) scale(.96); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Small screens: vertical flow ---------- */
+    @media (max-width: 900px) {
+      .card { height: auto; min-height: 0; max-height: none; margin: 14px; padding: 22px 18px 24px; display: flex; flex-direction: column; }
+      .logo, .bag, .nav, .headline, .track, .controls, .foot-l, .socials { position: relative; inset: auto; left: auto; right: auto; top: auto; bottom: auto; transform: none; }
+      .top { display: flex; justify-content: space-between; align-items: flex-start; }
+      .logo { text-align: left; }
+      .logo b { font-size: 16px; }
+      .nav { order: 1; display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; padding: 18px 0 4px; margin: 0 -18px; padding-left: 18px; padding-right: 18px; }
+      .nav::-webkit-scrollbar { display: none; }
+      .nav a, .nav a:nth-child(n) { margin: 0; font-size: 13px; flex: none; }
+      .glow { display: none; }
+      .headline { order: 2; margin-top: 30px; }
+      .headline h1 { font-size: clamp(40px, 13vw, 76px); grid-template-columns: auto; justify-items: center; line-height: .95; }
+      .headline .amp { font-size: 1.1em; line-height: .8; margin: -.05em 0 -.1em; transform: none; }
+      .tags { flex-direction: column; gap: 4px; margin-top: 14px; font-size: 12px; }
+      .tags span:first-child { margin: 0; }
+      .track { order: 3; height: 330px; margin: 26px -18px 0; overflow: hidden; }
+      .cap[data-pos="0"] { left: -60%; top: 14%; width: 34%; height: 72%; right: auto; }
+      .cap[data-pos="1"] { left: -14%; top: 12%; width: 36%; height: 76%; right: auto; }
+      .cap[data-pos="2"] { left: 27%;  top: 0;   width: 46%; height: 92%; right: auto; }
+      .cap[data-pos="3"] { left: 78%;  top: 12%; width: 36%; height: 76%; right: auto; }
+      .cap[data-pos="4"] { left: 126%; top: 14%; width: 34%; height: 72%; right: auto; }
+      .controls { order: 4; align-self: center; margin-top: 18px; gap: 12px; }
+      .arrow { width: 56px; }
+      .book { width: 112px; height: 112px; font-size: 13px; flex: none; }
+      .bottom { order: 5; display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+      .foot-l, .socials { position: static; }
+    }
+    @media (min-width: 901px) { .top, .bottom { display: contents; } }
+    @media (max-height: 860px) and (min-width: 901px) {
+      .tags { font-size: 13px; } .nav { gap: 16px; } .headline { top: 11%; }
+      .book { width: 108px; height: 108px; font-size: 13px; } .controls { bottom: 3.5%; }
+      .cap[data-pos="0"] { left: 1%;    top: 45%;   width: 12.5%; height: 31%; }
+      .cap[data-pos="1"] { left: 19%;   top: 34%;   width: 18%;   height: 37%; }
+      .cap[data-pos="2"] { left: 43.5%; top: 31.5%; width: 13%;   height: 38%; }
+      .cap[data-pos="3"] { left: 63%;   top: 34%;   width: 18%;   height: 37%; }
+      .cap[data-pos="4"] { left: 86.5%; top: 45%;   width: 12.5%; height: 31%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .water svg, .glow::before { animation: none; }
+      .js .in { animation: none; opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="water" aria-hidden="true">
+    <!-- Generated pool caustics: ridged turbulence lifted into bright lines over aqua -->
+    <svg preserveAspectRatio="none" viewBox="0 0 1000 700">
+      <filter id="caustic" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="turbulence" baseFrequency=".012 .018" numOctaves="1" seed="11" result="t"/>
+        <feColorMatrix in="t" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -4.2 -4.2 0 0 1.12" result="lines"/>
+        <feGaussianBlur in="lines" stdDeviation="1.1"/>
+      </filter>
+      <filter id="caustic2" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="turbulence" baseFrequency=".024 .034" numOctaves="1" seed="5"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 .85  0 0 0 0 .97  0 0 0 0 1  -5 -5 0 0 1.2"/>
+        <feGaussianBlur stdDeviation=".6"/>
+      </filter>
+      <filter id="shade" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".006 .009" numOctaves="3" seed="4"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 .2  0 0 0 0 .55  0 0 0 0 .8  .9 0 0 0 -.25"/>
+      </filter>
+      <rect width="1000" height="700" filter="url(#shade)" opacity=".55"/>
+      <rect width="1000" height="700" filter="url(#caustic2)" opacity=".55"/>
+      <rect width="1000" height="700" filter="url(#caustic)" opacity=".85"/>
+    </svg>
+  </div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="soften"><feGaussianBlur stdDeviation="2.2"/></filter>
+      <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+      <filter id="grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="2"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .09 0"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <main class="card" id="card">
+    <div class="top">
+      <a class="logo in" href="#" style="--d:0" aria-label="Ocean Dew Spa, beauty bar"><b>OCEAN DEW SPA</b><i>+beauty bar</i></a>
+      <button class="bag in" style="--d:1" id="bag" aria-label="Bag, 1 item">
+        <svg class="ico" viewBox="0 0 26 26"><path d="M5 10.5c0-1 .8-1.8 1.8-1.8h12.4c1 0 1.8.8 1.8 1.8l-1 10.2a2 2 0 0 1-2 1.8H8a2 2 0 0 1-2-1.8Z"/><path d="M9.5 8.7V7.5a3.5 3.5 0 0 1 7 0v1.2"/><path d="M10 15.5c.9 1.4 2 2 3 2s2.1-.6 3-2"/></svg>
+        <span class="count" id="bagCount">1</span>
+      </button>
+    </div>
+
+    <nav class="nav in" style="--d:2" aria-label="Primary" id="nav">
+      <span class="glow" id="glow" aria-hidden="true"></span>
+      <a href="#">About us</a>
+      <a href="#" aria-current="page">Services</a>
+      <a href="#">Membership</a>
+      <a href="#">Blog</a>
+      <a href="#">Contact</a>
+    </nav>
+
+    <header class="headline">
+      <h1 class="in" style="--d:2"><span>PEACE</span><span class="amp" aria-label="and">&amp;</span><span>RELAX</span></h1>
+      <p class="tags in" style="--d:3"><span>Find your inner peace</span><span>Reduce stress, improve focus</span></p>
+    </header>
+
+    <section class="track" id="track" aria-label="Treatments" aria-roledescription="carousel">
+      <!-- 1. Massage -->
+      <button class="cap in" data-pos="0" style="--d:4" data-name="Deep tissue massage" aria-label="Deep tissue massage">
+        <svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="m-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E9F1F2"/><stop offset="1" stop-color="#C9D8DC"/></linearGradient>
+            <radialGradient id="m-skin" cx=".45" cy=".35" r=".8"><stop offset="0" stop-color="#F3CDB6"/><stop offset=".6" stop-color="#E2A88B"/><stop offset="1" stop-color="#C98466"/></radialGradient>
+            <linearGradient id="m-hand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D7C3"/><stop offset="1" stop-color="#DDA184"/></linearGradient>
+          </defs>
+          <rect width="300" height="420" fill="url(#m-bg)"/>
+          <rect x="0" y="0" width="300" height="120" fill="#fff" opacity=".5" filter="url(#blur8)"/>
+          <path d="M-20 170 C40 120 150 118 230 150 C300 178 330 240 330 420 H-20Z" fill="url(#m-skin)"/>
+          <path d="M120 150 C140 200 150 260 140 330" stroke="#B87358" stroke-width="5" fill="none" opacity=".35" filter="url(#soften)"/>
+          <path d="M210 115 C240 105 280 110 320 130 L320 200 C290 175 250 160 215 160Z" fill="#B8C7CC" opacity=".8"/>
+          <path d="M215 112 C230 80 290 70 320 90 L320 140 C290 120 245 118 215 130Z" fill="#9FB3B9" opacity=".7" filter="url(#soften)"/>
+          <g>
+            <g opacity=".35" filter="url(#blur8)" fill="#8C5440"><ellipse cx="150" cy="300" rx="90" ry="26"/><ellipse cx="170" cy="230" rx="80" ry="22"/></g>
+            <path d="M52 330 C64 292 104 270 146 270 L150 302 C120 306 92 318 66 346Z" fill="url(#m-hand)"/>
+            <rect x="140" y="262" width="78" height="17" rx="8.5" fill="#F0C7AE" transform="rotate(-6 140 262)"/>
+            <rect x="142" y="280" width="84" height="17" rx="8.5" fill="#EDC2A8" transform="rotate(-2 142 280)"/>
+            <rect x="142" y="298" width="78" height="16" rx="8" fill="#E9BBA0" transform="rotate(3 142 298)"/>
+            <rect x="140" y="315" width="62" height="15" rx="7.5" fill="#E5B497" transform="rotate(8 140 315)"/>
+            <path d="M118 266 C110 250 116 238 130 240 C140 242 146 252 146 266Z" fill="#EFC5AC"/>
+            <path d="M84 238 C96 206 130 192 168 194 L170 224 C140 226 112 236 92 254Z" fill="url(#m-hand)"/>
+            <rect x="162" y="186" width="74" height="16" rx="8" fill="#F3CDB6" transform="rotate(-10 162 186)"/>
+            <rect x="166" y="203" width="80" height="16" rx="8" fill="#F0C8AF" transform="rotate(-5 166 203)"/>
+            <rect x="166" y="220" width="72" height="15" rx="7.5" fill="#ECC1A6" transform="rotate(0 166 220)"/>
+            <g fill="#fff" opacity=".35"><ellipse cx="200" cy="268" rx="22" ry="3"/><ellipse cx="206" cy="194" rx="20" ry="3" transform="rotate(-8 206 194)"/></g>
+          </g>
+          <rect width="300" height="420" filter="url(#grain)"/>
+        </svg>
+        <span class="label">Massage</span>
+      </button>
+
+      <!-- 2. Candles & reed diffuser -->
+      <button class="cap in" data-pos="1" style="--d:5" data-name="Aromatherapy ritual" aria-label="Aromatherapy ritual">
+        <svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="c-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE7EA"/><stop offset=".62" stop-color="#EEF3F3"/><stop offset="1" stop-color="#F7F8F6"/></linearGradient>
+            <linearGradient id="c-wax" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9BFA9"/><stop offset=".5" stop-color="#E6DDC8"/><stop offset="1" stop-color="#BDB29B"/></linearGradient>
+            <linearGradient id="c-wax2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E8E4D8"/><stop offset=".5" stop-color="#FBF8EF"/><stop offset="1" stop-color="#DCD7C8"/></linearGradient>
+            <radialGradient id="c-flame" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#FFF6D6"/><stop offset=".5" stop-color="#FFC861"/><stop offset="1" stop-color="#FF9A3C" stop-opacity="0"/></radialGradient>
+            <linearGradient id="c-towel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D9DFE0"/></linearGradient>
+          </defs>
+          <rect width="300" height="420" fill="url(#c-bg)"/>
+          <path d="M0 250 C60 200 110 190 160 220" stroke="#5E8B4E" stroke-width="2" fill="none" opacity=".6" filter="url(#soften)"/>
+          <g fill="#6E9C5B" opacity=".55" filter="url(#soften)"><ellipse cx="40" cy="226" rx="10" ry="5" transform="rotate(-30 40 226)"/><ellipse cx="80" cy="208" rx="11" ry="5" transform="rotate(-20 80 208)"/><ellipse cx="120" cy="206" rx="9" ry="4" transform="rotate(10 120 206)"/></g>
+          <ellipse cx="200" cy="168" rx="26" ry="30" fill="url(#c-flame)" opacity=".55" filter="url(#blur8)"/>
+          <rect x="172" y="186" width="58" height="96" rx="6" fill="url(#c-wax)"/>
+          <ellipse cx="201" cy="186" rx="29" ry="6" fill="#D8CFB9"/>
+          <path d="M201 182 v-8" stroke="#3a2a1a" stroke-width="1.6"/>
+          <path d="M201 152 C206 162 208 170 201 176 C194 170 196 162 201 152Z" fill="url(#c-flame)"/>
+          <ellipse cx="262" cy="244" rx="18" ry="22" fill="url(#c-flame)" opacity=".45" filter="url(#blur8)"/>
+          <rect x="242" y="262" width="56" height="84" rx="6" fill="url(#c-wax2)"/>
+          <path d="M268 258 C272 266 273 272 268 276 C263 272 264 266 268 258Z" fill="url(#c-flame)"/>
+          <g stroke="#C9A98A" stroke-width="2.4" stroke-linecap="round">
+            <path d="M118 340 L64 120"/><path d="M122 340 L100 100"/><path d="M126 340 L150 112"/><path d="M128 340 L172 128"/><path d="M120 340 L40 168"/>
+          </g>
+          <path d="M98 330 h48 l6 50 c0 18 -60 18 -60 0Z" fill="#E8F2F3" opacity=".75" stroke="#BFD3D6"/>
+          <rect x="112" y="314" width="20" height="18" rx="3" fill="#DCE9EA" stroke="#BFD3D6"/>
+          <path d="M100 372 c0 14 52 14 52 0" fill="#D4E4D8" opacity=".6"/>
+          <g>
+            <rect x="96" y="300" width="230" height="62" rx="31" fill="url(#c-towel)" transform="rotate(-6 210 330)"/>
+            <g stroke="#E1E6E7" stroke-width="3" transform="rotate(-6 210 330)" opacity=".9"><path d="M130 304v54M150 304v54M170 304v54M190 304v54M210 304v54M230 304v54M250 304v54M270 304v54"/></g>
+          </g>
+          <rect y="372" width="300" height="48" fill="#F3F5F2"/>
+          <rect width="300" height="420" filter="url(#grain)"/>
+        </svg>
+        <span class="label">Aromatherapy</span>
+      </button>
+
+      <!-- 3. Facial mask -->
+      <button class="cap in" data-pos="2" style="--d:6" data-name="Clay mask facial" aria-label="Clay mask facial">
+        <svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="f-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E9DCCF"/><stop offset="1" stop-color="#BFA996"/></linearGradient>
+            <radialGradient id="f-skin" cx=".55" cy=".4" r=".7"><stop offset="0" stop-color="#E7B596"/><stop offset="1" stop-color="#C78763"/></radialGradient>
+            <radialGradient id="f-clay" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#C28150"/><stop offset="1" stop-color="#8E5532"/></radialGradient>
+            <linearGradient id="f-robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DADFE0"/></linearGradient>
+          </defs>
+          <rect width="300" height="420" fill="url(#f-bg)"/>
+          <path d="M160 -10 C220 30 260 60 300 70 V-10Z" fill="#fff" opacity=".85"/>
+          <g transform="rotate(-18 150 240)">
+            <path d="M40 160 C40 90 110 60 165 70 C220 80 250 120 248 170 C230 140 190 128 150 132 C100 136 64 150 40 160Z" fill="url(#f-robe)"/>
+            <ellipse cx="148" cy="240" rx="90" ry="112" fill="url(#f-skin)"/>
+            <path d="M68 196 C80 150 120 138 150 140 C190 142 222 160 232 200 C236 236 228 262 214 284 C196 268 178 262 150 262 C122 262 102 270 84 286 C70 262 62 230 68 196Z" fill="url(#f-clay)"/>
+            <path d="M104 314 C122 300 176 300 194 314 C186 340 166 352 150 352 C134 352 112 340 104 314Z" fill="url(#f-clay)"/>
+            <path d="M108 228 q18 10 36 0" stroke="#4a2a16" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M160 228 q18 10 36 0" stroke="#4a2a16" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <ellipse cx="126" cy="230" rx="22" ry="12" fill="#E7B596" opacity=".9"/><ellipse cx="178" cy="230" rx="22" ry="12" fill="#E7B596" opacity=".9"/>
+            <path d="M110 230 q16 9 32 0M162 230 q16 9 32 0" stroke="#4a2a16" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <path d="M150 248 q-6 22 0 30" stroke="#8E5532" stroke-width="3" fill="none" opacity=".6"/>
+            <path d="M128 304 q22 12 44 0" stroke="#A14E46" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M20 330 C60 300 110 350 150 360 C200 372 250 330 290 330 L300 440 H0Z" fill="url(#f-robe)"/>
+          </g>
+          <g transform="rotate(-38 200 90)">
+            <rect x="196" y="-60" width="14" height="190" rx="7" fill="#F4F0E8"/>
+            <rect x="194" y="120" width="18" height="14" rx="2" fill="#C9C2B6"/>
+            <path d="M194 134 h18 l4 34 c-8 8 -18 8 -26 0Z" fill="#8E5532"/>
+          </g>
+          <g fill="#E8C0A5" filter="url(#soften)"><path d="M222 0 C250 20 262 50 248 72 C240 84 224 80 220 64 C214 40 210 18 222 0Z"/></g>
+          <rect width="300" height="420" filter="url(#grain)"/>
+        </svg>
+        <span class="label">Clay mask facial</span>
+      </button>
+
+      <!-- 4. Soap flatlay -->
+      <button class="cap in" data-pos="3" style="--d:7" data-name="Salt scrub & body polish" aria-label="Salt scrub and body polish">
+        <svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <radialGradient id="s-bg" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#F3EFEA"/><stop offset="1" stop-color="#DCD3CA"/></radialGradient>
+            <radialGradient id="s-bowl" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#E8E2DA"/><stop offset="1" stop-color="#A69C92"/></radialGradient>
+            <radialGradient id="s-soap" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#EBCFA3"/><stop offset="1" stop-color="#C79E68"/></radialGradient>
+            <linearGradient id="s-towel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#D9D9D6"/><stop offset=".5" stop-color="#F6F6F3"/><stop offset="1" stop-color="#D4D3CF"/></linearGradient>
+          </defs>
+          <rect width="300" height="420" fill="url(#s-bg)"/>
+          <g filter="url(#soften)" opacity=".35" fill="#9E9387"><ellipse cx="96" cy="112" rx="64" ry="54"/><ellipse cx="190" cy="300" rx="70" ry="90"/><ellipse cx="66" cy="300" rx="44" ry="110"/></g>
+          <ellipse cx="90" cy="96" rx="62" ry="52" fill="url(#s-bowl)"/>
+          <ellipse cx="90" cy="92" rx="48" ry="38" fill="#CFC7BD"/>
+          <g fill="#fff"><circle cx="76" cy="86" r="4"/><circle cx="88" cy="80" r="3"/><circle cx="100" cy="88" r="4"/><circle cx="84" cy="96" r="3.5"/><circle cx="96" cy="100" r="3"/><circle cx="108" cy="94" r="3"/><circle cx="70" cy="96" r="3"/><circle cx="92" cy="90" r="3"/><circle cx="80" cy="104" r="2.6"/><circle cx="104" cy="80" r="2.6"/></g>
+          <g transform="rotate(32 210 120)"><rect x="196" y="40" width="22" height="80" rx="11" fill="#E6CFB3"/><rect x="194" y="116" width="26" height="120" rx="10" fill="#D7B48E"/><g stroke="#B79570" stroke-width="2"><path d="M198 50v60M204 46v66M210 46v66M216 50v60"/></g></g>
+          <ellipse cx="250" cy="70" rx="22" ry="18" fill="#BCAE9F"/>
+          <rect x="22" y="180" width="70" height="200" rx="26" fill="url(#s-towel)"/>
+          <g stroke="#E3E2DE" stroke-width="2.4"><path d="M26 210h62M26 236h62M26 262h62M26 288h62M26 314h62M26 340h62"/></g>
+          <path d="M120 196 C170 176 260 186 270 236 C280 300 264 360 214 384 C170 404 128 380 118 330 C108 280 98 216 120 196Z" fill="#EDE6DE" stroke="#CFC4B8"/>
+          <g stroke="#3B3A36" stroke-width="1.4" fill="none" opacity=".75"><path d="M170 228 v40M170 240 l-12 -10M170 248 l10 -12M190 236 v34M190 246 l-9 -8"/></g>
+          <g fill="#3B3A36" opacity=".7"><circle cx="158" cy="228" r="2.4"/><circle cx="182" cy="234" r="2.4"/><circle cx="170" cy="226" r="2"/></g>
+          <circle cx="196" cy="320" r="40" fill="url(#s-soap)"/>
+          <circle cx="196" cy="320" r="40" fill="none" stroke="#B48A55" stroke-width="2" opacity=".5"/>
+          <rect width="300" height="420" filter="url(#grain)"/>
+        </svg>
+        <span class="label">Salt scrub</span>
+      </button>
+
+      <!-- 5. Glow skin treatment -->
+      <button class="cap in" data-pos="4" style="--d:8" data-name="Golden glow skin therapy" aria-label="Golden glow skin therapy">
+        <svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="g-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8A06A"/><stop offset="1" stop-color="#B9663A"/></linearGradient>
+            <radialGradient id="g-skin" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#F7C79E"/><stop offset=".7" stop-color="#E49866"/><stop offset="1" stop-color="#C47444"/></radialGradient>
+          </defs>
+          <rect width="300" height="420" fill="url(#g-bg)"/>
+          <g transform="rotate(24 160 220)">
+            <path d="M90 60 C150 20 250 50 260 140 C268 210 240 290 190 330 C160 352 120 350 100 320 C70 280 50 200 60 130 C64 100 74 76 90 60Z" fill="url(#g-skin)"/>
+            <path d="M96 180 q24 14 48 2" stroke="#6E3618" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+            <path d="M100 182 l-4 8M112 187 l-2 8M124 188 l0 8M136 186 l2 7" stroke="#6E3618" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M150 200 q8 34 -2 54 q10 4 18 -2" stroke="#B4602F" stroke-width="3" fill="none" opacity=".7"/>
+            <path d="M120 290 q30 14 56 -6" stroke="#A34A30" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M60 130 C50 60 120 0 200 10 C140 20 100 60 90 120Z" fill="#7A3A1A" opacity=".85"/>
+          </g>
+          <g fill="#FFE4BF" opacity=".55" filter="url(#blur8)"><ellipse cx="110" cy="120" rx="40" ry="16" transform="rotate(-30 110 120)"/><ellipse cx="200" cy="230" rx="50" ry="14" transform="rotate(-40 200 230)"/><ellipse cx="130" cy="320" rx="36" ry="12" transform="rotate(-20 130 320)"/></g>
+          <g fill="#5A2A12" opacity=".22" filter="url(#blur8)"><ellipse cx="230" cy="110" rx="34" ry="12" transform="rotate(-36 230 110)"/><ellipse cx="70" cy="240" rx="28" ry="10" transform="rotate(-30 70 240)"/></g>
+          <rect width="300" height="420" filter="url(#grain)"/>
+        </svg>
+        <span class="label">Glow therapy</span>
+      </button>
+    </section>
+
+    <div class="controls in" style="--d:9">
+      <button class="arrow prev" id="prev" aria-label="Previous treatment">
+        <svg viewBox="0 0 112 24"><path d="M2 12 H100"/><circle cx="104" cy="12" r="4"/><path d="M14 3 C10 8 6 11 2 12 C6 13 10 16 14 21"/></svg>
+      </button>
+      <button class="book" id="book" aria-haspopup="dialog">BOOK NOW</button>
+      <button class="arrow next" id="next" aria-label="Next treatment">
+        <svg viewBox="0 0 112 24"><circle cx="8" cy="12" r="4"/><path d="M12 12 H110"/><path d="M98 3 C102 8 106 11 110 12 C106 13 102 16 98 21"/></svg>
+      </button>
+    </div>
+
+    <div class="bottom">
+      <span class="foot-l in" style="--d:10">@2025</span>
+      <div class="socials in" style="--d:10">
+        <a href="#" aria-label="Message us">
+          <svg class="ico" viewBox="0 0 26 26"><path d="M13 3C7.5 3 3 7.1 3 12.3c0 2.9 1.4 5.5 3.7 7.2V23l3.4-1.9c.9.3 1.9.4 2.9.4 5.5 0 10-4.1 10-9.2S18.5 3 13 3Z"/><path d="m7.5 15 3.8-4 2.6 2.4 3.6-2.4-3.8 4-2.6-2.4Z"/></svg>
+        </a>
+        <a href="#" aria-label="Photo feed">
+          <svg class="ico" viewBox="0 0 26 26"><rect x="3.5" y="3.5" width="19" height="19" rx="5.5"/><circle cx="13" cy="13" r="4.4"/><circle cx="18.6" cy="7.4" r=".8" fill="currentColor"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Booking sheet -->
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-box" style="position:relative">
+        <button class="close" id="close" aria-label="Close booking"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="form">
+          <h2 id="sheetTitle">Reserve a ritual</h2>
+          <p class="sub" id="sheetSub">Clay mask facial · 60 min</p>
+          <div class="chips" role="group" aria-label="Day" id="days"></div>
+          <div class="chips" role="group" aria-label="Time" id="times"></div>
+          <button class="confirm" id="confirm">Confirm booking</button>
+        </div>
+        <div class="done" aria-live="polite">
+          <h2>See you soon</h2>
+          <p class="sub" id="doneText"></p>
+          <button class="confirm" id="doneBtn">Back to calm</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+  (() => {
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    document.documentElement.classList.add('js');
+
+    /* Nav glow follows hover / focus, rests on the current item */
+    const nav = $('#nav'), glow = $('#glow'), links = $$('a', nav);
+    const moveGlow = a => { glow.style.transform = `translateY(${a.offsetTop + a.offsetHeight / 2}px)`; };
+    const current = () => links.find(a => a.getAttribute('aria-current')) || links[1];
+    links.forEach(a => {
+      a.addEventListener('pointerenter', () => moveGlow(a));
+      a.addEventListener('focus', () => moveGlow(a));
+      a.addEventListener('click', e => { e.preventDefault(); links.forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); moveGlow(a); });
+    });
+    nav.addEventListener('pointerleave', () => moveGlow(current()));
+    requestAnimationFrame(() => moveGlow(current()));
+
+    /* Capsule carousel: rotate the five positions */
+    const caps = $$('.cap');
+    const order = caps.slice(); // order[i] sits at position i
+    function layout(dir) {
+      order.forEach((c, i) => {
+        const was = +c.dataset.pos;
+        // the capsule that wraps from one end to the other jumps without sliding across
+        if (dir && Math.abs(was - i) > 1) { c.classList.add('wrap'); c.dataset.pos = i; c.getBoundingClientRect(); requestAnimationFrame(() => c.classList.remove('wrap')); }
+        else c.dataset.pos = i;
+        c.tabIndex = i === 0 || i === 4 ? -1 : 0;
+      });
+    }
+    function step(dir) {
+      if (dir > 0) order.push(order.shift()); else order.unshift(order.pop());
+      layout(dir);
+    }
+    $('#next').addEventListener('click', () => step(1));
+    $('#prev').addEventListener('click', () => step(-1));
+    caps.forEach(c => c.addEventListener('click', () => {
+      const p = +c.dataset.pos;
+      if (p === 2) return openSheet();
+      const n = p - 2; for (let k = 0; k < Math.abs(n); k++) setTimeout(() => step(Math.sign(n)), k * 320);
+    }));
+    addEventListener('keydown', e => {
+      if (sheet.classList.contains('open')) { if (e.key === 'Escape') closeSheet(); return; }
+      if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'ArrowLeft') step(-1);
+    });
+    layout(0);
+    // gentle autoplay until the visitor interacts
+    let auto = reduceMotion ? null : setInterval(() => step(1), 5200);
+    const stopAuto = () => { clearInterval(auto); auto = null; };
+    ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, stopAuto, { once: true }));
+
+    /* Booking sheet */
+    const sheet = $('#sheet');
+    const days = ['Today', 'Tomorrow', 'Sat', 'Sun'], times = ['10:00', '12:30', '15:00', '18:30'];
+    const chips = (el, list) => { el.innerHTML = list.map((t, i) => `<button aria-pressed="${i === 0}">${t}</button>`).join('');
+      $$('button', el).forEach(b => b.addEventListener('click', () => $$('button', el).forEach(x => x.setAttribute('aria-pressed', x === b)))); };
+    chips($('#days'), days); chips($('#times'), times);
+    let lastFocus;
+    function openSheet() {
+      stopAuto();
+      const centre = order[2];
+      $('#sheetSub').textContent = `${centre.dataset.name} · 60 min`;
+      sheet.classList.remove('ok'); sheet.classList.add('open');
+      lastFocus = document.activeElement; setTimeout(() => $('#close').focus(), 50);
+    }
+    function closeSheet() { sheet.classList.remove('open'); lastFocus && lastFocus.focus(); }
+    $('#book').addEventListener('click', openSheet);
+    $('#close').addEventListener('click', closeSheet);
+    $('#doneBtn').addEventListener('click', closeSheet);
+    sheet.addEventListener('click', e => { if (e.target === sheet) closeSheet(); });
+    $('#confirm').addEventListener('click', () => {
+      const d = $('#days [aria-pressed="true"]').textContent, t = $('#times [aria-pressed="true"]').textContent;
+      $('#doneText').textContent = `${order[2].dataset.name}, ${d} at ${t}. It's waiting in your bag.`;
+      sheet.classList.add('ok');
+      const c = $('#bagCount'); c.textContent = +c.textContent + 1; c.classList.remove('pop'); c.getBoundingClientRect(); c.classList.add('pop');
+      $('#bag').setAttribute('aria-label', `Bag, ${c.textContent} items`);
+    });
+  })();
+  </script>
+</body>
+</html>
