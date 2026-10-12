@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nueansa Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: ivory envelope; tab nav, greeting + actions, KPI row, then a 2-column grid (cash flow + transactions | AI insight + card) */
+    :root {
+      --outer: #E7E4DF;
+      --ivory: #FAF7F2;
+      --panel: #FFFFFF;
+      --ink: #0F172A;
+      --ink-2: #1F2937;
+      --mute: #6B7280;
+      --line: #EDE8E1;
+      --orange: #FF5216;
+      --orange-2: #FF7A45;
+      --char: #1C1C1E;
+      --up: #FF5216;
+      --font: "Geist", "Inter", system-ui, sans-serif;
+      --mono: "Geist Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: light;
+    }
+    [hidden] { display: none !important; }
+    body { background: var(--outer); color: var(--ink); font-family: var(--font); padding: clamp(0px, 3vw, 44px); }
+    .env { max-width: 1440px; margin: 0 auto; background: var(--ivory); border-radius: clamp(0px, 1.7vw, 24px); overflow: hidden; box-shadow: 0 30px 70px -50px rgba(15,23,42,.45); }
+
+    /* ---------- Nav ---------- */
+    .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 76px; padding: 0 36px; border-bottom: 1px solid var(--line); }
+    .logo { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 18px; letter-spacing: -.01em; }
+    .logo svg { width: 30px; height: 26px; }
+    .tabs { position: relative; display: flex; gap: 6px; height: 100%; }
+    .tabs a { display: flex; align-items: center; padding: 0 16px; height: 100%; color: #4B5563; text-decoration: none; font-size: 15px; font-weight: 500; transition: color .2s; }
+    .tabs a:hover, .tabs a[aria-current="page"] { color: var(--ink); }
+    .tabs .bar { position: absolute; bottom: -1px; height: 2px; background: var(--orange); border-radius: 2px; transition: left .4s var(--ease), width .4s var(--ease); }
+    .nav-end { justify-self: end; display: flex; align-items: center; gap: 10px; }
+    .ib { width: 42px; height: 42px; border-radius: 12px; border: 1px solid #E4DED6; background: #fff; display: grid; place-items: center; color: var(--ink); position: relative; }
+    .ib svg { width: 18px; height: 18px; }
+    .ib .dot { position: absolute; top: 9px; right: 10px; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); border: 1.5px solid #fff; }
+    .user { display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px 0 6px; border-radius: 12px; border: 1px solid #E4DED6; background: #fff; font: 500 14px var(--font); color: var(--ink); }
+    .user i { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(140deg, #C7A07E, #5B3A26); display: grid; place-items: center; color: #fff; font-style: normal; font-size: 11px; font-weight: 600; }
+    .search-pop { position: absolute; top: 64px; right: 36px; z-index: 20; width: 320px; padding: 8px; border-radius: 14px; background: #fff; border: 1px solid var(--line); box-shadow: 0 20px 40px -20px rgba(15,23,42,.35); }
+    .search-pop input { width: 100%; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); font: 14px var(--font); }
+
+    /* ---------- Greeting ---------- */
+    main { padding: 28px 36px 36px; }
+    .greet { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(24px, 2.1vw, 30px); font-weight: 600; letter-spacing: -.02em; }
+    .today { margin: 8px 0 0; color: #4B5563; font-size: 16px; }
+    .gactions { display: flex; gap: 12px; }
+    .select { position: relative; }
+    .select select { appearance: none; height: 42px; padding: 0 40px 0 16px; border-radius: 10px; border: 1px solid #E4DED6; background: #fff; font: 500 15px var(--font); color: var(--ink); }
+    .select svg { position: absolute; right: 14px; top: 14px; width: 14px; height: 14px; pointer-events: none; }
+    .export { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 10px; border: 0; background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #fff; font: 500 15px var(--font); box-shadow: 0 10px 22px -10px rgba(255,82,22,.8); transition: transform .25s var(--ease); white-space: nowrap; }
+    .export:hover { transform: translateY(-1px); }
+    .export svg { width: 16px; height: 16px; }
+    .export.busy svg { animation: spin .9s linear infinite; }
+
+    /* ---------- KPIs ---------- */
+    .kpis { display: grid; grid-template-columns: 1.45fr repeat(3, 1fr); gap: 16px; margin-top: 18px; align-items: end; }
+    .total { padding: 0 0 6px; }
+    .total h3 { margin: 0; font-size: 16px; font-weight: 500; }
+    .num { font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+    .num .c { margin: 0 .12em; }
+    .big { font-size: clamp(40px, 4.2vw, 56px); font-weight: 600; margin-top: 18px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .delta { font-size: 14px; font-weight: 500; color: var(--mute); letter-spacing: 0; }
+    .delta b { color: var(--orange); font-weight: 500; }
+    .kpi { position: relative; padding: 20px 22px 18px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,.55); }
+    .kpi::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% 0%, rgba(255,122,69,.10), transparent 60%); pointer-events: none; }
+    .kpi-top { position: relative; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 500; }
+    .more { width: 28px; height: 28px; border: 0; background: none; padding: 0; display: grid; place-items: center; color: var(--ink); border-radius: 8px; }
+    .more:hover { background: rgba(15,23,42,.06); }
+    .more svg { width: 16px; height: 16px; }
+    .kpi .val { position: relative; font-size: clamp(26px, 2.3vw, 34px); font-weight: 600; margin-top: 28px; }
+    .kpi-foot { position: relative; display: flex; justify-content: space-between; margin-top: 10px; font-size: 14px; color: var(--mute); }
+    .kpi-foot b { color: var(--up); font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+    .kpi-foot svg { width: 13px; height: 13px; }
+
+    /* ---------- Grid ---------- */
+    .grid { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 18px; margin-top: 22px; }
+    .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+    .panel { background: var(--panel); border-radius: 20px; padding: 24px 24px; border: 1px solid #F0EBE4; box-shadow: 0 1px 2px rgba(15,23,42,.03); min-width: 0; position: relative; }
+    .panel h2 { margin: 0; font-size: 17px; font-weight: 500; }
+
+    /* cash flow */
+    .cf-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .cf-big { font-size: 32px; font-weight: 600; margin-top: 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .cf-big .delta { font-size: 12px; }
+    .legend { display: flex; align-items: center; gap: 20px; font-size: 14px; }
+    .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; }
+    .cf-tools { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .chart { position: relative; height: 330px; margin-top: 18px; }
+    .chart svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .chart text { font-family: var(--font); font-size: 12px; fill: #4B5563; }
+    .tip { position: absolute; z-index: 3; width: 170px; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid #EEE7DF; box-shadow: 0 16px 30px -18px rgba(15,23,42,.35); pointer-events: none; transition: left .3s var(--ease), top .3s var(--ease); font-size: 12px; color: #374151; }
+    .tip .r { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-family: var(--mono); font-size: 13px; color: var(--ink); }
+    .tip .r i { width: 7px; height: 7px; display: inline-block; margin-right: 8px; border-radius: 1px; }
+    .tip .r small { font-family: var(--font); font-size: 10px; color: var(--mute); }
+
+    /* table */
+    .tx-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .tx-tools { display: flex; gap: 10px; flex: 1; justify-content: flex-end; min-width: 260px; position: relative; }
+    .tsearch { position: relative; flex: 0 1 290px; }
+    .tsearch input { width: 100%; height: 42px; padding: 0 12px 0 40px; border-radius: 10px; border: 1px solid #E8E2DA; background: #fff; font: 14px var(--font); color: var(--ink); }
+    .tsearch input:focus { outline: none; border-color: #FFB599; box-shadow: 0 0 0 3px rgba(255,82,22,.12); }
+    .tsearch svg { position: absolute; left: 13px; top: 12px; width: 18px; height: 18px; color: var(--ink); }
+    .filter { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 10px; border: 1px solid #E8E2DA; background: #fff; font: 500 14px var(--font); color: var(--ink); }
+    .filter svg { width: 16px; height: 16px; }
+    .filter[aria-expanded="true"] { border-color: var(--orange); color: var(--orange); }
+    .fmenu { position: absolute; right: 0; top: 50px; z-index: 10; display: flex; gap: 6px; flex-wrap: wrap; width: 260px; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line); box-shadow: 0 20px 40px -20px rgba(15,23,42,.35); }
+    .fmenu button { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #E8E2DA; background: #fff; font: 500 13px var(--font); }
+    .fmenu button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .tbl { margin-top: 16px; border: 1px solid #F0EBE4; border-radius: 14px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 620px; font-size: 14px; }
+    th { text-align: left; font-weight: 400; color: #4B5563; font-size: 13px; padding: 14px 12px; border-bottom: 1px solid #F0EBE4; }
+    td { padding: 12px; border-bottom: 1px solid #F3EFE9; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr { transition: background .2s; }
+    tbody tr:hover { background: #FDFBF8; }
+    tbody tr.sel { background: #FFF5F0; }
+    th:first-child, td:first-child { width: 42px; padding-left: 16px; }
+    input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--orange); }
+    .tname { display: flex; align-items: center; gap: 12px; }
+    .ticon { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; flex: none; }
+    .pill { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 7px; border: 1px solid #E8E2DA; background: #fff; font-size: 13px; }
+    .amt { font-family: var(--mono); font-size: 13.5px; }
+    .empty td { text-align: center; color: var(--mute); padding: 28px; }
+
+    /* financial */
+    .fin-head, .card-head { display: flex; justify-content: space-between; align-items: center; }
+    .ai { margin-top: 16px; padding: 18px; border-radius: 16px; border: 1px solid #F0EBE4; background: linear-gradient(180deg, #fff, #FFFCF9); }
+    .ai-top { display: flex; gap: 14px; align-items: center; }
+    .spark { width: 46px; height: 46px; border-radius: 50%; flex: none; background: radial-gradient(circle at 35% 30%, #FF8A5C, var(--orange)); display: grid; place-items: center; color: #fff; box-shadow: 0 10px 20px -8px rgba(255,82,22,.7); }
+    .spark svg { width: 20px; height: 20px; }
+    .ai-top b { display: block; font-weight: 500; font-size: 15px; }
+    .ai-top small { color: var(--mute); font-size: 12px; }
+    .chat { margin-left: auto; width: 40px; height: 40px; border-radius: 10px; border: 1px solid #E8E2DA; background: #fff; display: grid; place-items: center; color: var(--ink); }
+    .chat svg { width: 18px; height: 18px; }
+    .insight { max-height: 0; overflow: hidden; font-size: 13px; line-height: 1.55; color: #374151; transition: max-height .5s var(--ease), margin .5s var(--ease); }
+    .insight.open { max-height: 120px; margin-top: 14px; }
+    .gauge { position: relative; width: min(230px, 100%); margin: 22px auto 0; aspect-ratio: 1; max-width: 100%; }
+    .gauge svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .gauge .seg { transition: stroke-width .25s var(--ease), opacity .25s; cursor: pointer; }
+    .gauge .seg:hover { stroke-width: 15; }
+    .gcenter { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+    .gcenter small { font-size: 11px; color: var(--mute); }
+    .gcenter b { font-size: 24px; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .metric { display: flex; align-items: flex-start; justify-content: space-between; padding-left: 12px; border-left: 3px solid var(--orange); }
+    .metric.dark { border-color: var(--char); }
+    .metric b { display: block; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .metric small { font-size: 12px; color: var(--mute); }
+    .metric svg { width: 16px; height: 16px; margin-top: 12px; }
+
+    /* my card */
+    .card-body { margin-top: 16px; padding: 18px; border-radius: 16px; border: 1px solid #F0EBE4; }
+    .card-body .acct { font-size: 14px; color: #4B5563; padding-bottom: 14px; border-bottom: 1px solid #F3EFE9; }
+    .card-row { display: flex; align-items: center; gap: 14px; margin-top: 16px; border: 0; background: none; padding: 0; width: 100%; text-align: left; font-family: var(--font); color: var(--ink); cursor: pointer; }
+    .mini { width: 64px; height: 42px; border-radius: 7px; background: linear-gradient(135deg, #2B2B2E, #0E0E10); position: relative; flex: none; box-shadow: 0 8px 14px -8px rgba(0,0,0,.6); transition: transform .4s var(--ease); }
+    .mini::before { content: ""; position: absolute; left: 7px; bottom: 7px; width: 10px; height: 8px; border-radius: 2px; background: #C9B37E; }
+    .mini::after { content: attr(data-brand); position: absolute; right: 6px; top: 5px; font-size: 7px; font-weight: 700; color: #fff; letter-spacing: .04em; }
+    .card-row:hover .mini { transform: rotate(-6deg) translateY(-2px); }
+    .card-row b { display: block; font-weight: 500; font-size: 16px; }
+    .card-row small { font-family: var(--mono); font-size: 11px; color: var(--mute); white-space: nowrap; }
+    .card-row .bal { margin-left: auto; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    .toast { position: fixed; left: 50%; bottom: 26px; z-index: 50; transform: translate(-50%, 16px); padding: 11px 18px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; opacity: 0; transition: opacity .25s, transform .3s var(--ease); pointer-events: none; }
+    .toast.on { opacity: 1; transform: translate(-50%, 0); }
+    button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+    .rise { opacity: 0; transform: translateY(12px); animation: rise .8s var(--ease) forwards; }
+    .d1 { animation-delay: .05s; } .d2 { animation-delay: .12s; } .d3 { animation-delay: .2s; } .d4 { animation-delay: .28s; } .d5 { animation-delay: .36s; } .d6 { animation-delay: .44s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .rise { opacity: 1; transform: none; animation: none; } }
+
+    @media (max-width: 1180px) {
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .total { grid-column: 1 / -1; }
+      .grid { grid-template-columns: 1fr; }
+      .col.side { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+    @media (max-width: 860px) {
+      .nav { grid-template-columns: 1fr auto; height: auto; padding: 14px 18px 0; row-gap: 6px; }
+      .tabs { grid-column: 1 / -1; order: 3; height: 46px; overflow-x: auto; scrollbar-width: none; }
+      .tabs a { padding: 0 12px; white-space: nowrap; }
+      .nav-end .user span { display: none; }
+      main { padding: 20px 16px 28px; }
+      .col.side { grid-template-columns: 1fr; }
+      .panel { padding: 18px; }
+    }
+    @media (max-width: 560px) {
+      .kpis { grid-template-columns: 1fr; }
+      .gactions { width: 100%; } .gactions .select, .gactions .select select { flex: 1; width: 100%; }
+      .legend { gap: 12px; font-size: 13px; }
+      .tx-tools { min-width: 0; width: 100%; }
+      .tsearch { flex: 1; }
+      .chart { height: 280px; }
+      .tx-tools { flex: 1 1 100%; }
+      .card-row { flex-wrap: wrap; }
+      .card-row .bal { margin-left: 0; width: 100%; font-size: 22px; }
+      .metric b { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="env">
+    <nav class="nav rise d1">
+      <a class="logo" href="#"><svg viewBox="0 0 30 26"><path d="M2 24V2h6l8 12V2h6v22h-6L8 12v12Z" fill="#FF5216"/><path d="M22 2h6v8l-6-4Z" fill="#FF8A5C"/></svg>Nueansa</a>
+      <div class="tabs" id="tabs">
+        <a href="#" aria-current="page">Dashboard</a><a href="#">Transactions</a><a href="#">My Wallet</a><a href="#">Invoices</a><a href="#">Reports</a>
+        <span class="bar" id="tabBar"></span>
+      </div>
+      <div class="nav-end">
+        <button class="ib" aria-label="Notifications, 3 new"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 8.5a5 5 0 0 1 10 0c0 3.8 1.5 5 1.5 5h-13S5 12.3 5 8.5Z"/><path d="M8.3 16.5a1.8 1.8 0 0 0 3.4 0"/></svg><span class="dot"></span></button>
+        <button class="ib" id="searchBtn" aria-label="Search" aria-expanded="false"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 3.5 3.5"/></svg></button>
+        <button class="user"><i>MA</i><span>Malik</span></button>
+      </div>
+      <div class="search-pop" id="searchPop" hidden><input id="globalSearch" type="search" placeholder="Search invoices, clients, reports…" aria-label="Search"></div>
+    </nav>
+
+    <main>
+      <section class="greet rise d2">
+        <div>
+          <h1>Good Afternoon, Malik!</h1>
+          <p class="today">Today is Saturday, December 25th, 2025</p>
+        </div>
+        <div class="gactions">
+          <span class="select"><select id="period" aria-label="Period"><option>This Month</option><option selected>Last Month</option><option>Last Quarter</option></select><svg viewBox="0 0 14 14" fill="none"><path d="m3.5 5.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <button class="export" id="exportBtn"><svg id="expIcon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M5 7l3 3 3-3M2.5 11v2.5h11V11"/></svg><span id="expLabel">Export</span></button>
+        </div>
+      </section>
+
+      <section class="kpis">
+        <div class="total rise d3">
+          <h3>Total Revenue</h3>
+          <div class="big num"><span id="kRev">$210,550</span> <span class="delta"><b id="kRevD">+9.5%</b> from last month</span></div>
+        </div>
+        <div class="kpi rise d3"><div class="kpi-top">Net Profit <button class="more" aria-label="Net Profit options"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button></div>
+          <div class="val num" id="kNet">$155,200</div><div class="kpi-foot">Growth Rate <b><svg viewBox="0 0 12 12" fill="none"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="kNetD">4.1%</span></b></div></div>
+        <div class="kpi rise d4"><div class="kpi-top">Operating Expenses <button class="more" aria-label="Operating Expenses options"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button></div>
+          <div class="val num" id="kOpex">$120,450</div><div class="kpi-foot">Growth Rate <b><svg viewBox="0 0 12 12" fill="none"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="kOpexD">1.8%</span></b></div></div>
+        <div class="kpi rise d4"><div class="kpi-top">Cash Projection <button class="more" aria-label="Cash Projection options"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button></div>
+          <div class="val num" id="kCash">$188,000</div><div class="kpi-foot">Growth Rate <b><svg viewBox="0 0 12 12" fill="none"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="kCashD">5.3%</span></b></div></div>
+      </section>
+
+      <div class="grid">
+        <div class="col">
+          <section class="panel rise d5" aria-label="Monthly cash flow">
+            <div class="cf-head">
+              <div><h2>Monthly Cash Flow</h2><div class="cf-big num"><span id="cfTotal">$104,627</span> <span class="delta"><b>+18%</b> from last month</span></div></div>
+              <div class="cf-tools">
+                <div class="legend"><span><i style="background:var(--orange)"></i>Revenue Inflow</span><span><i style="background:var(--char)"></i>Expense Outflow</span></div>
+                <span class="select"><select id="cfRange" aria-label="Date range"><option>Dec 01 - Dec 09</option><option>Dec 10 - Dec 18</option><option>Dec 19 - Dec 27</option></select><svg viewBox="0 0 14 14" fill="none"><path d="m3.5 5.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </div>
+            </div>
+            <div class="chart" id="chart">
+              <svg id="cf" aria-hidden="true"></svg>
+              <div class="tip" id="tip">
+                <div id="tipDate">December 05, 2025</div>
+                <div class="r"><span><i style="background:var(--orange)"></i><span id="tipIn">$8,740.00</span></span><small id="tipInD">↑ 2.5%</small></div>
+                <div class="r"><span><i style="background:var(--char)"></i><span id="tipOut">-$2,110.00</span></span><small id="tipOutD">↓ 2.5%</small></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel rise d6" aria-label="Transaction history">
+            <div class="tx-head">
+              <h2>Transaction History</h2>
+              <div class="tx-tools">
+                <label class="tsearch"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 3.5 3.5"/></svg><span style="position:absolute;left:-9999px">Search transactions</span><input id="txSearch" type="search" placeholder="Search by Name or Amount..."></label>
+                <button class="filter" id="filterBtn" aria-expanded="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg>Filter</button>
+                <div class="fmenu" id="fmenu" hidden></div>
+              </div>
+            </div>
+            <div class="tbl"><table>
+              <thead><tr><th><input type="checkbox" id="all" aria-label="Select all"></th><th>Transaction</th><th>Categories</th><th>Date</th><th>Amount</th><th aria-label="Actions"></th></tr></thead>
+              <tbody id="tx"></tbody>
+            </table></div>
+          </section>
+        </div>
+
+        <div class="col side">
+          <section class="panel rise d5" aria-label="Financial">
+            <div class="fin-head"><h2>Financial</h2><button class="more" aria-label="Financial options"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button></div>
+            <div class="ai">
+              <div class="ai-top">
+                <span class="spark"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5 12 8l6.5 2-6.5 2-2 6.5L8 12l-6.5-2L8 8Z"/></svg></span>
+                <div><b>AI Finance Insight</b><small>Smart insights from your weekly data</small></div>
+                <button class="chat" id="chatBtn" aria-expanded="false" aria-label="Show insight"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M10 3a7 7 0 0 0-6.1 10.4L3 17l3.7-.9A7 7 0 1 0 10 3Z"/></svg></button>
+              </div>
+              <p class="insight" id="insight" aria-live="polite"></p>
+              <div class="gauge" id="gauge">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                  <circle cx="100" cy="100" r="66" fill="none" stroke="#EDE8E1" stroke-width="1" stroke-dasharray="2 4"/>
+                  <path id="segA" class="seg" fill="none" stroke="#FF5216" stroke-width="11" stroke-linecap="round"/>
+                  <path id="segB" class="seg" fill="none" stroke="#1C1C1E" stroke-width="11" stroke-linecap="round"/>
+                </svg>
+                <div class="gcenter"><small id="gLabel">Available Balance</small><b class="num" id="gVal">$10,500</b></div>
+              </div>
+              <div class="metrics">
+                <div class="metric"><div><b class="num">$5,400</b><small>Earnings</small></div><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12 12 4M5.5 4H12v6.5"/></svg></div>
+                <div class="metric dark"><div><b class="num">$5,400</b><small>AI Suggested Save</small></div><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12 12 4M5.5 4H12v6.5"/></svg></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel rise d6" aria-label="My card">
+            <div class="card-head"><h2>My Card</h2><button class="more" aria-label="Card options"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button></div>
+            <div class="card-body">
+              <div class="acct" id="acct">Primary Business Account</div>
+              <button class="card-row" id="cardRow" aria-label="Switch card">
+                <span class="mini" id="mini" data-brand="VISA"></span>
+                <span><b id="cBrand">Visa</b><small id="cNum">**** **** **** 4219</small></span>
+                <span class="bal num" id="cBal">$39,219.00</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = id => document.getElementById(id);
+    const money = (v, d = 0) => (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const toast = $('toast'); let tt;
+    const say = m => { toast.textContent = m; toast.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => toast.classList.remove('on'), 2000); };
+    function tween(el, from, to, fmt, dur = 800) {
+      if (reduceMotion) { el.textContent = fmt(to); return; }
+      const t0 = performance.now();
+      const step = now => { const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3); el.textContent = fmt(from + (to - from) * e); if (t < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }
+
+    /* ---------- tabs with sliding indicator ---------- */
+    const tabs = $('tabs'), bar = $('tabBar');
+    const placeBar = a => { bar.style.left = a.offsetLeft + 'px'; bar.style.width = a.offsetWidth + 'px'; };
+    tabs.querySelectorAll('a').forEach(a => a.addEventListener('click', e => {
+      e.preventDefault(); tabs.querySelectorAll('a').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); placeBar(a);
+    }));
+    $('searchBtn').addEventListener('click', e => { e.stopPropagation(); const p = $('searchPop'); p.hidden = !p.hidden; $('searchBtn').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('globalSearch').focus(); });
+    $('searchPop').addEventListener('click', e => e.stopPropagation());
+
+    /* ---------- period switch: KPIs recount ---------- */
+    const periods = {
+      'This Month':   { rev: 68420, revD: '+3.2%', net: 49800, netD: '2.6%', opex: 38900, opexD: '0.9%', cash: 61200, cashD: '3.1%' },
+      'Last Month':   { rev: 210550, revD: '+9.5%', net: 155200, netD: '4.1%', opex: 120450, opexD: '1.8%', cash: 188000, cashD: '5.3%' },
+      'Last Quarter': { rev: 584300, revD: '+12.4%', net: 402900, netD: '6.7%', opex: 331700, opexD: '2.4%', cash: 512000, cashD: '7.9%' }
+    };
+    let cur = periods['Last Month'];
+    const kfmt = v => money(Math.round(v));
+    function setPeriod(name, animate = true) {
+      const p = periods[name];
+      [['kRev', 'rev'], ['kNet', 'net'], ['kOpex', 'opex'], ['kCash', 'cash']].forEach(([id, k]) => tween($(id), animate ? cur[k] : 0, p[k], kfmt, animate ? 700 : 1300));
+      $('kRevD').textContent = p.revD; $('kNetD').textContent = p.netD; $('kOpexD').textContent = p.opexD; $('kCashD').textContent = p.cashD;
+      cur = p;
+    }
+    $('period').addEventListener('change', e => setPeriod(e.target.value));
+
+    /* ---------- export ---------- */
+    $('exportBtn').addEventListener('click', () => {
+      const b = $('exportBtn'); if (b.classList.contains('busy')) return;
+      b.classList.add('busy'); $('expLabel').textContent = 'Preparing…'; $('expIcon').innerHTML = '<path d="M8 2a6 6 0 1 1-6 6"/>';
+      setTimeout(() => { b.classList.remove('busy'); $('expLabel').textContent = 'Exported ✓'; $('expIcon').innerHTML = '<path d="m3 8.5 3 3 7-7"/>'; say(`${$('period').value} report ready (PDF + CSV)`);
+        setTimeout(() => { $('expLabel').textContent = 'Export'; $('expIcon').innerHTML = '<path d="M8 2v8M5 7l3 3 3-3M2.5 11v2.5h11V11"/>'; }, 2200); }, 1300);
+    });
+
+    /* ---------- cash flow chart ---------- */
+    const ranges = {
+      'Dec 01 - Dec 09': { start: 1, inflow: [5400, 0, 6200, 3900, 8740, 0, 8200, 3600, 0], outflow: [0, 5300, 2600, 0, 2110, 3400, 0, 6000, 2800], focus: 4, pin: [2.5, 2.5], total: 104627 },
+      'Dec 10 - Dec 18': { start: 10, inflow: [4100, 6800, 0, 5200, 7400, 2900, 0, 6100, 4800], outflow: [1900, 0, 4200, 2300, 0, 3100, 5200, 0, 2200], focus: 4, total: 98210 },
+      'Dec 19 - Dec 27': { start: 19, inflow: [7200, 3300, 5900, 0, 2400, 0, 6600, 8100, 3900], outflow: [0, 2800, 1600, 4700, 3900, 5600, 0, 1400, 2900], focus: 7, total: 112480 }
+    };
+    let rKey = 'Dec 01 - Dec 09', focusI = 4, geo;
+    const svg = $('cf'), chart = $('chart'), tip = $('tip');
+    const MAXV = 9000;
+    function drawCF() {
+      const r = ranges[rKey], W = chart.clientWidth, H = chart.clientHeight;
+      const L = 46, R = W, T = 10, B = H - 34, mid = (T + B) / 2, n = r.inflow.length, cw = (R - L) / n, bw = Math.min(78, cw * .82);
+      const y = v => mid - v / MAXV * (mid - T);
+      geo = { L, R, T, B, mid, n, cw, bw, y, r };
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const ticks = [9000, 6000, 3000, 0, -3000, -6000, -9000];
+      let s = `<defs>
+        <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A45" stop-opacity=".22"/><stop offset="1" stop-color="#FF7A45" stop-opacity="0"/></linearGradient>
+        <linearGradient id="gOut" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1C1C1E" stop-opacity=".09"/><stop offset="1" stop-color="#1C1C1E" stop-opacity="0"/></linearGradient>
+        <linearGradient id="gInOn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF6A2E"/><stop offset="1" stop-color="#FF5216"/></linearGradient></defs>`;
+      s += ticks.map(t => `<text x="${L - 12}" y="${y(t) + 4}" text-anchor="end">${t === 0 ? '$0' : (t < 0 ? '-$' : '$') + Math.abs(t / 1000) + 'K'}</text>`).join('');
+      for (let i = 0; i <= n; i++) s += `<line x1="${L + i * cw}" x2="${L + i * cw}" y1="${T}" y2="${B}" stroke="#EDE8E1" stroke-dasharray="4 5"/>`;
+      s += `<line x1="${L}" x2="${R}" y1="${B}" y2="${B}" stroke="#E5DFD7"/>`;
+      r.inflow.forEach((v, i) => {
+        const x = L + i * cw + (cw - bw) / 2, o = r.outflow[i], on = i === focusI;
+        if (v) {
+          s += on ? `<rect class="b" x="${x}" y="${y(v)}" width="${bw}" height="${mid - y(v) + 14}" rx="12" fill="url(#gInOn)"/>`
+                  : `<rect class="b" x="${x}" y="${y(v)}" width="${bw}" height="${mid - y(v)}" fill="url(#gIn)"/><line x1="${x}" x2="${x + bw}" y1="${y(v)}" y2="${y(v)}" stroke="#FF5216" stroke-width="2"/>`;
+        }
+        if (o) {
+          s += on ? `<rect class="b" x="${x}" y="${mid}" width="${bw}" height="${y(-o) - mid}" rx="10" fill="#1C1C1E"/>`
+                  : `<rect class="b" x="${x}" y="${mid}" width="${bw}" height="${y(-o) - mid}" fill="url(#gOut)"/><line x1="${x}" x2="${x + bw}" y1="${y(-o)}" y2="${y(-o)}" stroke="#1C1C1E" stroke-width="2"/>`;
+        }
+        s += `<text x="${L + i * cw + cw / 2}" y="${H - 8}" text-anchor="middle" style="font-size:13px">${cw < 64 ? '' : 'Dec '}${String(r.start + i).padStart(2, '0')}</text>`;
+      });
+      const fx = L + (focusI + 1) * cw - (cw - bw) / 2 + 8;
+      s += `<line x1="${L}" x2="${R}" y1="${mid}" y2="${mid}" stroke="#1C1C1E" stroke-dasharray="6 6" stroke-width="1.2"/>`;
+      s += `<line x1="${fx}" x2="${fx}" y1="${T}" y2="${B}" stroke="#1C1C1E" stroke-dasharray="5 5" stroke-width="1.2"/>`;
+      s += `<circle cx="${fx}" cy="${mid}" r="6" fill="#fff" stroke="#1C1C1E" stroke-width="2"/><circle cx="${fx}" cy="${mid}" r="2.4" fill="#1C1C1E"/>`;
+      svg.innerHTML = s;
+      // tooltip
+      const day = r.start + focusI, inV = r.inflow[focusI], outV = r.outflow[focusI];
+      $('tipDate').textContent = `December ${String(day).padStart(2, '0')}, 2025`;
+      $('tipIn').textContent = money(inV, 2); $('tipOut').textContent = money(-outV, 2);
+      const pin = (r.pin && focusI === r.focus) ? r.pin : [1 + (day * 7 % 30) / 10, 1 + (day * 11 % 30) / 10];
+      $('tipInD').textContent = '↑ ' + pin[0].toFixed(1) + '%'; $('tipOutD').textContent = '↓ ' + pin[1].toFixed(1) + '%';
+      let tx = fx + 14; if (tx + 176 > W) tx = L + focusI * cw + (cw - bw) / 2 - 184;
+      tip.style.left = Math.max(0, tx) + 'px'; tip.style.top = (y(Math.max(inV, 3000)) + 4) + 'px';
+    }
+    chart.addEventListener('pointermove', e => {
+      if (!geo) return;
+      const r = chart.getBoundingClientRect(), i = Math.floor((e.clientX - r.left - geo.L) / geo.cw);
+      if (i >= 0 && i < geo.n && i !== focusI) { focusI = i; drawCF(); }
+    });
+    chart.addEventListener('pointerleave', () => { focusI = ranges[rKey].focus; drawCF(); });
+    $('cfRange').addEventListener('change', e => { const old = ranges[rKey].total; rKey = e.target.value; focusI = ranges[rKey].focus; drawCF(); tween($('cfTotal'), old, ranges[rKey].total, kfmt); });
+
+    /* ---------- transactions ---------- */
+    const rows = [
+      { n: 'Adobe Creative Cloud', c: 'Subscription', d: 'Nov 21, 2025', a: -8200, ic: '#DA1F26', t: 'Ac' },
+      { n: 'Payment from Client ABC', c: 'Revenue', d: 'Nov 29, 2025', a: 12450, ic: '#1C1C1E', t: 'AB' },
+      { n: 'Office Lease, December', c: 'Rent', d: 'Dec 01, 2025', a: -6400, ic: '#7C5CFA', t: 'OL' },
+      { n: 'Payment from Brightlane Ltd', c: 'Revenue', d: 'Dec 03, 2025', a: 9870, ic: '#0EA5E9', t: 'BL' },
+      { n: 'Payroll, Design Team', c: 'Payroll', d: 'Dec 05, 2025', a: -21300, ic: '#F59E0B', t: 'PR' },
+      { n: 'Cloud Hosting Invoice', c: 'Subscription', d: 'Dec 06, 2025', a: -1140, ic: '#10B981', t: 'CH' }
+    ];
+    const cats = ['All', ...new Set(rows.map(r => r.c))];
+    let cat = 'All', q = '';
+    const fmenu = $('fmenu');
+    fmenu.innerHTML = cats.map(c => `<button aria-pressed="${c === 'All'}">${c}</button>`).join('');
+    fmenu.querySelectorAll('button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); cat = b.textContent; fmenu.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderTx(); }));
+    $('filterBtn').addEventListener('click', e => { e.stopPropagation(); fmenu.hidden = !fmenu.hidden; $('filterBtn').setAttribute('aria-expanded', !fmenu.hidden); });
+    addEventListener('click', () => { fmenu.hidden = true; $('filterBtn').setAttribute('aria-expanded', false); $('searchPop').hidden = true; $('searchBtn').setAttribute('aria-expanded', false); });
+    function renderTx() {
+      const list = rows.filter(r => (cat === 'All' || r.c === cat) && (!q || r.n.toLowerCase().includes(q) || String(Math.abs(r.a)).includes(q.replace(/[^0-9]/g, '') || '§')));
+      $('tx').innerHTML = list.length ? list.map((r, i) => `<tr>
+          <td><input type="checkbox" aria-label="Select ${r.n}"></td>
+          <td><span class="tname"><span class="ticon" style="background:${r.ic}">${r.t}</span>${r.n}</span></td>
+          <td><span class="pill">${r.c}</span></td>
+          <td>${r.d}</td>
+          <td class="amt">${r.a < 0 ? '-' : '+'}$${Math.abs(r.a).toLocaleString('en-US')}</td>
+          <td><button class="more" aria-label="Options for ${r.n}"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg></button></td></tr>`).join('')
+        : `<tr class="empty"><td colspan="6">No transactions match “${q}”. Try a name like “Adobe” or an amount like 8200.</td></tr>`;
+      $('tx').querySelectorAll('input[type=checkbox]').forEach(c => c.addEventListener('change', () => c.closest('tr').classList.toggle('sel', c.checked)));
+      $('all').checked = false;
+    }
+    $('txSearch').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); renderTx(); });
+    $('all').addEventListener('change', e => $('tx').querySelectorAll('input[type=checkbox]').forEach(c => { c.checked = e.target.checked; c.closest('tr').classList.toggle('sel', c.checked); }));
+    renderTx();
+
+    /* ---------- gauge ---------- */
+    const polar = (a, r = 80) => [100 + r * Math.cos(a), 100 + r * Math.sin(a)];
+    const arc = (a0, a1, r = 80) => { const [x0, y0] = polar(a0, r), [x1, y1] = polar(a1, r); return `M${x0} ${y0} A${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1} ${y1}`; };
+    const startA = Math.PI * .72, span = Math.PI * 1.56, gap = .12, share = .5;
+    const segA = $('segA'), segB = $('segB');
+    segA.setAttribute('d', arc(startA, startA + span * share - gap / 2));
+    segB.setAttribute('d', arc(startA + span * share + gap / 2, startA + span));
+    [segA, segB].forEach(p => { const L = p.getTotalLength(); p.style.strokeDasharray = L; p.style.strokeDashoffset = reduceMotion ? 0 : L; if (!reduceMotion) { p.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1) .6s, stroke-width .25s'; requestAnimationFrame(() => requestAnimationFrame(() => p.style.strokeDashoffset = 0)); } });
+    const gLabel = $('gLabel'), gVal = $('gVal');
+    segA.addEventListener('mouseenter', () => { gLabel.textContent = 'Earnings'; gVal.textContent = '$5,400'; segB.style.opacity = .3; });
+    segB.addEventListener('mouseenter', () => { gLabel.textContent = 'AI Suggested Save'; gVal.textContent = '$5,400'; segA.style.opacity = .3; });
+    [segA, segB].forEach(p => p.addEventListener('mouseleave', () => { gLabel.textContent = 'Available Balance'; gVal.textContent = '$10,500'; segA.style.opacity = segB.style.opacity = 1; }));
+
+    /* ---------- AI insight ---------- */
+    const insightText = 'Software spend fell 12% versus November. Moving the suggested $5,400 into savings still leaves 2.3 months of operating runway, and Client ABC’s invoice is due in 4 days.';
+    let typing;
+    $('chatBtn').addEventListener('click', () => {
+      const el = $('insight'), open = !el.classList.contains('open');
+      el.classList.toggle('open', open); $('chatBtn').setAttribute('aria-expanded', open);
+      clearInterval(typing); el.textContent = '';
+      if (!open) return;
+      if (reduceMotion) { el.textContent = insightText; return; }
+      const words = insightText.split(' '); let i = 0;
+      typing = setInterval(() => { el.textContent = words.slice(0, ++i).join(' '); if (i >= words.length) clearInterval(typing); }, 40);
+    });
+
+    /* ---------- my card ---------- */
+    const cardsData = [
+      { acct: 'Primary Business Account', brand: 'Visa', mark: 'VISA', num: '**** **** **** 4219', bal: 39219 },
+      { acct: 'Operating Expenses Account', brand: 'Mastercard', mark: 'MC', num: '**** **** **** 8812', bal: 12480.5 }
+    ];
+    let ci = 0;
+    $('cardRow').addEventListener('click', () => {
+      const prev = cardsData[ci].bal; ci = (ci + 1) % cardsData.length; const c = cardsData[ci];
+      $('acct').textContent = c.acct; $('cBrand').textContent = c.brand; $('cNum').textContent = c.num; $('mini').dataset.brand = c.mark;
+      tween($('cBal'), prev, c.bal, v => money(v, 2), 600);
+    });
+
+    /* ---------- boot ---------- */
+    const boot = () => { placeBar(tabs.querySelector('[aria-current]')); drawCF(); setPeriod('Last Month', false); tween($('cfTotal'), 0, 104627, kfmt, 1300); };
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(boot);
+    let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { placeBar(tabs.querySelector('[aria-current]')); drawCF(); }, 120); });
+  </script>
+</body>
+</html>

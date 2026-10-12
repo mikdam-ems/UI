@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sync.ai</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: white card on slate; centred headline + email form; bento deck below with hand-drawn arrows feeding into it */
+    :root {
+      --backdrop: #3B4A54;
+      --card: #FFFFFF;
+      --ink: #0F172A;
+      --ink-2: #1E242B;
+      --muted: #64748B;
+      --line: #E6EAEE;
+      --soft: #F5F7F9;
+      --ice-1: #E2EFF4;
+      --ice-2: #C8E2EC;
+      --peach: #F6C9A8;
+      --sky: #CFE3EE;
+      --ok: #16A34A;
+      --display: "Schibsted Grotesk", "Inter", system-ui, sans-serif;
+      --body: "Inter", system-ui, sans-serif;
+      --script: "Caveat", "Segoe Print", cursive;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: light;
+    }
+    body { background: var(--backdrop); color: var(--ink); font-family: var(--body); padding: 24px 16px; }
+
+    .hero {
+      max-width: 1440px; margin: 0 auto;
+      background: var(--card);
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      background-image: linear-gradient(180deg, #fff 55%, #F1F5F8 100%);
+    }
+
+    /* ---------- Nav ---------- */
+    .nav {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .logo { font-family: var(--display); font-weight: 700; font-size: 26px; letter-spacing: -.04em; color: var(--ink); text-decoration: none; }
+    .logo span { color: #5B8FA6; }
+    .links { display: flex; gap: 38px; list-style: none; margin: 0; padding: 0; }
+    .links a { color: var(--muted); text-decoration: none; font-size: 15px; transition: color .2s; }
+    .links a:hover { color: var(--ink); }
+    .auth { justify-self: end; display: flex; align-items: center; gap: 24px; }
+    .auth a { text-decoration: none; font-size: 15px; font-weight: 500; }
+    .signin { color: var(--ink); }
+    .btn-dark {
+      display: inline-flex; align-items: center; gap: 10px;
+      height: 44px; padding: 0 20px; border-radius: 8px; border: 0;
+      background: var(--ink-2); color: #fff; font-family: var(--body); font-size: 15px; font-weight: 500;
+      transition: transform .25s var(--ease), background .25s;
+    }
+    .btn-dark:hover { background: #000; transform: translateY(-1px); }
+    .btn-dark svg { width: 16px; height: 16px; transition: transform .25s var(--ease); }
+    .btn-dark:hover svg { transform: translateX(3px); }
+    a.btn-dark { color: #fff; }
+
+    /* ---------- Head ---------- */
+    .head { text-align: center; padding: 76px 16px 0; position: relative; z-index: 2; }
+    h1 {
+      margin: 0 auto; max-width: 780px;
+      font-family: var(--display); font-weight: 600;
+      font-size: clamp(36px, 4.8vw, 64px); line-height: 1.06; letter-spacing: -.035em;
+      color: #22313B;
+      text-wrap: balance;
+    }
+    .form { display: flex; justify-content: center; gap: 8px; margin-top: 36px; flex-wrap: wrap; }
+    .form input {
+      width: 272px; max-width: 100%; height: 44px; padding: 0 16px;
+      border: 1px solid #DCE2E7; border-radius: 8px; background: #fff;
+      font: 15px var(--body); color: var(--ink);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form input::placeholder { color: #9AA6B2; }
+    .form input:focus { outline: none; border-color: #8FB3C4; box-shadow: 0 0 0 4px rgba(143,179,196,.25); }
+    .form.done input { border-color: #9ED3B0; }
+    .privacy { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; font-size: 14px; color: var(--muted); }
+    .privacy svg { width: 16px; height: 16px; }
+    .form-msg { min-height: 0; font-size: 13px; color: var(--ok); margin-top: 8px; }
+
+    /* ---------- Bento ---------- */
+    .deck-wrap { position: relative; max-width: 1060px; margin: 72px auto 0; padding: 0 16px 64px; }
+    .bento {
+      display: grid; gap: 12px;
+      grid-template-columns: 1fr .82fr 1.45fr;
+      grid-template-areas: "cal stat stack" "keys keys stack";
+      position: relative; z-index: 2;
+    }
+    .tile { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+
+    .cal { grid-area: cal; display: flex; flex-direction: column; }
+    .cal-top { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--soft); border-bottom: 1px solid var(--line); font-size: 14px; color: #475569; }
+    .cal-top button { background: none; border: 0; color: var(--muted); padding: 0; display: grid; }
+    .cal-top svg { width: 16px; height: 16px; }
+    .cal-body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
+    .app { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #475569; }
+    .app svg { width: 18px; height: 18px; }
+    .date { font-family: var(--display); font-weight: 500; font-size: 26px; letter-spacing: -.03em; margin: 14px 0 4px; }
+    .time { font-size: 14px; color: var(--muted); padding-bottom: 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+    .from { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-top: 14px; }
+    .from b { color: var(--ink); display: inline-flex; align-items: center; gap: 3px; font-weight: 700; letter-spacing: -.02em; }
+    .from svg { width: 13px; height: 13px; }
+    .cal-actions { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 24px; }
+    .cal-actions .btn-dark { height: 38px; padding: 0 18px; font-size: 14px; }
+    .cal-actions .btn-dark.ok { background: var(--ok); }
+    .icons { display: flex; gap: 10px; color: var(--muted); }
+    .icons svg { width: 20px; height: 20px; }
+
+    .stat {
+      grid-area: stat; position: relative;
+      background: linear-gradient(180deg, var(--ice-1), var(--ice-2));
+      border: 1px solid #D4E6EE;
+      padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between;
+      min-height: 296px;
+    }
+    .big { display: flex; align-items: center; gap: 14px; font-family: var(--display); font-weight: 600; font-size: 62px; letter-spacing: -.06em; color: #22313B; line-height: 1; }
+    .chev { display: flex; }
+    .chev svg { width: 18px; height: 40px; margin-left: -6px; stroke: #22313B; }
+    .chev svg:nth-child(1) { opacity: 1; } .chev svg:nth-child(2) { opacity: .6; } .chev svg:nth-child(3) { opacity: .35; } .chev svg:nth-child(4) { opacity: .15; }
+    .stat p { margin: 0; font-size: 14px; line-height: 1.45; color: #33424C; max-width: 22ch; }
+    .stat::after { /* glossy light */
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(80% 50% at 20% 0%, rgba(255,255,255,.7), transparent 70%);
+    }
+
+    .keys { grid-area: keys; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 24px; flex-wrap: wrap; }
+    .keys h3 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: -.02em; }
+    .keys p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+    .combo { display: flex; align-items: center; gap: 14px; color: #94A3B8; }
+    .kbd {
+      display: inline-flex; align-items: center; gap: 16px;
+      height: 56px; padding: 0 22px; border-radius: 12px;
+      background: var(--soft); border: 1px solid var(--line);
+      font-size: 18px; color: var(--ink);
+      box-shadow: inset 0 -2px 0 rgba(15,23,42,.06);
+      transition: transform .12s, background .2s, box-shadow .12s;
+    }
+    .kbd.down { transform: translateY(2px); background: #E9F2F6; box-shadow: none; }
+    .kbd span { transition: color .2s; }
+    .kbd span.on { color: #2F7FA0; }
+    .play { width: 58px; padding: 0; justify-content: center; border: 1px solid var(--line); cursor: pointer; }
+    .play svg { width: 12px; height: 12px; }
+
+    .stack { grid-area: stack; position: relative; min-height: 420px; perspective: 1200px; cursor: pointer; }
+    .stack-hint { position: absolute; left: 0; right: 0; bottom: 16px; text-align: center; font-size: 12px; color: #94A3B8; z-index: 1; }
+    .task {
+      position: absolute; left: 50%; top: 50%;
+      width: 236px; border-radius: 14px; overflow: hidden;
+      background: #fff;
+      box-shadow: 0 24px 48px -18px rgba(30,41,59,.35);
+      transition: transform .7s var(--ease), box-shadow .5s, filter .5s;
+      will-change: transform;
+    }
+    .task-top { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 14px; font-weight: 500; color: var(--ink); border-bottom: 1px solid rgba(15,23,42,.06); }
+    .task-top svg { width: 16px; height: 16px; }
+    .task-body { padding: 14px 18px 18px; }
+    .task small { font-size: 12px; color: var(--muted); }
+    .task h4 { margin: 6px 0 0; font-family: var(--display); font-weight: 500; font-size: 17px; line-height: 1.25; letter-spacing: -.02em; padding-bottom: 14px; border-bottom: 1px solid rgba(15,23,42,.08); }
+    .task .when { margin-top: 34px; font-family: var(--display); font-weight: 500; font-size: 15px; }
+    .task .meta { font-size: 12px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .t-peach { background: linear-gradient(160deg, #FBE3D2, var(--peach) 70%, #F2B48C); }
+    .t-peach .task-top { background: rgba(255,255,255,.25); }
+    .t-sky { background: linear-gradient(160deg, #E8F2F8, var(--sky) 70%, #B8D5E5); }
+    .t-sky .task-top { background: rgba(255,255,255,.35); }
+    .t-white .task-top { background: var(--soft); }
+    /* fan positions, assigned by JS: pos-0 is front */
+    .task.pos-0 { transform: translate(-50%, -50%) rotate(0deg); z-index: 3; }
+    .task.pos-1 { transform: translate(-28%, -64%) rotate(14deg); z-index: 2; filter: saturate(.95); }
+    .task.pos-2 { transform: translate(-80%, -38%) rotate(-14deg); z-index: 1; filter: saturate(.95); }
+    .stack:hover .task.pos-1 { transform: translate(-16%, -68%) rotate(18deg); }
+    .stack:hover .task.pos-2 { transform: translate(-92%, -34%) rotate(-18deg); }
+
+    /* ---------- Hand-drawn annotations ---------- */
+    .notes { position: absolute; inset: -150px -140px 0; pointer-events: none; z-index: 1; }
+    .notes svg { width: 100%; height: 100%; overflow: visible; }
+    .notes path { fill: none; stroke: #A9B4BD; stroke-width: 1.2; stroke-linecap: round; }
+    .notes .arrow-head { stroke-width: 1.2; }
+    .notes text { font-family: var(--script); font-size: 26px; fill: #8D99A4; }
+    .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.6s var(--ease) forwards; }
+    .draw.d2 { animation-delay: 1.5s; }
+    .draw.d3 { animation-delay: 1.75s; }
+    .write { opacity: 0; animation: fade .8s ease forwards; }
+
+    /* ---------- Motion ---------- */
+    .rise { opacity: 0; transform: translateY(16px); animation: rise .9s var(--ease) forwards; }
+    .r1 { animation-delay: .05s; } .r2 { animation-delay: .15s; } .r3 { animation-delay: .25s; } .r4 { animation-delay: .35s; }
+    .r5 { animation-delay: .5s; } .r6 { animation-delay: .6s; } .r7 { animation-delay: .7s; } .r8 { animation-delay: .8s; }
+    .chev.run svg { animation: chev 1.6s ease-in-out infinite; }
+    .chev.run svg:nth-child(2) { animation-delay: .12s; } .chev.run svg:nth-child(3) { animation-delay: .24s; } .chev.run svg:nth-child(4) { animation-delay: .36s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    @keyframes fade { to { opacity: 1; } }
+    @keyframes chev { 0%, 100% { transform: none; } 40% { transform: translateX(6px); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .rise, .write { opacity: 1; transform: none; animation: none; }
+      .draw { stroke-dashoffset: 0; animation: none; }
+      .chev.run svg { animation: none; }
+      .task { transition: none; }
+    }
+
+    .btn-dark:focus-visible, .links a:focus-visible, .signin:focus-visible, .play:focus-visible, .stack:focus-visible, .cal-top button:focus-visible { outline: 2px solid #5B8FA6; outline-offset: 3px; }
+
+    /* ---------- Responsive ---------- */
+    /* Height fit: on desktop the hero is one screen tall; spacing follows the viewport height and fit.js shrinks the bento */
+    @media (min-width: 921px) {
+      .hero { height: max(600px, calc(100svh - 48px)); }
+      .head { padding-top: clamp(28px, 7vh, 76px); }
+      h1 { font-size: clamp(32px, min(4.8vw, 6.6vh), 64px); }
+      .form { margin-top: clamp(16px, 3.4vh, 36px); }
+      .privacy { margin-top: clamp(10px, 2vh, 22px); }
+      .deck-wrap { margin-top: clamp(24px, 6.5vh, 72px); padding-bottom: 0; }
+    }
+    @media (max-width: 1180px), (max-height: 700px) { .notes { display: none; } }
+    @media (max-width: 920px) {
+      .links { display: none; }
+      .nav { grid-template-columns: 1fr auto; padding: 16px 20px; }
+      .bento { grid-template-columns: 1fr 1fr; grid-template-areas: "cal stat" "keys keys" "stack stack"; }
+      .stack { min-height: 400px; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      .hero { border-radius: 18px; }
+      .signin { display: none; }
+      .head { padding-top: 48px; }
+      .form input { width: 100%; }
+      .form .btn-dark { width: 100%; justify-content: center; }
+      .deck-wrap { margin-top: 44px; padding-bottom: 32px; }
+      .bento { grid-template-columns: 1fr; grid-template-areas: "cal" "stat" "keys" "stack"; }
+      .stat { min-height: 210px; }
+      .keys { padding: 18px; }
+      .kbd { height: 48px; padding: 0 16px; }
+      .play { width: 50px; }
+      .stack { min-height: 380px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero" data-fit-root>
+    <nav class="nav rise r1">
+      <a class="logo" href="#">sync<span>.</span>ai</a>
+      <ul class="links">
+        <li><a href="#">How it works</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Products</a></li>
+        <li><a href="#">Docs</a></li>
+      </ul>
+      <div class="auth">
+        <a class="signin" href="#">Sign in</a>
+        <a class="btn-dark" href="#">Sign up</a>
+      </div>
+    </nav>
+
+    <div class="head">
+      <h1 class="rise r2">Collaborate smarter with streamlined workflow</h1>
+      <form class="form rise r3" id="demoForm" novalidate>
+        <label for="email" class="sr" style="position:absolute;left:-9999px">Work email</label>
+        <input id="email" type="email" placeholder="Enter your email" autocomplete="email" required>
+        <button class="btn-dark" type="submit" id="demoBtn">Get a demo
+          <svg viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+      <div class="form-msg" id="formMsg" aria-live="polite"></div>
+      <div class="privacy rise r4">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M8 1.5 2.8 3.4v4.1c0 3.2 2.2 5.7 5.2 7 3-1.3 5.2-3.8 5.2-7V3.4L8 1.5Z"/><circle cx="8" cy="7" r="1.4"/><path d="M8 8.4v2" stroke-linecap="round"/></svg>
+        Privacy and security at every step of integration
+      </div>
+    </div>
+
+    <div class="deck-wrap" data-fit data-fit-from="921" data-fit-gap="32" data-fit-min=".5">
+      <!-- hand-drawn arrows from the action area into the deck -->
+      <div class="notes" aria-hidden="true">
+        <svg viewBox="0 0 1340 520" preserveAspectRatio="xMidYMin meet">
+          <defs><marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1 L8 5 L1 9" fill="none" stroke="#A9B4BD" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <text class="write" x="175" y="95" transform="rotate(-8 175 95)" style="animation-delay:1.3s">Meetings creation</text>
+          <path class="draw" pathLength="1" d="M168 88 C 70 120, 30 230, 132 296" marker-end="url(#head)"/>
+          <text class="write" x="1085" y="50" transform="rotate(10 1085 50)" style="animation-delay:1.3s">Tasks creation</text>
+          <path class="draw" pathLength="1" d="M1180 74 C 1300 120, 1330 300, 1200 340" marker-end="url(#head)"/>
+        </svg>
+      </div>
+
+      <div class="bento">
+        <article class="tile cal rise r5">
+          <div class="cal-top">Calendar
+            <button aria-label="Close calendar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+          </div>
+          <div class="cal-body">
+            <div class="app">
+              <svg viewBox="0 0 20 20"><rect x="1.5" y="4" width="12" height="12" rx="2.5" fill="#00AC47"/><path d="M13.5 8.5 18.5 5v10l-5-3.5Z" fill="#FFBA00"/><rect x="1.5" y="4" width="6" height="6" rx="2" fill="#4285F4"/><rect x="7.5" y="10" width="6" height="6" rx="2" fill="#EA4335" opacity=".9"/></svg>
+              Google Hangouts
+            </div>
+            <div class="date">Monday, 8 Mar</div>
+            <div class="time">10:00 – 11:13 AM</div>
+            <div class="from">Created from:
+              <b><svg viewBox="0 0 14 14" fill="#1E242B"><rect x="2" y="5" width="10" height="1.6" rx=".8"/><rect x="2" y="8" width="10" height="1.6" rx=".8"/><rect x="5" y="2" width="1.6" height="10" rx=".8"/><rect x="8" y="2" width="1.6" height="10" rx=".8"/></svg>slack</b>
+            </div>
+            <div class="cal-actions">
+              <button class="btn-dark" id="confirmBtn" type="button">Confirm meet</button>
+              <div class="icons">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5.5 1.5 5.5h-13S5 12 5 8Z"/><path d="M8.5 16.5a1.6 1.6 0 0 0 3 0"/></svg>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7.5"/><circle cx="6.8" cy="10" r=".6" fill="currentColor"/><circle cx="10" cy="10" r=".6" fill="currentColor"/><circle cx="13.2" cy="10" r=".6" fill="currentColor"/></svg>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="tile stat rise r6">
+          <div class="big"><span id="mult">3X</span>
+            <span class="chev run" aria-hidden="true">
+              <svg viewBox="0 0 18 40" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l10 14L4 34"/></svg>
+              <svg viewBox="0 0 18 40" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l10 14L4 34"/></svg>
+              <svg viewBox="0 0 18 40" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l10 14L4 34"/></svg>
+              <svg viewBox="0 0 18 40" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l10 14L4 34"/></svg>
+            </span>
+          </div>
+          <p>Double your team's productivity with our cutting-edge solutions.</p>
+        </article>
+
+        <article class="tile keys rise r7">
+          <div>
+            <h3>Shortcuts</h3>
+            <p>Simplify access to main features</p>
+          </div>
+          <div class="combo">
+            <span class="kbd" id="kbdMods"><span id="kCmd">⌘</span><span id="kAlt">⌥</span></span>
+            <svg width="18" height="18" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M9 3v12M3 9h12"/></svg>
+            <button class="kbd play" id="kbdPlay" aria-label="Run shortcut"><svg viewBox="0 0 12 12"><path d="M3 1.5v9l7.5-4.5Z" fill="currentColor"/></svg></button>
+          </div>
+        </article>
+
+        <article class="tile stack rise r8" id="stack" tabindex="0" aria-label="Integration tasks. Click to cycle cards.">
+          <div class="task t-peach" data-card>
+            <div class="task-top">
+              <svg viewBox="0 0 16 16"><rect x="2" y="6" width="12" height="1.8" rx=".9" fill="#E01E5A"/><rect x="2" y="9" width="12" height="1.8" rx=".9" fill="#2EB67D"/><rect x="5.5" y="2" width="1.8" height="12" rx=".9" fill="#36C5F0"/><rect x="8.7" y="2" width="1.8" height="12" rx=".9" fill="#ECB22E"/></svg>
+              Slack
+            </div>
+            <div class="task-body">
+              <small>Task created:</small>
+              <h4>Schedule a client call with Kira</h4>
+              <div class="when">Thursday, 16 Mar</div>
+              <div class="meta">14:22 &nbsp;|&nbsp; Kira + Dani</div>
+            </div>
+          </div>
+          <div class="task t-sky" data-card>
+            <div class="task-top">
+              <svg viewBox="0 0 16 16" fill="none" stroke="#1E242B" stroke-width="1.3"><rect x="2" y="2" width="12" height="12" rx="2"/><rect x="4.5" y="4.5" width="2.8" height="7" rx=".6" fill="#1E242B" stroke="none"/><rect x="8.7" y="4.5" width="2.8" height="4.2" rx=".6" fill="#1E242B" stroke="none"/></svg>
+              Trello
+            </div>
+            <div class="task-body">
+              <small>Card moved:</small>
+              <h4>Q2 roadmap review is ready for sign-off</h4>
+              <div class="when">Wednesday, 15 Mar</div>
+              <div class="meta">11:05 &nbsp;|&nbsp; Lena + Omar</div>
+            </div>
+          </div>
+          <div class="task t-white" data-card>
+            <div class="task-top">
+              <svg viewBox="0 0 16 16" fill="none" stroke="#1E242B" stroke-width="1.3"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 11V5l5 6V5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Notion
+            </div>
+            <div class="task-body">
+              <small>Task created:</small>
+              <h4>Send the email invoice to Martin S.</h4>
+              <div class="when">Tuesday, 14 Mar</div>
+              <div class="meta">9:23 &nbsp;|&nbsp; Viet + Dani</div>
+            </div>
+          </div>
+          <div class="stack-hint">Click to shuffle integrations</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Fanned stack: Notion in front; clicking sends the front card to the back
+    const stack = document.getElementById('stack');
+    let order = [...stack.querySelectorAll('[data-card]')].reverse(); // [front, middle, back]
+    const paint = () => order.forEach((c, i) => { c.className = c.className.replace(/\bpos-\d\b/g, '').trim() + ' pos-' + i; });
+    paint();
+    const cycle = () => { order.push(order.shift()); paint(); };
+    stack.addEventListener('click', cycle);
+    stack.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycle(); } });
+
+    // Confirm meet toggles to a confirmed state
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.addEventListener('click', () => {
+      const ok = confirmBtn.classList.toggle('ok');
+      confirmBtn.textContent = ok ? 'Meet confirmed ✓' : 'Confirm meet';
+    });
+
+    // Email form: validate and show a confirmation (no real submission in a showcase)
+    const form = document.getElementById('demoForm'), email = document.getElementById('email'), msg = document.getElementById('formMsg');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!email.checkValidity() || !email.value) { msg.style.color = '#DC2626'; msg.textContent = 'Enter a valid work email, like name@company.com.'; email.focus(); return; }
+      form.classList.add('done'); msg.style.color = ''; msg.textContent = 'Demo requested. We’ll email ' + email.value + ' within one business day.';
+    });
+
+    // Shortcuts: real ⌘/Ctrl and ⌥/Alt keys light up the badges; the play key pulses
+    const mods = document.getElementById('kbdMods'), kCmd = document.getElementById('kCmd'), kAlt = document.getElementById('kAlt'), play = document.getElementById('kbdPlay');
+    const sync = e => {
+      kCmd.classList.toggle('on', e.metaKey || e.ctrlKey);
+      kAlt.classList.toggle('on', e.altKey);
+      mods.classList.toggle('down', (e.metaKey || e.ctrlKey) && e.altKey);
+    };
+    addEventListener('keydown', sync); addEventListener('keyup', sync);
+    const press = () => {
+      [kCmd, kAlt].forEach(k => k.classList.add('on')); mods.classList.add('down'); play.classList.add('down');
+      setTimeout(() => { [kCmd, kAlt].forEach(k => k.classList.remove('on')); mods.classList.remove('down'); play.classList.remove('down'); cycle(); }, 260);
+    };
+    play.addEventListener('click', press);
+
+    // Count the multiplier up once on load
+    if (!reduceMotion) {
+      const m = document.getElementById('mult'); let v = 1;
+      setTimeout(function step() { m.textContent = v.toFixed(1).replace('.0', '') + 'X'; if ((v += .1) <= 3.001) setTimeout(step, 28); else m.textContent = '3X'; }, 900);
+    }
+  </script>
+  <script src="../../shared/fit.js"></script>
+</body>
+</html>

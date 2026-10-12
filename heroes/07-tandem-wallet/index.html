@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>tandem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: tablet frame on slate; emerald-to-beige gradient; floating glass nav, centred copy, coverflow deck of pots */
+    :root {
+      --frame: #2A323D;
+      --em-1: #0B3B24;
+      --em-2: #1B5E39;
+      --beige: #EBE7DF;
+      --lime: #E2FA52;
+      --ink: #0B0F0C;
+      --glass: rgba(15, 23, 42, .7);
+      --font: "Urbanist", "Futura", system-ui, sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: dark;
+    }
+    body { background: var(--frame); font-family: var(--font); padding: clamp(10px, 2.4vw, 32px); color: #fff; }
+
+    .tablet {
+      position: relative; isolation: isolate; overflow: hidden;
+      max-width: 1440px; margin: 0 auto; border-radius: 32px;
+      min-height: calc(100svh - 2 * clamp(10px, 2.4vw, 32px));
+      background: linear-gradient(180deg, var(--em-1) 0%, var(--em-2) 46%, #6E8F72 66%, var(--beige) 84%, var(--beige) 100%);
+      display: flex; flex-direction: column;
+    }
+    .tablet::after {
+      content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .18; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+    .glow { position: absolute; z-index: 0; left: 50%; top: 34%; width: 900px; height: 500px; transform: translateX(-50%); background: radial-gradient(closest-side, rgba(226,250,82,.14), transparent); pointer-events: none; }
+
+    /* ---------- Nav ---------- */
+    .nav { position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px clamp(16px, 3vw, 32px); }
+    .capsule {
+      display: flex; align-items: center; gap: 28px; height: 54px; padding: 0 10px 0 24px; border-radius: 999px;
+      background: var(--glass); border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .logo { font-weight: 800; font-size: 24px; letter-spacing: -.04em; color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .logo i { width: 9px; height: 9px; border-radius: 50%; background: var(--lime); display: inline-block; box-shadow: 10px 0 0 rgba(226,250,82,.45); margin-right: 12px; }
+    .links { display: flex; gap: 26px; list-style: none; margin: 0; padding: 0; }
+    .links a { color: rgba(255,255,255,.72); text-decoration: none; font-size: 15px; font-weight: 600; transition: color .2s; }
+    .links a:hover { color: #fff; }
+    .burger { width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); display: grid; place-items: center; color: #fff; }
+    .burger svg { width: 16px; height: 16px; }
+    .right { display: flex; align-items: center; gap: 22px; }
+    .login { color: #fff; text-decoration: none; font-weight: 600; font-size: 15px; }
+    .lime { display: inline-flex; align-items: center; height: 48px; padding: 0 22px; border-radius: 999px; background: var(--lime); color: var(--ink); text-decoration: none; font-weight: 800; font-size: 15px; white-space: nowrap; transition: transform .25s var(--ease), box-shadow .25s; }
+    .lime:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -10px rgba(226,250,82,.7); }
+
+    /* ---------- Copy ---------- */
+    .head { position: relative; z-index: 3; text-align: center; padding: clamp(12px, 3vh, 40px) 16px 0; }
+    h1 { margin: 0 auto; font-weight: 800; font-size: clamp(38px, 5vw, 68px); line-height: 1; letter-spacing: -.045em; max-width: 15ch; text-wrap: balance; }
+    h1 span { color: var(--lime); }
+    .sub { margin: 16px auto 0; max-width: 540px; color: rgba(255,255,255,.72); font-size: 18px; line-height: 1.55; font-weight: 500; }
+    .ctas { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 24px; flex-wrap: wrap; }
+    .pot-btn { display: inline-flex; align-items: center; gap: 14px; height: 56px; padding: 0 6px 0 26px; border-radius: 999px; background: #fff; color: var(--ink); text-decoration: none; font-weight: 800; font-size: 17px; transition: transform .25s var(--ease), box-shadow .25s; }
+    .pot-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -14px rgba(0,0,0,.6); }
+    .pot-btn .sq { width: 44px; height: 44px; border-radius: 14px; background: var(--lime); display: grid; place-items: center; transition: transform .3s var(--ease); }
+    .pot-btn:hover .sq { transform: rotate(45deg); }
+    .pot-btn .sq svg { width: 18px; height: 18px; }
+    .proof { display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 20px 0 8px; border-radius: 999px; background: rgba(8,20,14,.45); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-weight: 600; font-size: 15px; white-space: nowrap; }
+    .avs { display: flex; }
+    .avs span { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #174a2e; margin-left: -10px; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; }
+    .avs span:first-child { margin-left: 0; }
+    .a1 { background: linear-gradient(135deg, #F7A072, #C4542F); } .a2 { background: linear-gradient(135deg, #9EC5FE, #3D6BC4); } .a3 { background: linear-gradient(135deg, #F6D365, #C99A1E); }
+    .proof .star { color: var(--lime); }
+    .proof .dim { color: rgba(255,255,255,.65); font-weight: 500; }
+
+    /* ---------- Deck ---------- */
+    .deck { --w: 280px; --h: 392px; position: relative; z-index: 2; flex: 1; min-height: calc(var(--h) + 76px); margin-top: 28px; touch-action: pan-y; user-select: none; }
+    .card {
+      position: absolute; left: 50%; top: 0; width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2);
+      border-radius: 24px; cursor: pointer;
+      transition: transform .8s var(--ease), filter .8s var(--ease), opacity .8s var(--ease);
+      box-shadow: 0 40px 70px -30px rgba(0,0,0,.6);
+    }
+    .card .art { position: absolute; inset: 0; border-radius: 24px; overflow: hidden; }
+    .card .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 28%, transparent 55%, rgba(0,0,0,.45) 100%); }
+    .card[data-pos="0"]  { transform: translateX(0) scale(1); z-index: 3; filter: none; opacity: 1; cursor: default; }
+    .card[data-pos="1"]  { transform: translateX(min(330px, 40vw)) scale(.82) rotate(4deg); z-index: 2; filter: blur(10px); opacity: .85; }
+    .card[data-pos="-1"] { transform: translateX(max(-330px, -40vw)) scale(.82) rotate(-4deg); z-index: 2; filter: blur(10px); opacity: .85; }
+    .card[data-pos="2"]  { transform: translateX(0) scale(.6); z-index: 1; filter: blur(16px); opacity: 0; pointer-events: none; }
+
+    .tag { position: absolute; top: 18px; left: 18px; display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 999px; background: rgba(10,12,10,.78); font-size: 12px; font-weight: 800; letter-spacing: .1em; }
+    .tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); }
+    .info {
+      position: absolute; left: 12px; right: 12px; bottom: 12px; padding: 16px 18px; border-radius: 18px;
+      background: rgba(8,10,9,.55); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    .info h3 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+    .info .meta { margin-top: 6px; font-size: 12px; font-weight: 800; letter-spacing: .12em; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; }
+    .info .meta b { color: var(--lime); font-weight: 800; }
+    .bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); margin-top: 12px; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--lime); transition: width 1.2s var(--ease) .3s; }
+    .card[data-pos="0"] .bar i { width: var(--p); }
+
+    /* floating chips only belong to the focused card */
+    .note, .req { opacity: 0; transition: opacity .5s var(--ease), transform .6s var(--ease); pointer-events: none; }
+    .card[data-pos="0"] .note, .card[data-pos="0"] .req { opacity: 1; transform: none; pointer-events: auto; }
+    .note {
+      position: absolute; top: 58px; right: -64px; transform: translate(20px, -6px);
+      display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 16px;
+      background: rgba(12,16,14,.72); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 16px 30px -14px rgba(0,0,0,.6); white-space: nowrap;
+    }
+    .card[data-pos="0"] .note { transition-delay: .45s; }
+    .note .ok { width: 32px; height: 32px; border-radius: 10px; background: var(--lime); display: grid; place-items: center; }
+    .note .ok svg { width: 16px; height: 16px; }
+    .note b { display: block; font-size: 14px; font-weight: 800; }
+    .note small { font-size: 12px; color: rgba(255,255,255,.6); font-weight: 600; }
+    .req {
+      position: absolute; top: 47%; left: -52px; transform: translateX(-16px);
+      height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: #fff; color: var(--ink);
+      font: 800 15px var(--font); box-shadow: 0 16px 30px -12px rgba(0,0,0,.55); white-space: nowrap;
+    }
+    .card[data-pos="0"] .req { transition-delay: .6s; }
+    .req.sent { background: var(--lime); }
+
+    .dots { position: absolute; left: 50%; top: calc(var(--h) + 18px); transform: translateX(-50%); display: flex; gap: 10px; padding: 10px 14px; border-radius: 999px; background: rgba(12,16,14,.82); z-index: 4; }
+    .dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: rgba(255,255,255,.3); transition: width .4s var(--ease), background .3s; }
+    .dots button[aria-current="true"] { width: 26px; background: #fff; }
+
+    .lime:focus-visible, .pot-btn:focus-visible, .req:focus-visible, .dots button:focus-visible, .links a:focus-visible, .login:focus-visible, .burger:focus-visible, .logo:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+    .rise { opacity: 0; transform: translateY(16px); animation: rise .9s var(--ease) forwards; }
+    .r1 { animation-delay: .05s; } .r2 { animation-delay: .15s; } .r3 { animation-delay: .25s; } .r4 { animation-delay: .35s; } .r5 { animation-delay: .5s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .rise { opacity: 1; transform: none; animation: none; }
+      .card, .note, .req, .bar i { transition: none; }
+    }
+
+    /* Height fit: on wider screens the tablet is one screen tall; copy spacing follows the height and fit.js zooms the deck */
+    @media (min-width: 601px) {
+      .tablet { height: max(560px, calc(100svh - 2 * clamp(10px, 2.4vw, 32px))); min-height: 0; }
+      h1 { font-size: clamp(36px, min(5vw, 7.8vh), 68px); }
+      .sub { margin-top: clamp(8px, 1.6vh, 16px); }
+      .ctas { margin-top: clamp(12px, 2.6vh, 24px); }
+      .deck { flex: none; height: calc(var(--h) + 76px); min-height: 0; margin-top: clamp(10px, 2.6vh, 28px); }
+    }
+    @media (min-width: 601px) and (max-height: 820px) {
+      h1 { font-size: clamp(32px, min(5vw, 7vh), 60px); }
+      .sub { font-size: 15px; line-height: 1.45; max-width: 500px; }
+      .pot-btn, .proof { height: 46px; }
+      .pot-btn .sq { width: 36px; height: 36px; border-radius: 12px; }
+      .avs span { width: 32px; height: 32px; }
+    }
+    @media (max-width: 980px) { .links { display: none; } .capsule { gap: 14px; } }
+    @media (max-width: 600px) {
+      .login { display: none; }
+      .lime { height: 44px; padding: 0 16px; font-size: 14px; }
+      .capsule { height: 48px; padding: 0 6px 0 18px; }
+      .sub { font-size: 16px; }
+      .deck { --w: 240px; --h: 340px; }
+      .proof { font-size: 13px; gap: 8px; padding-right: 14px; }
+      .avs span { width: 32px; height: 32px; font-size: 11px; }
+      .card[data-pos="1"]  { transform: translateX(46vw) scale(.8) rotate(4deg); }
+      .card[data-pos="-1"] { transform: translateX(-46vw) scale(.8) rotate(-4deg); }
+      .note { right: -18px; top: 56px; }
+      .info .meta { font-size: 11px; letter-spacing: .08em; }
+      .req { left: -14px; }
+      .info h3 { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="tablet" data-fit-root>
+    <div class="glow" aria-hidden="true"></div>
+
+    <nav class="nav rise r1">
+      <div class="capsule">
+        <a class="logo" href="#"><i></i>tandem</a>
+        <ul class="links">
+          <li><a href="#">Pots</a></li><li><a href="#">Split</a></li><li><a href="#">Cards</a></li><li><a href="#">Pricing</a></li><li><a href="#">Stories</a></li>
+        </ul>
+        <button class="burger" aria-label="Open menu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg></button>
+      </div>
+      <div class="right">
+        <a class="login" href="#">Log in</a>
+        <a class="lime" href="#">Start for free</a>
+      </div>
+    </nav>
+
+    <header class="head">
+      <h1 class="rise r2">Split the bill, <span>keep the friends.</span></h1>
+      <p class="sub rise r3">The shared wallet for people who do life together. Start a pot, split anything in two taps, settle up before the next round.</p>
+      <div class="ctas rise r4">
+        <a class="pot-btn" href="#">Start a pot <span class="sq"><svg viewBox="0 0 18 18" fill="none"><path d="M5 13 13 5M6.5 5H13v6.5" stroke="#0B0F0C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+        <div class="proof">
+          <span class="avs" aria-hidden="true"><span class="a1">MA</span><span class="a2">OK</span><span class="a3">LN</span></span>
+          <span><span class="star">★</span> 4.9</span><span class="dim">·</span><span>2M friend groups</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="deck rise r5" id="deck" data-fit data-fit-from="601" data-fit-gap="12" data-fit-min=".5" aria-roledescription="carousel" aria-label="Example pots"></section>
+  </main>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const pots = [
+      { photo: 'img/trip.webp',     alt: 'Four friends laughing on a mountain hike', tag: 'TRIP POT',     who: 'Maya paid you $24', what: 'Tacos on Friday · Just now', req: 24, title: 'Dolomites, June',      raised: 1840, goal: 2400, friends: 5 },
+      { photo: 'img/festival.webp', alt: 'A cheering crowd at a concert', tag: 'FESTIVAL POT', who: 'Omar paid you $65', what: 'Weekend passes · 2 min ago',  req: 65, title: 'Primavera weekend', raised: 910,  goal: 1300, friends: 4 },
+      { photo: 'img/flat.webp',     alt: 'Flatmates high-fiving over tea at home', tag: 'HOUSE POT',    who: 'Lena paid you $38', what: 'Internet bill · 1 h ago',     req: 38, title: 'Flat 4B, bills',    raised: 412,  goal: 560,  friends: 3 },
+      { photo: 'img/dinner.webp',   alt: 'A birthday cake with sparklers on a party table', tag: 'DINNER POT',   who: 'Sam paid you $31',  what: 'Birthday dinner · Yesterday', req: 31, title: "Noor's 30th",       raised: 286,  goal: 320,  friends: 8 }
+    ];
+    const money = n => '$' + n.toLocaleString('en-US');
+
+    const deck = document.getElementById('deck');
+    deck.innerHTML = pots.map((p, i) => `
+      <article class="card" data-i="${i}" role="group" aria-roledescription="slide" aria-label="${p.title}, ${i + 1} of ${pots.length}">
+        <div class="art"><img src="${p.photo}" alt="${p.alt}" draggable="false"></div>
+        <span class="tag">${p.tag}</span>
+        <div class="note" role="status"><span class="ok"><svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.5 3 3 6-7" stroke="#0B0F0C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span><b>${p.who}</b><small>${p.what}</small></span></div>
+        <button class="req" type="button">+ Request ${money(p.req)}</button>
+        <div class="info" style="--p:${Math.round(p.raised / p.goal * 100)}%">
+          <h3>${p.title}</h3>
+          <div class="meta"><b>${money(p.raised)} OF ${money(p.goal)}</b> · ${p.friends} FRIENDS</div>
+          <div class="bar"><i></i></div>
+        </div>
+      </article>`).join('') + `<div class="dots" role="tablist" aria-label="Choose a pot">${pots.map((p, i) => `<button role="tab" aria-label="${p.title}" data-go="${i}"></button>`).join('')}</div>`;
+
+    const cards = [...deck.querySelectorAll('.card')], dotBtns = [...deck.querySelectorAll('[data-go]')];
+    let active = 0, touched = false;
+    function layout() {
+      const n = cards.length;
+      cards.forEach((c, i) => {
+        let pos = (i - active + n) % n;
+        if (pos === n - 1) pos = -1;
+        c.dataset.pos = pos;
+        c.setAttribute('aria-hidden', pos !== 0);
+        c.querySelectorAll('button').forEach(b => b.tabIndex = pos === 0 ? 0 : -1);
+      });
+      dotBtns.forEach((d, i) => d.setAttribute('aria-current', i === active));
+    }
+    const go = i => { active = (i + cards.length) % cards.length; layout(); };
+    layout();
+
+    cards.forEach(c => c.addEventListener('click', e => {
+      if (e.target.closest('.req')) return;
+      const pos = +c.dataset.pos; if (pos !== 0) { touched = true; go(active + pos); }
+    }));
+    dotBtns.forEach(d => d.addEventListener('click', () => { touched = true; go(+d.dataset.go); }));
+    addEventListener('keydown', e => { if (e.key === 'ArrowRight') { touched = true; go(active + 1); } if (e.key === 'ArrowLeft') { touched = true; go(active - 1); } });
+
+    // swipe / drag
+    let sx = null;
+    deck.addEventListener('pointerdown', e => { sx = e.clientX; });
+    deck.addEventListener('pointerup', e => { if (sx === null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) { touched = true; go(active + (dx < 0 ? 1 : -1)); } });
+
+    // request button: one tap sends, then resets
+    deck.addEventListener('click', e => {
+      const b = e.target.closest('.req'); if (!b || b.classList.contains('sent')) return;
+      const label = b.textContent; b.classList.add('sent'); b.textContent = 'Request sent ✓';
+      setTimeout(() => { b.classList.remove('sent'); b.textContent = label; }, 2200);
+    });
+
+    // autoplay until the visitor interacts
+    if (!reduceMotion) setInterval(() => { if (!touched && !deck.matches(':hover')) go(active + 1); }, 4800);
+  </script>
+  <script src="../../shared/fit.js"></script>
+</body>
+</html>

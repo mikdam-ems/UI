@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orbit Wallet Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: icon rail + main column; header, greeting + action pills, then a 2-row grid (wallet | overview) and a 2x2 grid of widgets */
+    :root {
+      --canvas: #EEF2F6;
+      --panel: #FFFFFF;
+      --ink: #0F172A;
+      --ink-2: #1E293B;
+      --mute: #64748B;
+      --soft: #94A3B8;
+      --line: #E5E9F0;
+      --blue: #5B7BFE;
+      --blue-2: #7C95FF;
+      --orange: #FF9533;
+      --pink: #D98BE6;
+      --green: #16A34A;
+      --font: "Urbanist", "Gilroy", system-ui, sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: light;
+    }
+    body { background: #E2E6EB; color: var(--ink); font-family: var(--font); padding: clamp(0px, 3vw, 48px); }
+    .app { max-width: 1440px; margin: 0 auto; background: var(--canvas); border-radius: clamp(0px, 1.6vw, 24px); display: grid; grid-template-columns: 96px 1fr; min-height: calc(100svh - 2 * clamp(0px, 3vw, 48px)); box-shadow: 0 30px 80px -50px rgba(15,23,42,.4); }
+
+    /* ---------- Rail ---------- */
+    .rail { display: flex; flex-direction: column; align-items: center; padding: 26px 0; gap: 14px; }
+    .rail .logo { width: 46px; height: 46px; display: grid; place-items: center; margin-bottom: 120px; }
+    .rail .logo svg { width: 44px; height: 44px; }
+    .rail button { width: 64px; height: 64px; border-radius: 50%; border: 1px solid #D9DFE7; background: var(--canvas); color: var(--ink-2); display: grid; place-items: center; transition: background .25s, color .25s, box-shadow .25s, transform .25s var(--ease); }
+    .rail button:hover { transform: translateY(-2px); background: #fff; }
+    .rail button svg { width: 22px; height: 22px; }
+    .rail button[aria-current="page"] { background: linear-gradient(180deg, var(--blue-2), var(--blue)); color: #fff; border-color: transparent; box-shadow: 0 14px 28px -10px rgba(91,123,254,.8); }
+
+    /* ---------- Main ---------- */
+    main { padding: 26px 30px 32px 6px; min-width: 0; }
+    .top { display: flex; align-items: center; gap: 16px; }
+    .search { position: relative; flex: 0 1 460px; }
+    .search input { width: 100%; height: 58px; padding: 0 70px 0 48px; border-radius: 999px; border: 1px solid #E3E8EF; background: #fff; font: 500 17px var(--font); color: var(--ink); }
+    .search input::placeholder { color: #64748B; }
+    .search input:focus { outline: none; box-shadow: 0 0 0 4px rgba(91,123,254,.18); border-color: #C5D0FF; }
+    .search > svg { position: absolute; left: 18px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: #64748B; }
+    .search kbd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); height: 30px; padding: 0 9px; border-radius: 999px; border: 1px solid #E3E8EF; background: #F8FAFC; font: 500 12px var(--font); color: #64748B; display: grid; place-items: center; }
+    .top-end { margin-left: auto; display: flex; align-items: center; gap: 12px; position: relative; }
+    .mm { display: inline-flex; align-items: center; gap: 12px; height: 58px; padding: 0 22px 0 28px; border-radius: 999px; border: 1px solid #D9DFE7; background: transparent; font: 600 18px var(--font); color: var(--ink); }
+    .mm svg { width: 16px; height: 16px; transition: transform .25s; }
+    .mm[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .menu { position: absolute; top: 66px; left: 0; z-index: 10; min-width: 200px; padding: 6px; border-radius: 16px; background: #fff; border: 1px solid var(--line); box-shadow: 0 20px 40px -20px rgba(15,23,42,.35); }
+    .menu button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-radius: 10px; background: none; font: 500 15px var(--font); color: var(--ink); }
+    .menu button:hover { background: #F1F4FF; }
+    .icon-btn { width: 58px; height: 58px; border-radius: 50%; border: 1px solid #D9DFE7; background: transparent; display: grid; place-items: center; color: var(--ink-2); position: relative; }
+    .icon-btn svg { width: 22px; height: 22px; }
+    .icon-btn .dot { position: absolute; top: 14px; right: 16px; width: 8px; height: 8px; border-radius: 50%; background: #F43F5E; border: 2px solid var(--canvas); }
+    .me { width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(140deg, #F2C6A0, #B97A52); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 18px; box-shadow: 0 0 0 3px #fff; }
+
+    .greet { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 44px 0 30px; flex-wrap: wrap; }
+    h1 { margin: 0; font-weight: 600; font-size: clamp(28px, 2.6vw, 40px); letter-spacing: -.02em; color: var(--ink); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .act { display: inline-flex; align-items: center; gap: 9px; height: 54px; padding: 0 20px; border-radius: 999px; border: 0; background: #fff; font: 500 17px var(--font); color: var(--ink-2); box-shadow: 0 1px 2px rgba(15,23,42,.04); transition: transform .25s var(--ease), box-shadow .25s, background .25s, color .25s; }
+    .act:hover { transform: translateY(-2px); }
+    .act svg { width: 18px; height: 18px; }
+    .act[aria-pressed="true"] { background: linear-gradient(180deg, var(--blue-2), var(--blue)); color: #fff; box-shadow: 0 16px 30px -12px rgba(91,123,254,.85); }
+
+    /* ---------- Grid ---------- */
+    .row1 { display: grid; grid-template-columns: 392px 1fr; gap: 20px; }
+    .row2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; margin-top: 20px; }
+    .panel { background: var(--panel); border-radius: 24px; padding: 26px 28px; min-width: 0; position: relative; }
+    .panel h2 { margin: 0; font-weight: 500; font-size: 22px; letter-spacing: -.01em; color: var(--ink-2); }
+    .chip { white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font: 500 14px var(--font); color: var(--ink-2); }
+    .chip svg { width: 14px; height: 14px; }
+
+    /* wallet */
+    .wallet { padding: 10px; overflow: hidden; }
+    .stack { position: relative; height: 230px; }
+    .cur { position: absolute; left: 10px; right: 10px; height: 120px; border-radius: 22px; padding: 16px 22px; display: flex; justify-content: space-between; color: #fff; font-size: 15px; cursor: pointer; border: 0; text-align: left; font-family: var(--font); transition: transform .45s var(--ease), filter .3s; box-shadow: 0 -8px 20px -14px rgba(15,23,42,.35); }
+    .cur b { font-weight: 500; font-variant-numeric: tabular-nums; }
+    .cur:hover { transform: translateY(-5px); }
+    .cur[aria-pressed="true"] { transform: translateY(-10px); }
+    .eur { top: 0; background: linear-gradient(180deg, #8FA2FF, #6F87FF); }
+    .ngn { top: 56px; left: 6px; right: 6px; background: linear-gradient(180deg, #FFA34A, #FF8A2A); }
+    .usd { top: 114px; left: 2px; right: 2px; height: 150px; background: linear-gradient(180deg, #E79EF0, #D27FE3); }
+    .body {
+      position: relative; margin-top: -60px; background: linear-gradient(180deg, #FBFBFD, #F4F6F9); border-radius: 20px; padding: 40px 18px 22px;
+      -webkit-mask: radial-gradient(62px 54px at 50% 0, transparent 98%, #000 100%); mask: radial-gradient(62px 54px at 50% 0, transparent 98%, #000 100%);
+    }
+    .body .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 500; }
+    .plus { position: absolute; right: 18px; top: 22px; width: 48px; height: 48px; border-radius: 50%; border: 0; background: linear-gradient(180deg, var(--blue-2), var(--blue)); color: #fff; display: grid; place-items: center; box-shadow: 0 12px 24px -8px rgba(91,123,254,.85); transition: transform .3s var(--ease); }
+    .plus:hover { transform: rotate(90deg); }
+    .plus svg { width: 20px; height: 20px; }
+    .wb { margin-top: 34px; font-size: 15px; color: var(--mute); }
+    .wb span { color: var(--green); font-weight: 500; }
+    .wbal { font-size: 34px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+    /* overview chart */
+    .ov-head { display: flex; justify-content: space-between; align-items: center; }
+    .chart { position: relative; height: 290px; margin-top: 12px; }
+    .chart svg { width: 100%; height: 100%; overflow: visible; display: block; }
+    .chart .axis text { fill: #8A94A6; font-size: 13px; font-family: var(--font); }
+    .tipbox { position: absolute; top: 0; transform: translateX(-50%); display: flex; gap: 0; border-radius: 12px; background: #fff; box-shadow: 0 14px 30px -16px rgba(15,23,42,.35), 0 0 0 1px rgba(15,23,42,.05); pointer-events: none; transition: left .25s var(--ease); white-space: nowrap; }
+    .tipbox div { padding: 10px 16px; font-size: 12px; color: var(--mute); }
+    .tipbox div + div { border-left: 1px solid var(--line); }
+    .tipbox i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+    .tipbox b { display: block; font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .range { position: relative; }
+    .range select { appearance: none; height: 38px; padding: 0 34px 0 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font: 500 14px var(--font); color: var(--ink-2); }
+    .range svg { position: absolute; right: 12px; top: 12px; width: 14px; height: 14px; pointer-events: none; }
+
+    /* spending limit */
+    .limit-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .limit-amt { font-size: 34px; font-weight: 600; letter-spacing: -.02em; margin-top: 10px; font-variant-numeric: tabular-nums; }
+    .limit-amt span { color: var(--soft); font-weight: 500; }
+    .round { width: 62px; height: 62px; border-radius: 50%; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; color: var(--ink-2); }
+    .round svg { width: 24px; height: 24px; }
+    .period { margin: 38px 0 14px; color: var(--mute); font-size: 18px; }
+    .segs { display: flex; gap: 4px; height: 22px; }
+    .segs i { flex: 1; border-radius: 4px; background: #E7EBF2; transition: background .3s; }
+    .segs i.on { background: linear-gradient(180deg, #8FA2FF, var(--blue)); }
+    .limit-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 22px; color: var(--mute); font-size: 16px; }
+    .limit-foot b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+    /* quick transfer */
+    .qt-head { display: flex; justify-content: space-between; align-items: center; }
+    .people { display: flex; align-items: center; gap: 12px; margin-top: 30px; }
+    .people .circle { flex: none; width: 58px; height: 58px; border-radius: 50%; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; color: var(--ink-2); }
+    .people .circle svg { width: 20px; height: 20px; }
+    .list { display: flex; gap: 12px; flex: 1; min-width: 0; overflow: hidden; padding: 6px 2px; }
+    .person { flex: none; width: 58px; height: 58px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: #fff; font: 700 16px var(--font); position: relative; transition: transform .3s var(--ease); }
+    .person:hover { transform: translateY(-2px); }
+    .person[aria-pressed="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--blue); transform: scale(1.08); }
+    .amount { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 30px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .amount label { display: flex; align-items: baseline; font-size: 26px; font-weight: 500; }
+    .amount input { width: 7ch; border: 0; background: transparent; font: 500 26px var(--font); color: var(--ink); font-variant-numeric: tabular-nums; padding: 0; }
+    .amount input:focus { outline: none; }
+    .btn-blue { height: 50px; padding: 0 28px; border-radius: 999px; border: 0; background: linear-gradient(180deg, var(--blue-2), var(--blue)); color: #fff; font: 500 19px var(--font); box-shadow: 0 14px 28px -10px rgba(91,123,254,.85); transition: transform .25s var(--ease); white-space: nowrap; }
+    .btn-blue:hover { transform: translateY(-2px); }
+    .btn-blue.ok { background: linear-gradient(180deg, #34D399, var(--green)); box-shadow: 0 14px 28px -10px rgba(22,163,74,.7); }
+    .qt-note { min-height: 20px; margin-top: 8px; font-size: 13px; color: var(--mute); }
+
+    /* transactions */
+    .tx-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .tx-head a { color: var(--ink-2); font-size: 15px; text-decoration: none; }
+    .tx-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 17px; min-width: 560px; }
+    td { padding: 20px 0; border-bottom: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    td:nth-child(2), td:nth-child(3) { padding-inline: 12px; }
+    td:last-child { text-align: right; }
+    tr.new td { animation: flash 2.4s ease; }
+    .neg { color: #DC2626; }
+
+    /* money movement */
+    .mv-head { display: flex; justify-content: space-between; align-items: center; }
+    .mv-vals { display: flex; justify-content: space-between; margin-top: 26px; font-size: 14px; color: var(--soft); }
+    .mv-vals b { display: block; margin-top: 4px; font-size: 20px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .mv-vals div:last-child { text-align: right; }
+    .bars { position: relative; display: flex; align-items: flex-end; gap: 12px; height: 110px; margin-top: 16px; border-bottom: 1px solid var(--line); }
+    .bars button { flex: 1; border: 0; padding: 0; border-radius: 10px 10px 0 0; background: linear-gradient(180deg, #E9EDFB, #F1F4FC); transition: height .5s var(--ease), background .3s; cursor: pointer; position: relative; }
+    .bars button:hover { background: linear-gradient(180deg, #DCE3FD, #EDF1FD); }
+    .bars button.on { background: linear-gradient(180deg, #8FA2FF, #C9D3FF 70%, rgba(201,211,255,.2)); box-shadow: 0 0 30px -4px rgba(91,123,254,.6); }
+    .bars button.on::after { content: ""; position: absolute; left: 50%; top: -5px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--blue-2); }
+    .bars .date { position: absolute; top: -40px; transform: translateX(-50%); height: 28px; padding: 0 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 13px; display: grid; place-items: center; white-space: nowrap; transition: left .35s var(--ease); pointer-events: none; }
+
+    .toast { position: fixed; left: 50%; bottom: 28px; z-index: 50; transform: translate(-50%, 16px); padding: 12px 18px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .25s, transform .3s var(--ease); pointer-events: none; }
+    .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+
+    /* motion */
+    .rise { opacity: 0; transform: translateY(14px); animation: rise .8s var(--ease) forwards; }
+    .d1 { animation-delay: .05s; } .d2 { animation-delay: .12s; } .d3 { animation-delay: .2s; } .d4 { animation-delay: .28s; } .d5 { animation-delay: .36s; } .d6 { animation-delay: .44s; } .d7 { animation-delay: .52s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    @keyframes flash { 0% { background: #EEF2FF; } 100% { background: transparent; } }
+    .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.6s var(--ease) .5s forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    @media (prefers-reduced-motion: reduce) { .rise { opacity: 1; transform: none; animation: none; } .draw { stroke-dashoffset: 0; animation: none; } tr.new td { animation: none; } }
+
+    /* responsive */
+    @media (max-width: 1200px) {
+      .row1 { grid-template-columns: 1fr; }
+      .wallet { max-width: 420px; }
+      .row2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      body { padding: 0; }
+      .app { grid-template-columns: 1fr; border-radius: 0; }
+      .rail { flex-direction: row; justify-content: space-around; position: sticky; bottom: 0; order: 2; padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px)); background: rgba(238,242,246,.92); backdrop-filter: blur(10px); z-index: 20; }
+      .rail .logo { display: none; }
+      .rail button { width: 48px; height: 48px; }
+      main { padding: 16px; }
+      .top { flex-wrap: wrap; }
+      .search { flex: 1 1 100%; order: 2; }
+      .top-end { margin-left: 0; width: 100%; justify-content: flex-end; }
+      .mm, .icon-btn, .me { height: 48px; } .icon-btn, .me { width: 48px; } .mm { font-size: 16px; padding: 0 16px 0 20px; margin-right: auto; }
+      .greet { margin: 26px 0 18px; }
+      .actions { flex-wrap: nowrap; overflow-x: auto; width: 100%; scrollbar-width: none; padding-bottom: 6px; }
+      .act { flex: none; height: 48px; font-size: 16px; padding: 0 18px; }
+      .panel { padding: 20px; }
+      .wallet { max-width: none; }
+      .people .circle:last-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <nav class="rail rise d1" aria-label="Main">
+      <span class="logo"><svg viewBox="0 0 44 44" fill="none" stroke="#0F172A" stroke-width="2.2"><circle cx="22" cy="22" r="17"/><circle cx="22" cy="22" r="9"/><path d="M8 13c6-6 22-8 30 2M36 31c-6 6-22 8-30-2" stroke-linecap="round"/></svg></span>
+      <button aria-current="page" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19Z"/></svg></button>
+      <button aria-label="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="5" y="4.5" width="14" height="16" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 11h7M8.5 14.5h7M8.5 18h4"/></svg></button>
+      <button aria-label="Cards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="6" width="17" height="12" rx="3"/><path d="M3.5 10.5h17M7 14.5h4"/></svg></button>
+      <button aria-label="Analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 16v-3M12 16v-6M15.5 16v-4M8 9l3-2.5 2.5 2 3-2.5"/></svg></button>
+      <button aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M10.3 3.5h3.4l.5 2.4 1.7.9 2.3-.8 1.7 2.9-1.8 1.6v2l1.8 1.6-1.7 2.9-2.3-.8-1.7.9-.5 2.4h-3.4l-.5-2.4-1.7-.9-2.3.8-1.7-2.9 1.8-1.6v-2L3.8 8.9l1.7-2.9 2.3.8 1.7-.9Z"/></svg></button>
+    </nav>
+
+    <main>
+      <header class="top rise d2">
+        <label class="search">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 3.5 3.5"/></svg>
+          <span style="position:absolute;left:-9999px">Search</span>
+          <input id="search" type="search" placeholder="Search or jump to">
+          <kbd>⌘ K</kbd>
+        </label>
+        <div class="top-end">
+          <button class="mm" id="mmBtn" aria-expanded="false" aria-haspopup="true">Move Money <svg viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="menu" id="mmMenu" hidden>
+            <button data-go="Send">Send money</button><button data-go="Request">Request money</button><button data-go="Transfer">Transfer between accounts</button>
+          </div>
+          <button class="icon-btn" aria-label="Notifications, 2 new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 10a6 6 0 0 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14.5 6 10Z"/><path d="M10 19.5a2.2 2.2 0 0 0 4 0"/></svg><span class="dot"></span></button>
+          <span class="me" aria-label="Liam's profile">LK</span>
+        </div>
+      </header>
+
+      <section class="greet">
+        <h1 class="rise d3">Welcome Back, Liam !</h1>
+        <div class="actions rise d3" role="group" aria-label="Quick actions">
+          <button class="act" aria-pressed="true" data-a="Send"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8M8 10l7-7M11 3h4v4"/></svg>Send</button>
+          <button class="act" aria-pressed="false" data-a="Request"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4v10M15 9H7M10 6 7 9l3 3"/></svg>Request</button>
+          <button class="act" aria-pressed="false" data-a="Transfer"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9h13M5 6.5 2.5 9 5 11.5M13 6.5 15.5 9 13 11.5"/></svg>Transfer</button>
+          <button class="act" aria-pressed="false" data-a="Deposit"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 3v12M3 9h12"/></svg>Deposit</button>
+          <button class="act" aria-pressed="false" data-a="Pay Bill"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h10v13l-2-1.3-1.5 1.3L9 14.2l-1.5 1.3L6 14.2l-2 1.3ZM6.5 6h5M6.5 9h5"/></svg>Pay Bill</button>
+          <button class="act" aria-pressed="false" data-a="Create Invoice"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5h9v13h-9zM7 6h4M7 9h4M7 12h2"/></svg>Create Invoice</button>
+        </div>
+      </section>
+
+      <div class="row1">
+        <section class="panel wallet rise d4" aria-label="Wallet">
+          <div class="stack">
+            <button class="cur eur" data-k="eur" aria-pressed="false"><span>Euro</span><b>€40,000</b></button>
+            <button class="cur ngn" data-k="ngn" aria-pressed="false"><span>Naira</span><b>₦30,000</b></button>
+            <button class="cur usd" data-k="usd" aria-pressed="false"><span>Dollar</span><b>$20,000</b></button>
+          </div>
+          <div class="body">
+            <span class="tag" id="cardCount">4 cards</span>
+            <button class="plus" id="addCard" aria-label="Add a card"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg></button>
+            <div class="wb"><span id="wbLabel" style="color:inherit;font-weight:400">Wallet balance</span> <span id="wbPerf">+ 32.8%</span></div>
+            <div class="wbal" id="wbal">$14,765.00</div>
+          </div>
+        </section>
+
+        <section class="panel rise d5" aria-label="Overview">
+          <div class="ov-head">
+            <h2>Overview</h2>
+            <span class="range"><select aria-label="Overview range" id="ovRange"><option>This year</option><option>Last 30 days</option></select><svg viewBox="0 0 14 14" fill="none"><path d="m3.5 5.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="chart" id="chart">
+            <svg id="ov" aria-hidden="true"></svg>
+            <div class="tipbox" id="tipbox"><div><i style="background:var(--blue)"></i>Current Year<b id="tCur">$20,000</b></div><div><i style="background:var(--orange)"></i>Last Year<b id="tLast">$40,000</b></div></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="row2">
+        <section class="panel rise d6" aria-label="Monthly spending limit">
+          <div class="limit-top">
+            <div><h2>Monthly spending limit</h2><div class="limit-amt">$2,400.00 <span>USD</span></div></div>
+            <span class="round" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="6" width="17" height="12" rx="3"/><path d="M3.5 10.5h17M7 14.5h4"/></svg></span>
+          </div>
+          <div class="period">From Sep 20 to Oct 2026</div>
+          <div class="segs" id="segs" role="progressbar" aria-valuemin="0" aria-valuemax="2400" aria-valuenow="2200" aria-label="Amount spent"></div>
+          <div class="limit-foot"><span>Amount Spent <b id="spent">$2,200 USD</b></span><span>Budget total <b>$2,400.00 USD</b></span></div>
+        </section>
+
+        <section class="panel rise d6" aria-label="Quick transfer">
+          <div class="qt-head"><h2>Quick transfer</h2><a class="chip" href="#">See All Contacts</a></div>
+          <div class="people">
+            <button class="circle" aria-label="Add contact"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg></button>
+            <div class="list" id="people"></div>
+            <button class="circle" id="nextPeople" aria-label="More contacts"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 5 5-5 5"/></svg></button>
+          </div>
+          <div class="amount">
+            <label for="amt">$<input id="amt" inputmode="decimal" value="200.00" aria-label="Amount in dollars"></label>
+            <button class="btn-blue" id="sendBtn">Send</button>
+          </div>
+          <div class="qt-note" id="qtNote" aria-live="polite"></div>
+        </section>
+
+        <section class="panel rise d7" aria-label="Transactions">
+          <div class="tx-head"><h2>Transaction</h2><a href="#">See all</a></div>
+          <div class="tx-wrap"><table><tbody id="tx">
+            <tr><td>Google Workspace</td><td>April 20.04.2025</td><td>$400.00</td><td>Checking...2987******</td></tr>
+            <tr><td>Google temporary</td><td>Oct 10.03.2025</td><td>$300.00</td><td>Checking...8686******</td></tr>
+            <tr><td>Google Workspace</td><td>Oct 16.03.2025</td><td>$200.00</td><td>Checking...1256******</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="panel rise d7" aria-label="Money movement">
+          <div class="mv-head"><h2>Money movement</h2><span class="chip">Last 30 days <svg viewBox="0 0 14 14" fill="none"><path d="m3.5 5.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+          <div class="mv-vals"><div>Money in<b id="mvIn">$40.00</b></div><div>Money Out<b id="mvOut">$60.00</b></div></div>
+          <div class="bars" id="bars"><span class="date" id="mvDate">Nov 23, 2025</span></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = id => document.getElementById(id);
+    const usd = (v, d = 2) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const toast = $('toast'); let tt;
+    const say = m => { toast.textContent = m; toast.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => toast.classList.remove('on'), 2000); };
+    function tween(el, from, to, fmt, dur = 700) {
+      if (reduceMotion) { el.textContent = fmt(to); return; }
+      const t0 = performance.now();
+      const step = now => { const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3); el.textContent = fmt(from + (to - from) * e); if (t < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }
+
+    /* ---------- rail + header ---------- */
+    document.querySelectorAll('.rail button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.rail button').forEach(x => x.removeAttribute('aria-current')); b.setAttribute('aria-current', 'page');
+    }));
+    addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('search').focus(); } });
+    const mmBtn = $('mmBtn'), mmMenu = $('mmMenu');
+    mmBtn.addEventListener('click', e => { e.stopPropagation(); const open = mmMenu.hidden; mmMenu.hidden = !open; mmBtn.setAttribute('aria-expanded', open); });
+    addEventListener('click', () => { mmMenu.hidden = true; mmBtn.setAttribute('aria-expanded', false); });
+    mmMenu.querySelectorAll('button').forEach(b => b.addEventListener('click', () => pick(b.dataset.go)));
+
+    const acts = document.querySelectorAll('.act');
+    function pick(name) {
+      acts.forEach(a => a.setAttribute('aria-pressed', a.dataset.a === name));
+      if (name === 'Send') { $('amt').focus(); $('amt').select(); }
+      else say(`${name}: this flow would open here`);
+    }
+    acts.forEach(a => a.addEventListener('click', () => pick(a.dataset.a)));
+
+    /* ---------- wallet ---------- */
+    const wallets = { total: ['Wallet balance', 14765, '+ 32.8%', v => usd(v)], eur: ['Euro balance', 40000, '+ 4.1%', v => '€' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })], ngn: ['Naira balance', 30000, '+ 1.9%', v => '₦' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })], usd: ['Dollar balance', 20000, '+ 2.6%', v => usd(v)] };
+    let wsel = 'total';
+    document.querySelectorAll('.cur').forEach(c => c.addEventListener('click', () => {
+      wsel = wsel === c.dataset.k ? 'total' : c.dataset.k;
+      document.querySelectorAll('.cur').forEach(x => x.setAttribute('aria-pressed', x.dataset.k === wsel));
+      const [label, v, perf, fmt] = wallets[wsel];
+      $('wbLabel').textContent = label; $('wbPerf').textContent = perf; tween($('wbal'), 0, v, fmt);
+    }));
+    let cards = 4;
+    $('addCard').addEventListener('click', () => { cards++; $('cardCount').textContent = cards + ' cards'; say('New virtual card added'); });
+
+    /* ---------- overview chart ---------- */
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const series = {
+      'This year':    { cur: [8, 12, 15, 17, 20, 47, 44, 39, 42, 45, 31, 38], last: [38, 37, 33, 35, 40, 24, 37, 36, 25, 19, 13, 17], labels: months, focus: 4 },
+      'Last 30 days': { cur: [14, 18, 16, 22, 26, 24, 31, 29, 35, 33, 38, 42], last: [22, 20, 24, 23, 21, 26, 25, 28, 27, 24, 26, 29], labels: ['1', '4', '7', '10', '13', '16', '19', '22', '25', '28', '30', 'Today'], focus: 6 }
+    };
+    let ovKey = 'This year';
+    const svg = $('ov'), chart = $('chart'), tipbox = $('tipbox');
+    let geo = null;
+    function spline(pts) {
+      let d = `M${pts[0][0]} ${pts[0][1]}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        d += ` C${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`;
+      }
+      return d;
+    }
+    function drawOverview(animate = true) {
+      const r = chart.getBoundingClientRect(), W = r.width, H = r.height;
+      const L = 40, R = W - 10, T = 70, B = H - 34, s = series[ovKey];
+      const x = i => L + 20 + i * (R - L - 20) / (s.cur.length - 1), y = v => B - v / 50 * (B - T);
+      const pc = s.cur.map((v, i) => [x(i), y(v)]), pl = s.last.map((v, i) => [x(i), y(v)]);
+      geo = { x, y, pc, pl, s };
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const grid = [0, 10, 20, 30, 40, 50].map(v => `<text x="${L - 14}" y="${y(v) + 4}" text-anchor="end">${v ? v + 'K' : '0'}</text>`).join('');
+      const xl = s.labels.map((m, i) => (W < 560 && i % 2) ? '' : `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${m}</text>`).join('');
+      svg.innerHTML = `<defs>
+          <linearGradient id="fadeB" x1="0" x2="1"><stop offset="0" stop-color="#5B7BFE" stop-opacity=".12"/><stop offset=".35" stop-color="#5B7BFE" stop-opacity=".55"/><stop offset=".5" stop-color="#5B7BFE"/><stop offset=".75" stop-color="#5B7BFE" stop-opacity=".55"/><stop offset="1" stop-color="#5B7BFE" stop-opacity=".1"/></linearGradient>
+          <linearGradient id="fadeO" x1="0" x2="1"><stop offset="0" stop-color="#FF9533" stop-opacity=".12"/><stop offset=".35" stop-color="#FF9533" stop-opacity=".6"/><stop offset=".5" stop-color="#FF9533"/><stop offset=".75" stop-color="#FF9533" stop-opacity=".6"/><stop offset="1" stop-color="#FF9533" stop-opacity=".1"/></linearGradient></defs>
+        <g class="axis">${grid}${xl}</g>
+        <line id="xline" x1="0" x2="0" y1="${T - 10}" y2="${B}" stroke="#D5DBE5" stroke-width="1.5"/>
+        <path class="${animate ? 'draw' : ''}" pathLength="1" d="${spline(pl)}" fill="none" stroke="url(#fadeO)" stroke-width="3" stroke-linecap="round"/>
+        <path class="${animate ? 'draw' : ''}" pathLength="1" d="${spline(pc)}" fill="none" stroke="url(#fadeB)" stroke-width="3" stroke-linecap="round"/>
+        <circle id="dl" r="7" fill="#FF9533" stroke="#fff" stroke-width="3"/>
+        <circle id="dc" r="7" fill="#5B7BFE" stroke="#fff" stroke-width="3"/>`;
+      focus(s.focus);
+    }
+    function focus(i) {
+      const { x, pc, pl, s } = geo;
+      const xl = svg.querySelector('#xline'); xl.setAttribute('x1', x(i)); xl.setAttribute('x2', x(i));
+      svg.querySelector('#dc').setAttribute('cx', pc[i][0]); svg.querySelector('#dc').setAttribute('cy', pc[i][1]);
+      svg.querySelector('#dl').setAttribute('cx', pl[i][0]); svg.querySelector('#dl').setAttribute('cy', pl[i][1]);
+      const w = chart.getBoundingClientRect().width;
+      tipbox.style.left = Math.max(130, Math.min(w - 130, x(i))) + 'px';
+      $('tCur').textContent = usd(s.cur[i] * 1000, 0); $('tLast').textContent = usd(s.last[i] * 1000, 0);
+    }
+    chart.addEventListener('pointermove', e => {
+      if (!geo) return;
+      const r = chart.getBoundingClientRect(), px = e.clientX - r.left, n = geo.s.cur.length;
+      let best = 0, bd = 1e9; for (let i = 0; i < n; i++) { const d = Math.abs(geo.x(i) - px); if (d < bd) { bd = d; best = i; } }
+      focus(best);
+    });
+    chart.addEventListener('pointerleave', () => geo && focus(geo.s.focus));
+    $('ovRange').addEventListener('change', e => { ovKey = e.target.value; drawOverview(true); });
+
+    /* ---------- spending limit ---------- */
+    const segs = $('segs'), N = 60, spent = 2200, budget = 2400;
+    segs.innerHTML = Array.from({ length: N }, () => '<i></i>').join('');
+    const fill = Math.round(spent / budget * N);
+    segs.querySelectorAll('i').forEach((s, i) => { if (i < fill) { reduceMotion ? s.classList.add('on') : setTimeout(() => s.classList.add('on'), 600 + i * 18); } });
+
+    /* ---------- quick transfer ---------- */
+    const people = [
+      { n: 'Noah Reyes', i: 'NR', g: 'linear-gradient(140deg,#A3B1C6,#4B5A72)' },
+      { n: 'Ethan Brooks', i: 'EB', g: 'linear-gradient(140deg,#9FD3B5,#3F7D5C)' },
+      { n: 'Maya Lin', i: 'ML', g: 'linear-gradient(140deg,#F0B7A4,#A65A45)' },
+      { n: 'Omar Haddad', i: 'OH', g: 'linear-gradient(140deg,#F9A8A8,#B83A3A)' },
+      { n: 'Leo Fischer', i: 'LF', g: 'linear-gradient(140deg,#E7C68A,#9A6B23)' },
+      { n: 'Jonah Kim', i: 'JK', g: 'linear-gradient(140deg,#94A3B8,#1F2937)' },
+      { n: 'Sara Okafor', i: 'SO', g: 'linear-gradient(140deg,#C4B5FD,#6D28D9)' },
+      { n: 'Ivy Chen', i: 'IC', g: 'linear-gradient(140deg,#99F6E4,#0F766E)' }
+    ];
+    let start = 0, chosen = 2;
+    function renderPeople() {
+      const list = $('people'); list.innerHTML = '';
+      const fit = Math.max(3, Math.floor((list.clientWidth + 12) / 70));
+      for (let k = 0; k < Math.min(fit, people.length); k++) {
+        const idx = (start + k) % people.length, p = people[idx];
+        const b = document.createElement('button'); b.className = 'person'; b.style.background = p.g; b.textContent = p.i;
+        b.setAttribute('aria-label', p.n); b.setAttribute('aria-pressed', idx === chosen); b.title = p.n;
+        b.onclick = () => { chosen = idx; renderPeople(); $('qtNote').textContent = `Sending to ${p.n}`; };
+        list.appendChild(b);
+      }
+    }
+    renderPeople(); $('qtNote').textContent = `Sending to ${people[chosen].n}`;
+    $('nextPeople').addEventListener('click', () => { start = (start + 1) % people.length; renderPeople(); });
+    $('amt').addEventListener('blur', e => { const v = parseFloat(e.target.value.replace(/[^0-9.]/g, '')); e.target.value = isFinite(v) && v > 0 ? v.toFixed(2) : '200.00'; });
+    $('sendBtn').addEventListener('click', () => {
+      const v = parseFloat($('amt').value) || 0, p = people[chosen], btn = $('sendBtn');
+      if (v <= 0) { $('qtNote').textContent = 'Enter an amount above $0.00'; $('amt').focus(); return; }
+      btn.classList.add('ok'); btn.textContent = 'Sent ✓';
+      $('qtNote').textContent = `${usd(v)} sent to ${p.n}`;
+      const tr = document.createElement('tr'); tr.className = 'new';
+      const d = new Date(); const date = d.toLocaleString('en-US', { month: 'short' }) + ' ' + String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+      tr.innerHTML = `<td>Transfer to ${p.n}</td><td>${date}</td><td class="neg">-${usd(v)}</td><td>Checking...2987******</td>`;
+      const tb = $('tx'); tb.prepend(tr); while (tb.children.length > 3) tb.lastElementChild.remove();
+      wallets.total[1] -= v; if (wsel === 'total') tween($('wbal'), wallets.total[1] + v, wallets.total[1], x => usd(x));
+      setTimeout(() => { btn.classList.remove('ok'); btn.textContent = 'Send'; }, 2200);
+    });
+
+    /* ---------- money movement ---------- */
+    const mv = [
+      { d: 'Nov 18, 2025', in: 22, out: 35, h: 62 }, { d: 'Nov 19, 2025', in: 18, out: 30, h: 56 }, { d: 'Nov 20, 2025', in: 9, out: 14, h: 36 },
+      { d: 'Nov 21, 2025', in: 26, out: 41, h: 64 }, { d: 'Nov 23, 2025', in: 40, out: 60, h: 100 }, { d: 'Nov 24, 2025', in: 28, out: 44, h: 66 },
+      { d: 'Nov 25, 2025', in: 12, out: 19, h: 36 }, { d: 'Nov 26, 2025', in: 20, out: 29, h: 50 }, { d: 'Nov 27, 2025', in: 19, out: 27, h: 50 }, { d: 'Nov 28, 2025', in: 24, out: 36, h: 60 }
+    ];
+    const bars = $('bars'), dateChip = $('mvDate');
+    let mvSel = 4, mvShown = { in: 40, out: 60 };
+    mv.forEach((b, i) => {
+      const el = document.createElement('button'); el.style.height = reduceMotion ? b.h + '%' : '0%';
+      el.setAttribute('aria-label', `${b.d}: in ${usd(b.in)}, out ${usd(b.out)}`);
+      el.onmouseenter = el.onfocus = el.onclick = () => selectBar(i);
+      bars.appendChild(el);
+      if (!reduceMotion) setTimeout(() => el.style.height = b.h + '%', 500 + i * 60);
+    });
+    function selectBar(i) {
+      mvSel = i; const els = bars.querySelectorAll('button');
+      els.forEach((e, k) => e.classList.toggle('on', k === i));
+      const el = els[i]; dateChip.style.left = (el.offsetLeft + el.offsetWidth / 2) + 'px'; dateChip.textContent = mv[i].d;
+      tween($('mvIn'), mvShown.in, mv[i].in, v => usd(v), 400); tween($('mvOut'), mvShown.out, mv[i].out, v => usd(v), 400);
+      mvShown = { in: mv[i].in, out: mv[i].out };
+    }
+    bars.addEventListener('mouseleave', () => selectBar(4));
+
+    /* ---------- boot ---------- */
+    const boot = () => { drawOverview(true); selectBar(4); };
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(boot);
+    let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { drawOverview(false); selectBar(mvSel); renderPeople(); }, 120); });
+  </script>
+</body>
+</html>

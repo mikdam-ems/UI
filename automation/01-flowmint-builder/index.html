@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flowmint Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: dark rail | white element drawer | dotted canvas with floating header, tool dock and inspector */
+    :root {
+      --outer: #E2E8F0;
+      --canvas: #EAF1FA;
+      --ink: #0F172A;
+      --rail: #121212;
+      --lime: #B4F535;
+      --lime-2: #C8F75F;
+      --blue: #5C62F6;
+      --blue-2: #7B80FF;
+      --mute: #64748B;
+      --line: #E5E7EB;
+      --cell: #F5F6F8;
+      --font: "Inter", system-ui, sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      color-scheme: light;
+    }
+    [hidden] { display: none !important; }
+    html, body { height: 100%; }
+    body { background: var(--outer); color: var(--ink); font-family: var(--font); padding: clamp(0px, 2.6vw, 40px); overflow: hidden; }
+    .app { height: 100%; max-width: 1560px; margin: 0 auto; display: grid; grid-template-columns: 80px 280px 1fr; border-radius: clamp(0px, 1.6vw, 26px); overflow: hidden; background: var(--canvas); box-shadow: 0 30px 70px -40px rgba(15,23,42,.4); position: relative; }
+    .app.collapsed { grid-template-columns: 80px 0 1fr; }
+    button { font-family: var(--font); }
+
+    /* ---------- Rail ---------- */
+    .rail { grid-column: 1; grid-row: 1; background: var(--rail); display: flex; flex-direction: column; align-items: center; padding: 22px 0; gap: 12px; }
+    .rail .logo { width: 40px; height: 40px; margin-bottom: 12px; }
+    .rail hr { width: 40px; border: 0; border-top: 1px solid rgba(255,255,255,.12); margin: 2px 0 6px; }
+    .rail button { width: 40px; height: 40px; border-radius: 10px; border: 0; background: rgba(255,255,255,.08); color: rgba(255,255,255,.55); display: grid; place-items: center; transition: background .2s, color .2s; }
+    .rail button:hover { color: #fff; }
+    .rail button[aria-current="page"] { background: var(--lime); color: #111; }
+    .rail svg { width: 18px; height: 18px; }
+    .rail .expand { margin-top: auto; }
+
+    /* ---------- Drawer ---------- */
+    .drawer { grid-column: 2; grid-row: 1; background: #fff; padding: 18px 16px; overflow-y: auto; overflow-x: hidden; min-width: 0; border-right: 1px solid var(--line); }
+    .app.collapsed .drawer { padding: 0; border: 0; }
+    .model { position: relative; display: block; }
+    .model select { width: 100%; appearance: none; height: 48px; padding: 0 36px 0 38px; border-radius: 10px; border: 0; background: var(--cell); font: 500 15px var(--font); color: var(--ink); }
+    .model > svg { position: absolute; top: 15px; width: 18px; height: 18px; pointer-events: none; }
+    .model .bolt { left: 12px; color: var(--blue); }
+    .model .chev { right: 12px; }
+    .search { position: relative; display: block; margin-top: 14px; }
+    .search input { width: 100%; height: 48px; padding: 0 12px 0 42px; border-radius: 10px; border: 0; background: var(--cell); font: 14px var(--font); color: var(--ink); }
+    .search svg { position: absolute; left: 14px; top: 15px; width: 18px; height: 18px; color: var(--ink); }
+    .tabs { display: flex; gap: 22px; margin-top: 18px; border-bottom: 1px solid var(--line); overflow: hidden; white-space: nowrap; }
+    .tabs button { border: 0; background: none; padding: 10px 2px; font-size: 14px; letter-spacing: .02em; color: #A3A9B4; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tabs button[aria-selected="true"] { color: var(--ink); border-color: var(--blue); }
+    .group { border-bottom: 1px solid var(--line); }
+    .ghead { width: 100%; display: flex; align-items: center; gap: 10px; padding: 16px 2px; border: 0; background: none; font-size: 14px; font-weight: 500; color: var(--ink); }
+    .ghead i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+    .ghead span { color: var(--mute); font-weight: 400; }
+    .ghead svg { margin-left: auto; width: 14px; height: 14px; transition: transform .25s; }
+    .ghead[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .cells { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+    .cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 122px; padding: 10px; border: 0; background: var(--cell); font-size: 14px; color: var(--ink); text-align: center; cursor: grab; transition: background .2s, transform .2s var(--ease); }
+    .cell:hover { background: #ECEEF3; }
+    .cell:active { cursor: grabbing; }
+    .cell svg { width: 22px; height: 22px; }
+    .cell .new { position: absolute; top: 10px; right: 10px; padding: 2px 7px; border-radius: 999px; background: var(--lime); font-size: 10px; font-weight: 500; }
+    .cell.dragging { background: linear-gradient(160deg, var(--blue-2), var(--blue)); color: #fff; transform: rotate(-3deg); }
+    .empty { grid-column: 1 / -1; padding: 22px; background: var(--cell); color: var(--mute); font-size: 13px; text-align: center; }
+
+    /* ---------- Canvas ---------- */
+    .stage { grid-column: 3; grid-row: 1; position: relative; overflow: hidden; touch-action: none; cursor: default; min-width: 0;
+      background-color: var(--canvas); background-image: radial-gradient(rgba(92,98,246,.22) 1.2px, transparent 1.4px); background-size: 24px 24px; }
+    .stage.pan, .stage.pan .node { cursor: grab; }
+    .stage.panning, .stage.panning .node { cursor: grabbing; }
+    .world { position: absolute; left: 0; top: 0; width: 1100px; height: 1080px; transform-origin: 0 0; }
+    .edges { position: absolute; inset: 0; width: 1100px; height: 1080px; overflow: visible; pointer-events: none; }
+    .edge { fill: none; stroke: #1F2937; stroke-width: 1.4; }
+    .edge.soft { stroke: #94A3B8; }
+    .edge.flow { stroke: var(--blue); stroke-width: 2; stroke-dasharray: 6 6; animation: flow .7s linear infinite; }
+    .port circle { fill: #fff; stroke: #1F2937; stroke-width: 1.2; }
+    .port text { font: 600 11px var(--font); fill: #1F2937; text-anchor: middle; dominant-baseline: central; }
+
+    .node { position: absolute; width: 120px; height: 120px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 10px; text-align: center; font-size: 12.5px; font-weight: 500; line-height: 1.3; user-select: none; cursor: pointer; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.06); transition: box-shadow .2s, outline-color .2s; outline: 2px solid transparent; outline-offset: 3px; }
+    .node svg { width: 36px; height: 36px; flex: none; }
+    .node.lime { background: var(--lime-2); }
+    .node.blue { background: linear-gradient(160deg, var(--blue-2), var(--blue)); color: #fff; font-weight: 400; }
+    .node.sel { outline-color: var(--blue); box-shadow: 0 16px 30px -16px rgba(92,98,246,.6); }
+    .node.drag { box-shadow: 0 24px 40px -18px rgba(15,23,42,.45); z-index: 5; }
+    .node.flash { animation: flash 1s var(--ease); }
+    .badge { position: absolute; top: -12px; right: -12px; width: 30px; height: 30px; border-radius: 50%; background: #0B1220; color: #fff; display: grid; place-items: center; font-size: 12px; border: 2px solid var(--canvas); }
+    .dot { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #0B1220; border: 6px solid #0B1220; box-shadow: inset 0 0 0 3px #fff; cursor: pointer; }
+    .dot .lab { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); font-size: 16px; font-weight: 500; white-space: nowrap; }
+    .dec { position: absolute; width: 40px; height: 40px; cursor: pointer; user-select: none; }
+    .dec::before { content: ""; position: absolute; inset: 4px; border-radius: 7px; background: var(--blue); transform: rotate(45deg); box-shadow: 0 6px 14px -6px rgba(92,98,246,.8); transition: box-shadow .2s; }
+    .dec.sel::before { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--blue); }
+    .dec svg { position: relative; width: 40px; height: 40px; }
+    .dec .lab { position: absolute; left: 54px; top: 2px; white-space: nowrap; font-size: 16px; font-weight: 500; }
+    .dec .lab small { display: block; margin-top: 4px; font-size: 13px; font-weight: 400; color: #9AA1AE; }
+    .note { position: absolute; min-width: 140px; padding: 10px 12px; border-radius: 10px; background: #FFF8C5; box-shadow: 0 10px 20px -14px rgba(15,23,42,.5); font-size: 13px; cursor: pointer; }
+    .note[contenteditable="true"] { outline: 2px solid var(--blue); cursor: text; }
+    .pin { position: absolute; width: 30px; height: 30px; border-radius: 50% 50% 50% 4px; background: var(--blue); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 600; box-shadow: 0 8px 16px -8px rgba(92,98,246,.9); }
+
+    /* ---------- Floating header ---------- */
+    .top { position: absolute; left: 24px; right: 24px; top: 14px; display: flex; align-items: center; gap: 16px; pointer-events: none; z-index: 10; }
+    .top > * { pointer-events: auto; }
+    .me { display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 18px 0 6px; border-radius: 999px; border: 0; background: #fff; text-align: left; box-shadow: 0 6px 16px -12px rgba(15,23,42,.4); }
+    .me i { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(140deg, #8E9BB0, #2F3A4D); display: grid; place-items: center; color: #fff; font-style: normal; font-size: 13px; font-weight: 600; }
+    .me b { display: block; font-weight: 500; font-size: 14px; }
+    .me small { display: block; font-size: 13px; color: var(--mute); }
+    .me svg { width: 14px; height: 14px; margin-left: 12px; }
+    .circle { width: 54px; height: 54px; border-radius: 50%; border: 0; background: #fff; display: grid; place-items: center; color: var(--ink); position: relative; box-shadow: 0 6px 16px -12px rgba(15,23,42,.4); }
+    .circle svg { width: 20px; height: 20px; }
+    .circle .ping { position: absolute; top: 14px; right: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); border: 2px solid #fff; }
+    .team { margin-left: auto; display: flex; align-items: center; padding: 5px; border-radius: 999px; background: #fff; box-shadow: 0 6px 16px -12px rgba(15,23,42,.4); }
+    .team span, .team button { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; margin-left: -8px; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 600; }
+    .team span:first-child { margin-left: 0; }
+    .team button { background: #DCDDFE; color: var(--blue); }
+    .team button svg { width: 16px; height: 16px; }
+    .team .pop { animation: pop .4s var(--ease); }
+
+    /* ---------- Dock ---------- */
+    .dock { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+    .dock .grp { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 999px; background: #121212; }
+    .dock button { width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); display: grid; place-items: center; transition: background .2s, color .2s; }
+    .dock button:hover { color: #fff; background: rgba(255,255,255,.14); }
+    .dock button[aria-pressed="true"] { background: var(--lime); color: #111; }
+    .dock button:disabled { opacity: .35; }
+    .dock svg { width: 20px; height: 20px; }
+
+    /* ---------- Inspector ---------- */
+    .insp { position: absolute; right: 116px; bottom: 26px; width: 336px; border-radius: 14px; background: linear-gradient(160deg, var(--blue-2), var(--blue)); padding: 12px; z-index: 11; box-shadow: 0 30px 50px -30px rgba(40,44,140,.7); animation: rise .45s var(--ease); }
+    .insp .art { height: 170px; position: relative; }
+    .insp .art svg { width: 100%; height: 100%; }
+    .insp .x { position: absolute; top: -26px; right: -26px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; background: #0B1220; color: #fff; display: grid; place-items: center; }
+    .insp .x svg { width: 14px; height: 14px; }
+    .ibody { background: #fff; border-radius: 10px; padding: 18px 18px; }
+    .ibody h3 { margin: 0; font-size: 17px; font-weight: 500; }
+    .ibody p { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--mute); }
+    .ibody .meta { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .ibody .meta span { padding: 3px 9px; border-radius: 999px; background: #F1F2FF; color: var(--blue); font-size: 11px; font-weight: 500; }
+    .ibody .go { width: 100%; height: 42px; margin-top: 16px; border-radius: 6px; border: 0; background: #0B0B0B; color: #fff; font-size: 14px; font-weight: 500; transition: background .2s; }
+    .ibody .go.ok { background: #16A34A; }
+
+    .zoom { position: absolute; left: 24px; top: 82px; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; background: #fff; z-index: 10; box-shadow: 0 6px 16px -12px rgba(15,23,42,.4); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .zoom button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: none; font-size: 16px; color: var(--ink); }
+    .zoom button:hover { background: var(--cell); }
+    .zoom span { min-width: 42px; text-align: center; }
+
+    .toast { position: absolute; left: 50%; top: 84px; transform: translate(-50%, -10px); z-index: 30; padding: 10px 16px; border-radius: 999px; background: #0B1220; color: #fff; font-size: 13px; opacity: 0; transition: opacity .25s, transform .3s var(--ease); pointer-events: none; white-space: nowrap; }
+    .toast.on { opacity: 1; transform: translate(-50%, 0); }
+    button:focus-visible, select:focus-visible, input:focus-visible, .node:focus-visible, .dec:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    @keyframes flow { to { stroke-dashoffset: -12; } }
+    @keyframes flash { 0%, 100% { box-shadow: 0 1px 2px rgba(15,23,42,.06); } 30% { box-shadow: 0 0 0 6px rgba(180,245,53,.9); } }
+    @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+    @media (prefers-reduced-motion: reduce) { .edge.flow, .insp, .node.flash, .team .pop { animation: none; } }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 72px 0 1fr; }
+      .drawer { position: absolute; left: 72px; top: 0; bottom: 0; width: 280px; z-index: 20; box-shadow: 20px 0 40px -30px rgba(15,23,42,.5); transform: translateX(-24px); opacity: 0; visibility: hidden; transition: transform .35s var(--ease), opacity .25s, visibility .35s; }
+      .app.open .drawer { transform: none; opacity: 1; visibility: visible; }
+      .me div { display: none; } .me { padding: 0 12px 0 6px; } .me svg { margin-left: 0; }
+    }
+    @media (max-width: 640px) {
+      body { padding: 0; }
+      .app { grid-template-columns: 56px 0 1fr; border-radius: 0; }
+      .rail { padding: 14px 0; gap: 8px; }
+      .rail .logo { width: 32px; height: 32px; margin-bottom: 4px; }
+      .rail button { width: 36px; height: 36px; }
+      .drawer { left: 56px; width: min(280px, calc(100vw - 56px)); }
+      .top { left: 10px; right: 10px; top: 10px; gap: 8px; }
+      .me, .circle { height: 44px; } .circle { width: 44px; } .me i { width: 34px; height: 34px; }
+      .top .circle:last-of-type { display: none; }
+      .team span:nth-child(n+3) { display: none; }
+      .team span, .team button { width: 32px; height: 32px; }
+      .dock { right: 8px; top: auto; bottom: 16px; transform: none; }
+      .dock .grp { padding: 5px; } .dock button { width: 36px; height: 36px; }
+      .dock .grp:first-child button:nth-child(n+4) { display: none; }
+      .insp { left: 10px; right: 64px; bottom: 12px; width: auto; }
+      .insp .art { height: 86px; }
+      .zoom { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- ======= rail ======= -->
+    <nav class="rail" aria-label="Main">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M28 6C17 6 9 13 9 22c0 7 5 12 11 13l2-9c-3-1-5-3-5-6 0-5 5-8 11-8Z" fill="#B4F535"/><path d="M27 18l4-10 5 4Z" fill="#B4F535"/></svg>
+      <hr>
+      <button aria-label="Home"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 9 10 3l7 6v7.5A1.5 1.5 0 0 1 15.5 18h-11A1.5 1.5 0 0 1 3 16.5Z"/></svg></button>
+      <button aria-current="page" aria-label="Flows"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="4" r="1.8"/><circle cx="4" cy="16" r="1.8"/><circle cx="10" cy="16" r="1.8"/><circle cx="16" cy="16" r="1.8"/><path d="M10 6v8M4 14v-3h12v3"/></svg></button>
+      <button aria-label="Projects"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 4.5V3.5A1.5 1.5 0 0 1 8.5 2h3A1.5 1.5 0 0 1 13 3.5v1h3A1.5 1.5 0 0 1 17.5 6v9A1.5 1.5 0 0 1 16 16.5H4A1.5 1.5 0 0 1 2.5 15V6A1.5 1.5 0 0 1 4 4.5Zm1.5 0h3v-1h-3Z"/></svg></button>
+      <button aria-label="Team"><svg viewBox="0 0 20 20" fill="currentColor"><circle cx="7.5" cy="6.5" r="3"/><circle cx="14" cy="7.5" r="2.3"/><path d="M1.5 16c.5-3 3-5 6-5s5.5 2 6 5ZM13.5 11.5c2.5 0 4.5 1.5 5 4.5h-4"/></svg></button>
+      <button aria-label="Billing"><svg viewBox="0 0 20 20" fill="currentColor"><rect x="2" y="4" width="16" height="12" rx="2.5"/><rect x="2" y="7" width="16" height="2.4" fill="#121212"/></svg></button>
+      <button aria-label="Settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.3M10 15.2v2.3M17.5 10h-2.3M4.8 10H2.5M15.3 4.7l-1.6 1.6M6.3 13.7l-1.6 1.6M15.3 15.3l-1.6-1.6M6.3 6.3 4.7 4.7"/></svg></button>
+      <button class="expand" id="expand" aria-label="Toggle elements drawer" aria-expanded="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 5 5-5 5M11 5l5 5-5 5"/></svg></button>
+    </nav>
+
+    <!-- ======= drawer ======= -->
+    <aside class="drawer" id="drawer" aria-label="Elements">
+      <label class="model">
+        <svg class="bolt" viewBox="0 0 18 18" fill="currentColor"><path d="M10 1 3.5 10H8l-1 7 6.5-9H9Z"/></svg>
+        <span style="position:absolute;left:-9999px">Process model</span>
+        <select id="model"><option>AG Process Model</option><option>Onboarding Model</option><option>Invoice Approval</option></select>
+        <svg class="chev" viewBox="0 0 18 18" fill="none"><path d="m5 7 4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </label>
+      <label class="search"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 3.5 3.5"/></svg><span style="position:absolute;left:-9999px">Search elements</span><input id="search" type="search" placeholder="Search elements..."></label>
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" aria-selected="true" data-t="core">CORE</button><button role="tab" aria-selected="false" data-t="helpers">HELPERS</button><button role="tab" aria-selected="false" data-t="triggers">TRIGGERS</button><button role="tab" aria-selected="false" data-t="api">API</button>
+      </div>
+      <div id="groups"></div>
+    </aside>
+
+    <!-- ======= canvas ======= -->
+    <main class="stage" id="stage" aria-label="Flow canvas">
+      <div class="world" id="world">
+        <svg class="edges" id="edges"><defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 8 5 1 9" fill="none" stroke="#1F2937" stroke-width="1.4"/></marker></defs><g id="edgeG"></g></svg>
+        <div id="nodes"></div>
+      </div>
+
+      <header class="top">
+        <button class="me" id="me"><i>AH</i><div><b>Aron Hoffman</b><small>hoffman23@gmail.com</small></div><svg viewBox="0 0 14 14" fill="none"><path d="m3.5 5.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="circle" aria-label="Notifications"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 8.5a5 5 0 0 1 10 0c0 3.8 1.5 5 1.5 5h-13S5 12.3 5 8.5Z"/><path d="M8.3 16.5a1.8 1.8 0 0 0 3.4 0"/></svg><span class="ping"></span></button>
+        <button class="circle" aria-label="Settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M8.6 2.5h2.8l.4 2 1.4.8 1.9-.7 1.4 2.4-1.5 1.3v1.6l1.5 1.3-1.4 2.4-1.9-.7-1.4.8-.4 2H8.6l-.4-2-1.4-.8-1.9.7-1.4-2.4 1.5-1.3V9.3L3.5 8l1.4-2.4 1.9.7 1.4-.8Z"/></svg></button>
+        <div class="team" id="team">
+          <span style="background:linear-gradient(140deg,#E8B79A,#9C5A3C)" title="Mia">MI</span>
+          <span style="background:linear-gradient(140deg,#C9A27C,#6B4426)" title="Omar">OM</span>
+          <span style="background:linear-gradient(140deg,#94A3B8,#1F2937)" title="Ben">BE</span>
+          <button id="invite" aria-label="Invite collaborator"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg></button>
+        </div>
+      </header>
+
+      <div class="dock" aria-label="Canvas tools">
+        <div class="grp" role="group">
+          <button aria-pressed="true" data-tool="select" aria-label="Select"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 3 16 9l-5.2 1.6L8.8 16Z"/></svg></button>
+          <button aria-pressed="false" data-tool="pan" aria-label="Pan"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10V4.5a1.2 1.2 0 0 1 2.4 0V9M9.4 9V3.5a1.2 1.2 0 0 1 2.4 0V9M11.8 9V4.5a1.2 1.2 0 0 1 2.4 0V11c0 3.5-2 6-5.2 6-2.3 0-3.6-1.2-4.6-3L3 11.4a1.2 1.2 0 0 1 2-1.3L7 12"/></svg></button>
+          <button data-act="text" aria-label="Add text note"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5V3.5h12V5M10 3.5v13M8 16.5h4"/></svg></button>
+          <button data-act="comment" aria-label="Add comment"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M10 3a7 7 0 0 0-6.1 10.4L3 17l3.7-.9A7 7 0 1 0 10 3Z"/></svg></button>
+          <button data-act="fit" aria-label="Fit flow to screen"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5.5 2v12.5H18M2 5.5h12.5V18"/></svg></button>
+          <button data-act="trace" aria-pressed="false" aria-label="Trace data flow"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m12.5 3.5 4 4-8.5 8.5H4v-4Z"/><path d="m10.5 5.5 4 4"/></svg></button>
+          <button data-act="focus" aria-label="Center on selected node"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 7V4a1 1 0 0 1 1-1h3M13 3h3a1 1 0 0 1 1 1v3M17 13v3a1 1 0 0 1-1 1h-3M7 17H4a1 1 0 0 1-1-1v-3"/><circle cx="10" cy="10" r="2.5"/></svg></button>
+        </div>
+        <div class="grp" role="group">
+          <button id="undo" aria-label="Undo" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8H13a4 4 0 0 1 0 8H8M7 8l3-3M7 8l3 3"/></svg></button>
+          <button id="redo" aria-label="Redo" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H7a4 4 0 0 0 0 8h5M13 8l-3-3M13 8l-3 3"/></svg></button>
+        </div>
+      </div>
+
+      <section class="insp" id="insp" aria-live="polite">
+        <button class="x" id="closeInsp" aria-label="Close inspector"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m3 3 8 8M11 3l-8 8"/></svg></button>
+        <div class="art" aria-hidden="true">
+          <svg viewBox="0 0 312 170" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2">
+            <path d="M0 70H120c10 0 14-4 14-14V0M118 70v40c0 10 4 14 14 14h48V170M134 56h60c10 0 14 4 14 14v54M208 124h40c10 0 14-4 14-14V0M262 110v60M180 124V96c0-10 4-14 14-14h118M262 40c0 10 4 14 14 14h36"/>
+            <g fill="#B4F535" stroke="none"><circle cx="118" cy="70" r="5"/><circle cx="180" cy="96" r="5"/><circle cx="262" cy="22" r="5"/><circle cx="262" cy="96" r="5"/><circle cx="216" cy="160" r="5"/></g>
+            <g fill="none" stroke="#fff" stroke-width="1.4"><path d="M208 64l6-6 6 6-6 6Z"/><path d="M118 124l6-6 6 6-6 6Z"/></g>
+            <rect x="24" y="48" width="42" height="42" rx="10" fill="rgba(255,255,255,.95)" stroke="none"/>
+            <path d="M54 62a10 10 0 1 0 0 14" stroke="#5C62F6" stroke-width="4" stroke-linecap="round"/><circle cx="45" cy="69" r="3.5" fill="#5C62F6" stroke="none"/>
+          </svg>
+        </div>
+        <div class="ibody">
+          <h3 id="iTitle">Update Salesforce via API</h3>
+          <p id="iDesc">Next to the component’s name, click Edit, then select the Version Settings tab. In the Version field for Salesforce API, select version 45.0 or later.</p>
+          <div class="meta" id="iMeta"></div>
+          <button class="go" id="goBtn">Update process</button>
+        </div>
+      </section>
+
+      <div class="zoom"><button id="zOut" aria-label="Zoom out">−</button><span id="zVal">100%</span><button id="zIn" aria-label="Zoom in">+</button></div>
+      <div class="toast" id="toast" role="status"></div>
+    </main>
+  </div>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = id => document.getElementById(id);
+    const toastEl = $('toast'); let tt;
+    const say = m => { toastEl.textContent = m; toastEl.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('on'), 1800); };
+
+    /* ---------- icons ---------- */
+    const I = {
+      request: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><path d="M6 7v10M18 7c0 6-12 4-12 10"/></svg>',
+      transform: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>',
+      code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6-6 6 6 6M15 6l6 6-6 6"/></svg>',
+      data: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
+      trigger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M11 8.3 6.5 15.8M7.5 18h9M13 8.3l4.5 7.5"/></svg>',
+      save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+      webhook: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg>',
+      terminal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4 7 5 5-5 5M12 18h8"/></svg>',
+      clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>',
+      branch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3 21 12 12 21 3 12Z"/></svg>',
+      loop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l3 3-3 3M20 6H8a4 4 0 0 0-4 4v1M7 21l-3-3 3-3M4 18h12a4 4 0 0 0 4-4v-1"/></svg>',
+      mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>',
+      form: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+      api: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4H6a2 2 0 0 0-2 2v4l-2 2 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4l2 2-2 2v4a2 2 0 0 1-2 2h-2"/></svg>',
+      // node art
+      grid4: '<svg viewBox="0 0 40 40"><g fill="#fff"><rect x="16" y="4" width="8" height="8" rx="2"/><rect x="4" y="16" width="8" height="8" rx="2" opacity=".8"/><rect x="16" y="16" width="8" height="8" rx="2"/><rect x="28" y="16" width="8" height="8" rx="2" opacity=".8"/><rect x="16" y="28" width="8" height="8" rx="2" opacity=".7"/></g></svg>',
+      robot: '<svg viewBox="0 0 40 40"><path d="M20 4 34 30h-8L20 18 14 30H6Z" fill="#111"/><path d="M6 32h28l-4 5H10Z" fill="#111"/></svg>',
+      ai: '<svg viewBox="0 0 40 40" fill="none" stroke="#111" stroke-width="3"><rect x="4" y="4" width="32" height="32" rx="9"/><circle cx="14" cy="14" r="5"/><circle cx="26" cy="14" r="5"/><circle cx="14" cy="26" r="5"/><circle cx="26" cy="26" r="5"/></svg>',
+      clover: '<svg viewBox="0 0 40 40" fill="#111"><circle cx="20" cy="11" r="7"/><circle cx="11" cy="19" r="7"/><circle cx="29" cy="19" r="7"/><circle cx="20" cy="26" r="6"/><path d="M19 28h2v9h-2z"/></svg>',
+      warn: '<svg viewBox="0 0 40 40" fill="#111"><circle cx="20" cy="9" r="6"/><circle cx="10" cy="28" r="6"/><circle cx="30" cy="28" r="6"/><path d="M17 13 12 23h4l4-8 4 8h4l-5-10Z"/></svg>',
+      sign: '<svg viewBox="0 0 40 40" fill="#111">' + Array.from({ length: 49 }, (_, k) => { const x = k % 7, y = Math.floor(k / 7), d = Math.hypot(x - 3, y - 3); return d < 3.6 ? `<circle cx="${5 + x * 5}" cy="${5 + y * 5}" r="${1.9 - d * .25}"/>` : ''; }).join('') + '</svg>',
+      bell: '<svg viewBox="0 0 40 40" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round"><path d="M10 18a10 10 0 0 1 20 0c0 7 3 10 3 10H7s3-3 3-10Z"/><path d="M16 33a4 4 0 0 0 8 0"/></svg>',
+      retry: '<svg viewBox="0 0 40 40" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M30 12a12 12 0 1 0 3 10M30 4v8h-8"/></svg>'
+    };
+
+    /* ---------- palette ---------- */
+    const lib = {
+      core: [{ name: 'Actions Blocks', open: true, items: [['Request', 'request'], ['Event Tranform', 'transform'], ['Code', 'code'], ['Data Imap', 'data'], ['Trigger', 'trigger', true], ['Save to Story', 'save'], ['Webhook', 'webhook'], ['Terminal', 'terminal']] },
+             { name: 'Agari', items: [['Email Check', 'mail'], ['Score Sender', 'branch'], ['Quarantine', 'save']] },
+             { name: 'Airtable', items: [['Create Row', 'data'], ['Find Rows', 'request'], ['Update Row', 'code'], ['Delete Row', 'terminal'], ['List Bases', 'webhook'], ['Attach File', 'save'], ['Comment', 'mail'], ['Sync View', 'loop'], ['Webhook', 'webhook'], ['Formula', 'code']] },
+             { name: 'Abuse.ch', items: [['URL Lookup', 'request'], ['Hash Lookup', 'code'], ['IP Report', 'data'], ['Feed Sync', 'loop']] }],
+      helpers: [{ name: 'Logic', open: true, items: [['Condition', 'branch'], ['Loop', 'loop'], ['Delay', 'clock'], ['Formatter', 'transform'], ['Merge', 'webhook'], ['Filter', 'request']] }],
+      triggers: [{ name: 'Start events', open: true, items: [['Schedule', 'clock'], ['Form Submit', 'form'], ['Email In', 'mail'], ['Webhook In', 'webhook', true]] }],
+      api: [{ name: 'Connectors', open: true, items: [['REST Call', 'api'], ['GraphQL', 'code'], ['Auth Token', 'save'], ['Pagination', 'loop']] }]
+    };
+    let tab = 'core', q = '';
+    function renderPalette() {
+      const g = $('groups'); g.innerHTML = '';
+      lib[tab].forEach(grp => {
+        const items = grp.items.filter(([n]) => !q || n.toLowerCase().includes(q));
+        if (q && !items.length) return;
+        const wrap = document.createElement('div'); wrap.className = 'group';
+        const open = q ? true : !!grp.open;
+        wrap.innerHTML = `<button class="ghead" aria-expanded="${open}"><i></i>${grp.name} <span>(${grp.items.length})</span><svg viewBox="0 0 14 14" fill="none"><path d="m3.5 5.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="cells" ${open ? '' : 'hidden'}>${items.map(([n, ic, isNew]) => `<button class="cell" draggable="true" data-name="${n}" data-icon="${ic}">${isNew ? '<span class="new">New</span>' : ''}${I[ic]}${n}</button>`).join('')}</div>`;
+        wrap.querySelector('.ghead').onclick = () => { grp.open = !grp.open; renderPalette(); };
+        g.appendChild(wrap);
+      });
+      if (!g.children.length) g.innerHTML = `<div class="cells" style="margin-top:14px"><div class="empty">No elements match “${q}”.</div></div>`;
+      g.querySelectorAll('.cell').forEach(c => {
+        c.addEventListener('dragstart', e => { c.classList.add('dragging'); e.dataTransfer.setData('text/plain', c.dataset.name + '|' + c.dataset.icon); e.dataTransfer.effectAllowed = 'copy'; });
+        c.addEventListener('dragend', () => c.classList.remove('dragging'));
+        c.addEventListener('click', () => { const p = toWorld(stage.clientWidth / 2, stage.clientHeight / 2); addNode(c.dataset.name, c.dataset.icon, p.x - 60, p.y - 60); });
+      });
+    }
+    $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => { tab = b.dataset.t; $('tabs').querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', x === b)); renderPalette(); });
+    $('search').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); renderPalette(); });
+    $('model').addEventListener('change', e => say(`${e.target.value} loaded`));
+    renderPalette();
+
+    /* ---------- graph model ---------- */
+    let nodes = [
+      { id: 'start', kind: 'dot', label: 'Start', x: 827, y: 125 },
+      { id: 'submit', kind: 'card', tone: 'blue', label: 'Submit New Project App', icon: 'grid4', x: 567, y: 73, desc: 'Entry form that collects the project brief, budget and owner before the flow runs.' },
+      { id: 'd1', kind: 'dec', label: 'Proper Application?', sub: 'Branh-1', x: 313, y: 116, desc: 'Checks that every required field is filled and the budget code is valid.' },
+      { id: 'robot', kind: 'card', tone: 'white', label: 'Execute Robotic Process', icon: 'robot', x: 100, y: 312, desc: 'Runs the RPA bot that copies the application into the ERP system.' },
+      { id: 'ai', kind: 'card', tone: 'lime', label: 'Start AI Doc Extraction', icon: 'ai', x: 412, y: 312, desc: 'Reads attached PDFs and extracts totals, dates and signatories with the doc model.' },
+      { id: 'sf', kind: 'card', tone: 'white', label: 'Update Salesforce via API', icon: 'clover', badge: 1, x: 688, y: 312, desc: 'Next to the component’s name, click Edit, then select the Version Settings tab. In the Version field for Salesforce API, select version 45.0 or later.' },
+      { id: 'd2', kind: 'dec', label: 'Update System', sub: 'Branh-2', x: 140, y: 506, desc: 'Confirms the ERP accepted the record before notifying anyone.' },
+      { id: 'warn', kind: 'card', tone: 'lime', label: 'Send Warning Email', icon: 'warn', x: 23, y: 712, desc: 'Emails the project owner when the ERP rejects the record.' },
+      { id: 'sign', kind: 'card', tone: 'white', label: 'Send DocuSign for Signature', icon: 'sign', x: 176, y: 712, desc: 'Sends the approval packet for e-signature to the finance lead.' },
+      { id: 'd3', kind: 'dec', label: 'AI Success?', sub: 'Branh-3', x: 453, y: 552, desc: 'Routes on the extraction confidence score (threshold 0.85).' },
+      { id: 'notify', kind: 'card', tone: 'white', label: 'Notify Reviewer', icon: 'bell', x: 336, y: 878, desc: 'Asks a human reviewer to check low-confidence extractions.' },
+      { id: 'retry', kind: 'card', tone: 'white', label: 'Retry Extraction', icon: 'retry', x: 489, y: 878, desc: 'Re-runs extraction with the enhanced OCR model.' }
+    ];
+    let edges = [['start', 'submit'], ['submit', 'd1'], ['d1', 'robot', '−'], ['d1', 'sf', '−'], ['ai', 'sf', null, 'soft'], ['robot', 'd2'], ['d2', 'warn', '−'], ['d2', 'sign', '+'], ['ai', 'd3'], ['d3', 'notify', '−'], ['d3', 'retry', '+']];
+    const size = n => n.kind === 'card' ? [120, 120] : n.kind === 'dec' ? [40, 40] : [22, 22];
+    let selId = 'sf', seq = 1;
+
+    const world = $('world'), stage = $('stage'), nodesEl = $('nodes'), edgeG = $('edgeG');
+    function renderNodes() {
+      nodesEl.innerHTML = '';
+      nodes.forEach(n => {
+        const el = document.createElement('div'); el.dataset.id = n.id; el.tabIndex = 0;
+        el.style.left = n.x + 'px'; el.style.top = n.y + 'px';
+        if (n.kind === 'card') { el.className = `node ${n.tone === 'white' ? '' : n.tone}`; el.innerHTML = `${I[n.icon] || ''}<span>${n.label}</span>${n.badge ? `<span class="badge">${n.badge}</span>` : ''}`; el.setAttribute('aria-label', n.label); }
+        else if (n.kind === 'dec') { el.className = 'dec'; el.innerHTML = `<svg viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="m15 15 10 10M25 15 15 25"/></svg><span class="lab">${n.label}<small>${n.sub}</small></span>`; el.setAttribute('aria-label', `${n.label} decision`); }
+        else if (n.kind === 'note') { el.className = 'note'; el.textContent = n.label; }
+        else if (n.kind === 'pin') { el.className = 'pin'; el.textContent = n.label; el.title = 'Comment'; }
+        else { el.className = 'dot'; el.innerHTML = `<span class="lab">${n.label}</span>`; }
+        if (n.id === selId) el.classList.add('sel');
+        nodesEl.appendChild(el);
+      });
+      renderEdges();
+    }
+    const byId = id => nodes.find(n => n.id === id);
+    function anchors(a, b) {
+      const [aw, ah] = size(a), [bw, bh] = size(b);
+      const ac = [a.x + aw / 2, a.y + ah / 2], bc = [b.x + bw / 2, b.y + bh / 2];
+      if (Math.abs(bc[1] - ac[1]) < 70) {           // side by side → horizontal link
+        const dir = bc[0] > ac[0] ? 1 : -1;
+        return { h: true, x1: ac[0] + dir * aw / 2, y1: ac[1], x2: bc[0] - dir * bw / 2, y2: bc[1] };
+      }
+      const down = bc[1] > ac[1] ? 1 : -1;
+      return { h: false, x1: ac[0], y1: ac[1] + down * ah / 2, x2: bc[0], y2: bc[1] - down * bh / 2 - (down > 0 ? 12 : -12) };
+    }
+    function route(p) {
+      const { x1, y1, x2, y2 } = p;
+      if (p.h) {
+        if (Math.abs(y1 - y2) < 1) return `M${x1} ${y1}H${x2}`;
+        const xm = (x1 + x2) / 2, sx = x2 > x1 ? 1 : -1, sy = y2 > y1 ? 1 : -1, r = Math.min(12, Math.abs(xm - x1), Math.abs(y2 - y1) / 2);
+        return `M${x1} ${y1}H${xm - sx * r}Q${xm} ${y1} ${xm} ${y1 + sy * r}V${y2 - sy * r}Q${xm} ${y2} ${xm + sx * r} ${y2}H${x2}`;
+      }
+      if (Math.abs(x1 - x2) < 1) return `M${x1} ${y1}V${y2}`;
+      const sy = y2 > y1 ? 1 : -1, ym = y1 + sy * Math.min(Math.abs(y2 - y1) / 2, 92), sx = x2 > x1 ? 1 : -1;
+      const r = Math.min(16, Math.abs(x2 - x1) / 2, Math.abs(ym - y1), Math.abs(y2 - ym));
+      return `M${x1} ${y1}V${ym - sy * r}Q${x1} ${ym} ${x1 + sx * r} ${ym}H${x2 - sx * r}Q${x2} ${ym} ${x2} ${ym + sy * r}V${y2}`;
+    }
+    let tracing = false;
+    function pathIds() {           // upstream chain of the selected node
+      const set = new Set(); let cur = selId, guard = 0;
+      while (cur && guard++ < 30) { const e = edges.find(e => e[1] === cur && e[3] !== 'soft'); if (!e) break; set.add(e[0] + '>' + e[1]); cur = e[0]; }
+      return set;
+    }
+    function renderEdges() {
+      const hot = tracing ? pathIds() : new Set();
+      let s = '';
+      edges.forEach(([a, b, port, style]) => {
+        const A = byId(a), B = byId(b); if (!A || !B) return;
+        const p = anchors(A, B), d = route(p), isHot = hot.has(a + '>' + b);
+        s += `<path class="edge ${style || ''} ${isHot ? 'flow' : ''}" d="${d}" ${!p.h || !style ? 'marker-end="url(#arr)"' : ''}/>`;
+        if (port && !p.h) s += `<g class="port"><circle cx="${p.x2}" cy="${p.y2 + 4}" r="8"/><text x="${p.x2}" y="${p.y2 + 4.5}">${port}</text></g>`;
+      });
+      edgeG.innerHTML = s;
+    }
+
+    /* ---------- view: pan + zoom ---------- */
+    let view = { x: 20, y: 70, k: 1 };
+    const applyView = () => { world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.k})`; stage.style.backgroundPosition = `${view.x}px ${view.y}px`; stage.style.backgroundSize = `${24 * view.k}px ${24 * view.k}px`; $('zVal').textContent = Math.round(view.k * 100) + '%'; };
+    const toWorld = (sx, sy) => ({ x: (sx - view.x) / view.k, y: (sy - view.y) / view.k });
+    function zoomAt(k, sx = stage.clientWidth / 2, sy = stage.clientHeight / 2) {
+      k = Math.max(.35, Math.min(1.8, k)); const p = toWorld(sx, sy);
+      view.k = k; view.x = sx - p.x * k; view.y = sy - p.y * k; applyView();
+    }
+    function fit() {
+      const W = stage.clientWidth, H = stage.clientHeight, narrow = W < 700;
+      const minX = Math.min(...nodes.map(n => n.x)), maxX = Math.max(...nodes.map(n => n.x + size(n)[0] + (n.kind === 'dec' ? 150 : 0)));
+      const top = narrow ? 70 : 60;
+      const k = Math.min(1, (W - (narrow ? 64 : 150)) / (maxX - minX + 20));
+      view.k = k; view.x = (narrow ? 8 : 20) - minX * k; view.y = top + (narrow ? 20 : 0);
+      if (!narrow && W > 1000) view.x = Math.max(view.x, (W - 116 - (maxX - minX) * k) / 2 - minX * k);
+      applyView();
+    }
+    stage.addEventListener('wheel', e => { e.preventDefault(); const r = stage.getBoundingClientRect(); zoomAt(view.k * (e.deltaY < 0 ? 1.1 : .9), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+    $('zIn').onclick = () => zoomAt(view.k * 1.15); $('zOut').onclick = () => zoomAt(view.k / 1.15);
+
+    /* ---------- history ---------- */
+    let past = [], future = [];
+    const snap = () => JSON.stringify({ nodes, edges, seq });
+    function commit(before) { past.push(before); if (past.length > 60) past.shift(); future = []; syncHist(); }
+    function restore(s) { const o = JSON.parse(s); nodes = o.nodes; edges = o.edges; seq = o.seq; if (!byId(selId)) selId = null; renderNodes(); showInspector(); }
+    const syncHist = () => { $('undo').disabled = !past.length; $('redo').disabled = !future.length; };
+    $('undo').onclick = () => { if (!past.length) return; future.push(snap()); restore(past.pop()); syncHist(); say('Undone'); };
+    $('redo').onclick = () => { if (!future.length) return; past.push(snap()); restore(future.pop()); syncHist(); say('Redone'); };
+    addEventListener('keydown', e => {
+      if (e.target.isContentEditable || e.target.tagName === 'INPUT') return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); (e.shiftKey ? $('redo') : $('undo')).click(); }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selId && selId !== 'start') { const b = snap(); nodes = nodes.filter(n => n.id !== selId); edges = edges.filter(x => x[0] !== selId && x[1] !== selId); selId = null; commit(b); renderNodes(); showInspector(); say('Node removed · ⌘Z to undo'); }
+    });
+
+    /* ---------- tools ---------- */
+    let tool = 'select';
+    const setTool = t => { tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t)); stage.classList.toggle('pan', t === 'pan'); };
+    document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+    document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+      const c = toWorld(stage.clientWidth / 2, stage.clientHeight / 2), before = snap();
+      if (b.dataset.act === 'text') { nodes.push({ id: 'n' + seq++, kind: 'note', label: 'Double-click to edit note', x: c.x - 70, y: c.y - 20 }); commit(before); renderNodes(); say('Note added'); }
+      if (b.dataset.act === 'comment') { nodes.push({ id: 'n' + seq++, kind: 'pin', label: 'AH', x: c.x, y: c.y }); commit(before); renderNodes(); say('Comment pinned'); }
+      if (b.dataset.act === 'fit') fit();
+      if (b.dataset.act === 'trace') { tracing = !tracing; b.setAttribute('aria-pressed', tracing); renderEdges(); say(tracing ? 'Tracing the path into the selected node' : 'Trace off'); }
+      if (b.dataset.act === 'focus') { const n = byId(selId); if (!n) return say('Select a node first'); const [w, h] = size(n); view.x = stage.clientWidth / 2 - (n.x + w / 2) * view.k; view.y = stage.clientHeight / 2 - (n.y + h / 2) * view.k; applyView(); }
+    });
+
+    /* ---------- pointer: select, drag nodes, pan ---------- */
+    let drag = null;
+    stage.addEventListener('pointerdown', e => {
+      if (e.target.closest('.top, .dock, .insp, .zoom')) return;
+      const el = e.target.closest('[data-id]');
+      if (el && el.isContentEditable) return;
+      if (el && tool === 'select') {
+        const n = byId(el.dataset.id); select(n.id);
+        drag = { n, el, sx: e.clientX, sy: e.clientY, ox: n.x, oy: n.y, moved: false, before: snap() };
+        el.classList.add('drag');
+      } else {
+        drag = { pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
+        stage.classList.add('panning');
+        if (!el) { /* click on empty canvas keeps selection */ }
+      }
+      stage.setPointerCapture(e.pointerId);
+    });
+    stage.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (drag.pan) { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); return; }
+      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      drag.n.x = Math.round((drag.ox + dx / view.k) / 4) * 4; drag.n.y = Math.round((drag.oy + dy / view.k) / 4) * 4;
+      drag.el.style.left = drag.n.x + 'px'; drag.el.style.top = drag.n.y + 'px'; renderEdges();
+    });
+    const endDrag = () => {
+      if (!drag) return;
+      if (drag.pan) stage.classList.remove('panning');
+      else { drag.el.classList.remove('drag'); if (drag.moved) commit(drag.before); }
+      drag = null;
+    };
+    stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+    nodesEl.addEventListener('dblclick', e => { const el = e.target.closest('.note'); if (!el) return; el.contentEditable = 'true'; el.focus(); document.getSelection().selectAllChildren(el);
+      el.onblur = () => { el.contentEditable = 'false'; const n = byId(el.dataset.id); if (n.label !== el.textContent) { const b = snap(); n.label = el.textContent; commit(b); } }; });
+    nodesEl.addEventListener('keydown', e => { const el = e.target.closest('[data-id]'); if (el && e.key === 'Enter' && !el.isContentEditable) select(el.dataset.id); });
+
+    /* ---------- palette drop ---------- */
+    stage.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    stage.addEventListener('drop', e => {
+      e.preventDefault(); const [name, icon] = (e.dataTransfer.getData('text/plain') || '').split('|'); if (!name) return;
+      const r = stage.getBoundingClientRect(), p = toWorld(e.clientX - r.left, e.clientY - r.top); addNode(name, icon, p.x - 60, p.y - 60);
+    });
+    function addNode(name, icon, x, y) {
+      const before = snap(), id = 'n' + seq++;
+      nodes.push({ id, kind: 'card', tone: 'white', label: name, icon: 'x-' + icon, x: Math.round(x), y: Math.round(y), desc: `New ${name} step. Connect it by dragging it under the step it should follow.` });
+      I['x-' + icon] = I[icon].replace('<svg ', '<svg style="width:30px;height:30px" ');
+      const anchor = byId(selId);
+      if (anchor && anchor.kind !== 'note' && anchor.kind !== 'pin') edges.push([anchor.id, id, '+']);
+      commit(before); selId = id; renderNodes(); showInspector();
+      const el = nodesEl.querySelector(`[data-id="${id}"]`); el && el.classList.add('flash');
+      say(anchor ? `${name} added after “${anchor.label}”` : `${name} added`);
+    }
+
+    /* ---------- selection + inspector ---------- */
+    function select(id) {
+      selId = id; nodesEl.querySelectorAll('[data-id]').forEach(el => el.classList.toggle('sel', el.dataset.id === id));
+      if (tracing) renderEdges(); showInspector();
+    }
+    function showInspector() {
+      const n = byId(selId), box = $('insp');
+      if (!n || n.kind === 'note' || n.kind === 'pin') { box.hidden = true; return; }
+      box.hidden = false;
+      $('iTitle').textContent = n.kind === 'dec' ? `${n.label} (${n.sub})` : n.label;
+      $('iDesc').textContent = n.desc || 'The flow starts here when a new project application is submitted.';
+      const ins = edges.filter(e => e[1] === n.id).length, outs = edges.filter(e => e[0] === n.id).length;
+      $('iMeta').innerHTML = `<span>${n.kind === 'dec' ? 'Decision' : n.kind === 'dot' ? 'Trigger' : 'Action'}</span><span>${ins} in · ${outs} out</span>${n.badge ? `<span>${n.badge} pending change</span>` : ''}`;
+      const g = $('goBtn'); g.classList.remove('ok'); g.textContent = 'Update process';
+    }
+    $('closeInsp').onclick = () => { $('insp').hidden = true; };
+    $('goBtn').onclick = () => {
+      const n = byId(selId); if (!n) return;
+      const g = $('goBtn'); g.textContent = 'Saving…';
+      setTimeout(() => { g.classList.add('ok'); g.textContent = 'Process updated ✓'; if (n.badge) { n.badge = 0; renderNodes(); } const el = nodesEl.querySelector(`[data-id="${n.id}"]`); el && el.classList.add('flash'); say(`“${n.label}” published to v2.4`); }, 700);
+    };
+
+    /* ---------- header ---------- */
+    const guests = [['ZK', '#FDBA74,#C2410C'], ['LT', '#A7F3D0,#047857'], ['RS', '#C4B5FD,#6D28D9']];
+    $('invite').onclick = () => {
+      const g = guests.shift(); if (!g) return say('Invite limit reached for this plan');
+      const s = document.createElement('span'); s.textContent = g[0]; s.style.background = `linear-gradient(140deg,${g[1]})`; s.className = 'pop';
+      $('team').insertBefore(s, $('invite')); say(`${g[0]} joined the canvas`);
+    };
+    $('me').onclick = () => say('Signed in as hoffman23@gmail.com');
+
+    /* ---------- drawer toggle ---------- */
+    const app = $('app');
+    $('expand').onclick = () => {
+      const narrow = innerWidth <= 1100;
+      if (narrow) app.classList.toggle('open'); else app.classList.toggle('collapsed');
+      $('expand').setAttribute('aria-expanded', narrow ? app.classList.contains('open') : !app.classList.contains('collapsed'));
+      setTimeout(fit, 30);
+    };
+    if (innerWidth <= 1100) $('expand').setAttribute('aria-expanded', 'false');
+
+    renderNodes(); showInspector();
+    if (innerWidth < 1100) $('insp').hidden = true;
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(fit);
+    let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(fit, 120); });
+  </script>
+</body>
+</html>
