@@ -1,0 +1,2319 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotlane — Smart Parking Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <style>
+    /* Layout: full-bleed generative street map; floating glass header (search, date/time, amenity pills),
+       380px result list on the left, pins + Shmeisani garage pop-over on the map, navigation capsule bottom-centre. */
+    :root {
+      --bg: #F1F5F9;
+      --glass: rgba(255, 255, 255, .92);
+      --glass-line: rgba(229, 231, 235, .8);
+      --radius: 20px;
+      --green: #10B981;
+      --amber: #F59E0B;
+      --red: #EF4444;
+      --indigo: #4F46E5;
+      --indigo-2: #6366F1;
+      --indigo-soft: #EEF2FF;
+      --ink: #0F172A;
+      --ink-2: #334155;
+      --mute: #64748B;
+      --dim: #94A3B8;
+      --line: #E2E8F0;
+      --panel-w: 380px;
+      --shadow: 0 18px 40px -18px rgba(15, 23, 42, .28), 0 2px 8px rgba(15, 23, 42, .06);
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif; font-size: 14px;
+      overflow: hidden;
+    }
+    button, input, select { font: inherit; }
+    :focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    .glass {
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-line); border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    /* ---------- App shell ---------- */
+    .app { position: relative; height: 100svh; overflow: hidden; }
+    .map { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: var(--bg); touch-action: none; cursor: grab; }
+    .map.dragging { cursor: grabbing; }
+    .world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+    .world svg { display: block; max-width: none; }
+    .markers { position: absolute; inset: 0; pointer-events: none; }
+    .markers > * { pointer-events: auto; }
+
+    .ui {
+      position: absolute; inset: 16px; z-index: 5;
+      display: flex; flex-direction: column; gap: 14px;
+      pointer-events: none;
+    }
+    .ui > * { pointer-events: auto; }
+
+    /* ---------- Header ---------- */
+    .top { padding: 14px 16px 14px; display: grid; gap: 12px; }
+    .top-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; padding-right: 6px; flex: none; }
+    .brand-mark {
+      width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+      background: linear-gradient(140deg, #6366F1, #4338CA); color: #fff; font-weight: 800; font-size: 18px;
+      box-shadow: 0 8px 18px -8px rgba(79, 70, 229, .8), inset 0 1px 0 rgba(255,255,255,.3);
+    }
+    .brand b { font-size: 16px; letter-spacing: -.02em; }
+    .brand small { display: block; color: var(--mute); font-size: 11px; font-weight: 500; }
+    .fields, .when { display: flex; gap: 8px; min-width: 0; }
+    .fields { flex: 1 1 auto; }
+    .when { margin-left: auto; flex: none; }
+    .field {
+      display: flex; align-items: center; gap: 10px; min-width: 0;
+      height: 50px; padding: 0 14px; border-radius: 14px;
+      background: #fff; border: 1px solid var(--line);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .fields .field { flex: 1 1 0; max-width: 300px; }
+    .field:focus-within { border-color: #A5B4FC; box-shadow: 0 0 0 4px rgba(79, 70, 229, .12); }
+    .field svg.i { color: var(--indigo); }
+    .field .fl { display: grid; min-width: 0; flex: 1; }
+    .field small { font-size: 11px; color: var(--mute); font-weight: 500; line-height: 1.2; }
+    .field input, .field select {
+      border: 0; outline: 0; padding: 0; background: transparent; color: var(--ink);
+      font-weight: 700; font-size: 14px; min-width: 0; width: 100%; line-height: 1.35;
+      text-overflow: ellipsis; -webkit-appearance: none; appearance: none; cursor: pointer;
+    }
+    .field input { cursor: text; }
+    .field .chev { width: 14px; height: 14px; color: var(--dim); }
+    .when .field { width: 150px; }
+
+    .amen { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; }
+    .amen::-webkit-scrollbar { display: none; }
+    .pill { position: relative; flex: none; }
+    .pill input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+    .pill span {
+      display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 8px;
+      border-radius: 999px; border: 1px solid var(--line); background: #fff;
+      font-weight: 600; font-size: 13px; color: var(--ink-2); white-space: nowrap;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .pill .box {
+      width: 20px; height: 20px; border-radius: 7px; display: grid; place-items: center;
+      border: 1.5px solid #CBD5E1; background: #fff; transition: inherit; padding: 0;
+    }
+    .pill .box svg { width: 12px; height: 12px; stroke-width: 3; opacity: 0; transform: scale(.5); transition: .2s var(--ease); }
+    .pill input:checked + span { background: var(--indigo-soft); border-color: #C7D2FE; color: #3730A3; }
+    .pill input:checked + span .box { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+    .pill input:checked + span .box svg { opacity: 1; transform: none; }
+    .pill input:focus-visible + span { outline: 2px solid var(--indigo); outline-offset: 2px; }
+    .pill:hover span { border-color: #C7D2FE; }
+
+    /* ---------- Body row / result panel ---------- */
+    .row { flex: 1; min-height: 0; display: flex; pointer-events: none; padding-bottom: 46px; }
+    .panel {
+      pointer-events: auto; width: var(--panel-w); max-height: 100%;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .panel-head { padding: 18px 18px 12px; border-bottom: 1px solid var(--line); }
+    .live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #047857; background: #ECFDF5; border-radius: 999px; padding: 4px 9px 4px 7px; }
+    .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(16,185,129,.6); animation: ping 1.8s infinite; }
+    @keyframes ping { 70% { box-shadow: 0 0 0 7px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+    .panel-head h1 { margin: 10px 0 4px; font-size: 20px; line-height: 1.25; letter-spacing: -.02em; }
+    .panel-head h1 em { font-style: normal; color: var(--indigo); }
+    .panel-head p { margin: 0; color: var(--mute); font-size: 12.5px; }
+    .seg { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); background: #F1F5F9; border-radius: 12px; padding: 3px; }
+    .seg button { border: 0; background: transparent; height: 30px; border-radius: 9px; font-size: 12.5px; font-weight: 600; color: var(--mute); }
+    .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+
+    .list { overflow-y: auto; padding: 12px; display: grid; gap: 10px; align-content: start; scrollbar-width: thin; }
+    .lot {
+      position: relative; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 14px;
+      display: grid; gap: 10px; cursor: pointer;
+      transition: border-color .2s, box-shadow .25s, transform .25s var(--ease);
+    }
+    .lot:hover { border-color: #C7D2FE; transform: translateY(-1px); box-shadow: 0 10px 24px -16px rgba(79,70,229,.5); }
+    .lot.is-active { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.12), 0 12px 26px -18px rgba(79,70,229,.7); }
+    .lot-top { display: flex; gap: 12px; align-items: flex-start; }
+    .lot-mark {
+      width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center;
+      font-weight: 800; color: #fff; font-size: 17px; background: var(--c);
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.12);
+    }
+    .lot h3 { margin: 0; font-size: 15px; line-height: 1.3; letter-spacing: -.01em; }
+    .lot .addr { margin: 3px 0 0; color: var(--mute); font-size: 12.5px; line-height: 1.4; }
+    .lot .best { position: absolute; top: -9px; right: 14px; background: var(--indigo); color: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; }
+    .high { --c: var(--green); --soft: #ECFDF5; --deep: #047857; }
+    .med  { --c: var(--amber); --soft: #FFFBEB; --deep: #B45309; }
+    .low  { --c: var(--red);   --soft: #FEF2F2; --deep: #B91C1C; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 7px; width: max-content; max-width: 100%;
+      background: var(--soft); color: var(--deep); font-size: 12px; font-weight: 700;
+      padding: 5px 10px 5px 8px; border-radius: 999px;
+    }
+    .badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+    .badge .num { font-weight: 600; opacity: .85; }
+    .avail { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+    .meter { flex: 1; max-width: 120px; height: 6px; border-radius: 6px; background: #F1F5F9; overflow: hidden; }
+    .meter span { display: block; height: 100%; border-radius: inherit; background: var(--c); transition: width .6s var(--ease); }
+    .meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px; border-radius: 8px;
+      background: #F8FAFC; border: 1px solid var(--line); font-size: 11.5px; font-weight: 600; color: var(--ink-2);
+      transition: opacity .25s;
+    }
+    .chip svg.i { width: 14px; height: 14px; }
+    .chip.ev svg { color: var(--green); }
+    .chip.metro svg { color: var(--indigo); }
+    .chip.off { opacity: .4; }
+    .meta .dist { margin-left: auto; color: var(--mute); font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .lot-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+    .price { font-size: 12.5px; color: var(--mute); }
+    .price b { font-size: 20px; color: var(--ink); letter-spacing: -.02em; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid transparent;
+      font-weight: 700; font-size: 13.5px; white-space: nowrap;
+      transition: background .2s, transform .15s, box-shadow .2s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn.primary {
+      background: var(--indigo); color: #fff;
+      box-shadow: 0 8px 18px -10px rgba(79,70,229,.9), inset 0 1px 0 rgba(255,255,255,.18);
+    }
+    .btn.primary:hover { background: #4338CA; }
+    .btn.ghost { background: #fff; border-color: var(--line); color: var(--ink-2); }
+    .btn.ghost:hover { border-color: #C7D2FE; color: var(--indigo); }
+    .btn.booked { background: #ECFDF5; color: #047857; box-shadow: none; }
+
+    /* ---------- Map overlays ---------- */
+    .pin {
+      position: absolute; left: 0; top: 0; border: 0; padding: 0; background: none;
+      transform-origin: 0 0; z-index: 2;
+    }
+    .pin-in {
+      position: absolute; left: 0; bottom: 0; transform: translate(-50%, 0);
+      display: flex; flex-direction: column; align-items: center;
+      transition: transform .3s var(--ease);
+    }
+    .pin-body {
+      display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px;
+      background: #fff; border: 1px solid var(--line); box-shadow: 0 10px 22px -10px rgba(15,23,42,.45);
+      font-weight: 800; font-size: 13px; white-space: nowrap; color: var(--ink);
+      transition: background .25s, color .25s, border-color .25s;
+    }
+    .pin-p { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; font-size: 12px; }
+    .pin-tail { width: 12px; height: 12px; background: #fff; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: translateY(-7px) rotate(45deg); transition: background .25s; }
+    .pin-dot { width: 10px; height: 10px; margin-top: -6px; border-radius: 50%; background: var(--c); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(15,23,42,.35); }
+    .pin:hover .pin-in, .pin.hot .pin-in { transform: translate(-50%, -3px); }
+    .pin.is-active { z-index: 3; }
+    .pin.is-active .pin-body { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+    .pin.is-active .pin-tail { background: var(--indigo); border-color: var(--indigo); }
+    .pin.is-active .pin-p { box-shadow: 0 0 0 2px #fff; }
+
+    .me { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
+    .me i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--indigo); border: 3px solid #fff; box-shadow: 0 2px 8px rgba(79,70,229,.6); }
+    .me i::before { content: ""; position: absolute; inset: -16px; border-radius: 50%; background: rgba(79,70,229,.18); animation: halo 2.4s var(--ease) infinite; }
+    @keyframes halo { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+    .me b { position: absolute; left: 16px; top: -12px; font-size: 11px; font-weight: 700; color: #3730A3; background: #fff; padding: 3px 8px; border-radius: 999px; box-shadow: 0 4px 10px -4px rgba(15,23,42,.3); white-space: nowrap; }
+    .car { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 4; opacity: 0; transition: opacity .3s; }
+    .car.on { opacity: 1; }
+    .car i { position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 6px 16px -6px rgba(79,70,229,.8), 0 0 0 4px rgba(79,70,229,.18); }
+    .car svg { width: 18px; height: 18px; fill: var(--indigo); stroke: none; }
+
+    .pop {
+      position: absolute; left: 0; top: 0; width: 300px; padding: 14px; z-index: 6;
+      opacity: 0; transform: translateY(6px) scale(.98); transform-origin: 50% 100%;
+      transition: opacity .25s, transform .3s var(--ease); pointer-events: none;
+      cursor: default;
+    }
+    .pop.on { opacity: 1; transform: none; pointer-events: auto; }
+    .pop-tip { position: absolute; width: 14px; height: 14px; margin-top: -7px; background: #fff; border-right: 1px solid var(--glass-line); border-bottom: 1px solid var(--glass-line); }
+    .pop.side-r .pop-tip { left: -7px; transform: rotate(135deg); }
+    .pop.side-l .pop-tip { right: -7px; transform: rotate(-45deg); }
+    .pop.docked .pop-tip { display: none; }
+    .pop.side-r { transform-origin: 0 50%; } .pop.side-l { transform-origin: 100% 50%; }
+    .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .x { width: 28px; height: 28px; border-radius: 9px; border: 0; background: #F1F5F9; color: var(--mute); display: grid; place-items: center; }
+    .x svg { width: 14px; height: 14px; }
+    .x:hover { background: #E2E8F0; color: var(--ink); }
+    .pop h4 { margin: 10px 0 2px; font-size: 14px; letter-spacing: -.01em; }
+    .pop .sub { margin: 0; color: var(--mute); font-size: 12px; }
+    .slot-hero { margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(135deg, #EEF2FF, #F5F3FF); border: 1px solid #E0E7FF; }
+    .slot-hero small { font-size: 11px; font-weight: 600; color: #4338CA; text-transform: uppercase; letter-spacing: .06em; }
+    .slot-hero strong { display: block; font-size: 17px; letter-spacing: -.02em; margin-top: 2px; }
+    .slots { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-top: 10px; }
+    .slots span {
+      height: 26px; border-radius: 6px; font-size: 9px; font-weight: 700; display: grid; place-items: center;
+      border: 1px dashed #A7F3D0; color: #047857; background: #fff;
+    }
+    .slots span.taken { background: #E2E8F0; border: 1px solid #E2E8F0; color: #94A3B8; }
+    .slots span.mine { background: var(--indigo); border: 1px solid var(--indigo); color: #fff; box-shadow: 0 4px 10px -4px rgba(79,70,229,.8); }
+    .ev-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 9px 10px; border-radius: 12px; background: #fff; border: 1px solid var(--line); font-size: 12px; }
+    .ev-row .ev-ic { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: #ECFDF5; color: var(--green); flex: none; }
+    .ev-row.none .ev-ic { background: #F1F5F9; color: var(--dim); }
+    .ev-row b { display: block; font-size: 12.5px; }
+    .ev-row span { color: var(--mute); }
+    .pop-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+
+    .ctrls { position: absolute; right: 16px; bottom: 96px; z-index: 4; display: grid; gap: 10px; justify-items: end; }
+    .ctrl-stack { display: grid; padding: 4px; border-radius: 16px; }
+    .ctrl-stack button { width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--ink-2); display: grid; place-items: center; }
+    .ctrl-stack button:hover { background: #F1F5F9; color: var(--indigo); }
+    .ctrl-stack button[aria-pressed="false"] { color: var(--dim); }
+    .ctrl-stack hr { border: 0; height: 1px; background: var(--line); margin: 2px 6px; }
+    .legend { padding: 10px 12px; border-radius: 16px; display: grid; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--ink-2); }
+    .legend span { display: flex; align-items: center; gap: 8px; }
+    .legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+    .legend .route i { width: 16px; height: 4px; border-radius: 4px; background: var(--indigo); }
+
+    .toast {
+      position: absolute; bottom: 112px; left: calc(50% + (var(--panel-w) + 16px) / 2); z-index: 20; transform: translate(-50%, 12px);
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; border-radius: 16px;
+      font-weight: 600; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .3s, transform .35s var(--ease);
+      max-width: calc(100% - 32px);
+    }
+    .toast.on { opacity: 1; transform: translate(-50%, 0); }
+    .toast i { width: 28px; height: 28px; border-radius: 9px; background: #ECFDF5; color: var(--green); display: grid; place-items: center; flex: none; }
+    .toast i svg { width: 16px; height: 16px; stroke-width: 2.6; }
+
+    /* ---------- Navigation capsule ---------- */
+    .capsule, .ctrls { transition: opacity .25s; }
+    .capsule {
+      position: fixed; z-index: 8; bottom: 20px; left: calc(50% + (var(--panel-w) + 16px) / 2);
+      transform: translateX(-50%);
+      display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 10px; border-radius: 999px;
+      white-space: nowrap;
+    }
+    .cap-slot { display: flex; align-items: center; gap: 10px; padding-right: 12px; }
+    .cap-ic { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--indigo-soft); color: var(--indigo); font-weight: 800; font-size: 18px; position: relative; }
+    .cap-ic::after { content: ""; position: absolute; right: 0; bottom: 1px; width: 12px; height: 12px; border-radius: 50%; background: var(--green); border: 2px solid #fff; }
+    .cap small, .capsule small { display: block; font-size: 11px; color: var(--mute); font-weight: 500; line-height: 1.2; }
+    .capsule strong { font-size: 15px; letter-spacing: -.01em; }
+    .cap-slot strong b { color: var(--indigo); }
+    .hold { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: 11px; font-weight: 700; color: #B45309; background: #FFFBEB; padding: 2px 7px; border-radius: 999px; vertical-align: 2px; }
+    .cap-stat { padding: 0 16px; border-left: 1px solid var(--line); }
+    .cap-btns { display: flex; gap: 6px; margin-left: 6px; }
+    .capsule .btn { height: 48px; border-radius: 999px; padding: 0 22px; }
+    .capsule .btn.nav.on { background: #fff; color: var(--indigo); border-color: #C7D2FE; box-shadow: none; }
+    .icon-btn {
+      width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+      display: grid; place-items: center; transition: color .2s, border-color .2s;
+    }
+    .icon-btn:hover { color: var(--indigo); border-color: #C7D2FE; }
+
+    .hold.exp { color: #B91C1C; background: #FEF2F2; }
+    .hold.paid { color: #047857; background: #ECFDF5; }
+
+    /* ---------- Journey sheet ---------- */
+    .sheet {
+      position: absolute; z-index: 9; right: 16px; top: var(--sheet-top, 176px); bottom: 16px; width: 420px;
+      display: flex; flex-direction: column; overflow: hidden;
+      transform: translateX(calc(100% + 32px)); visibility: hidden;
+      transition: transform .45s var(--ease), visibility 0s .45s;
+    }
+    .sheet.on { transform: none; visibility: visible; transition: transform .45s var(--ease); }
+    body.sheet-open .capsule, body.sheet-open .ctrls, body.sheet-open .pop { opacity: 0; pointer-events: none; }
+    body.sheet-open .toast, body.sheet-open .notice { left: calc(50% - 12px); }
+    body.sheet-open .ems-back { opacity: 0; pointer-events: none; }
+    .sh-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 12px; }
+    .sh-top { display: flex; align-items: center; gap: 10px; }
+    .sh-top > div { flex: 1; min-width: 0; }
+    .sh-top h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; outline: 0; }
+    .sh-top p { margin: 2px 0 0; font-size: 12px; color: var(--mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sh-top .x { width: 34px; height: 34px; flex: none; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .steps span { display: grid; gap: 6px; font-size: 11px; font-weight: 700; color: var(--dim); }
+    .steps span::before { content: ""; height: 4px; border-radius: 4px; background: var(--line); }
+    .steps .done { color: var(--indigo); }
+    .steps .cur { color: var(--ink); }
+    .steps .done::before, .steps .cur::before { background: var(--indigo); }
+    .sh-body { flex: 1; overflow-y: auto; padding: 16px; display: grid; gap: 18px; align-content: start; overscroll-behavior: contain; }
+    .sh-foot { padding: 12px 16px 16px; border-top: 1px solid var(--line); display: grid; gap: 4px; }
+    .sh-foot .btn { height: 50px; width: 100%; font-size: 15px; border-radius: 14px; }
+    .sh-foot .btn.text { height: 36px; font-size: 13px; }
+    .sh-foot small { text-align: center; color: var(--mute); font-size: 11.5px; padding-top: 4px; }
+    .btn.text { background: none; color: var(--indigo); }
+    .btn.text:hover { text-decoration: underline; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+    .btn.loading { color: transparent !important; position: relative; pointer-events: none; }
+    .btn.loading svg { opacity: 0; }
+    .btn.loading::after { content: ""; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sheet .seg { margin-top: 0; }
+    .sec { display: grid; gap: 10px; }
+    .sec > h3 { margin: 0; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .sec > h3 em { font-style: normal; text-transform: none; letter-spacing: 0; color: var(--indigo); font-weight: 700; }
+    .lot-line { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 16px; background: #fff; border: 1px solid var(--line); }
+    .lot-line > div { flex: 1; min-width: 0; }
+    .lot-line b { font-size: 14px; }
+    .lot-line p { margin: 2px 0 0; color: var(--mute); font-size: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .opt { height: 38px; padding: 0 13px; border-radius: 11px; border: 1px solid var(--line); background: #fff; font-weight: 700; font-size: 13px; color: var(--ink-2); transition: border-color .2s, background .2s; }
+    .opt:hover { border-color: #C7D2FE; }
+    .opt[aria-pressed="true"] { background: var(--indigo-soft); border-color: var(--indigo); color: #3730A3; }
+    .stepper { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }
+    .stepper button { width: 42px; height: 42px; border-radius: 10px; border: 0; background: #F1F5F9; display: grid; place-items: center; color: var(--ink-2); }
+    .stepper button:hover:not(:disabled) { background: var(--indigo-soft); color: var(--indigo); }
+    .stepper button:disabled { opacity: .4; cursor: not-allowed; }
+    .stepper div { text-align: center; }
+    .stepper b { display: block; font-size: 17px; letter-spacing: -.01em; }
+    .stepper small { color: var(--mute); font-size: 12px; font-weight: 600; }
+    .slot-map { padding: 12px; border-radius: 16px; background: #fff; border: 1px solid var(--line); display: grid; gap: 8px; }
+    .slot-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+    .slot { height: 42px; border-radius: 8px; border: 1.5px dashed #A7F3D0; background: #F0FDF8; color: #047857; font-size: 11px; font-weight: 800; display: grid; place-items: center; align-content: center; gap: 1px; padding: 0; }
+    .slot svg.i { width: 11px; height: 11px; stroke-width: 2.2; }
+    .slot.taken { background: #F1F5F9; border: 1.5px solid #E2E8F0; color: #CBD5E1; cursor: not-allowed; }
+    .slot.sel { background: var(--indigo); border: 1.5px solid var(--indigo); color: #fff; box-shadow: 0 6px 14px -6px rgba(79,70,229,.9); }
+    .slot:not(.taken):not(.sel):hover { border-style: solid; border-color: var(--green); }
+    .aisle { text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .4em; color: var(--dim); border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 4px 0; }
+    .slot-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11px; color: var(--mute); font-weight: 600; }
+    .slot-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .slot-legend i { width: 12px; height: 12px; border-radius: 4px; border: 1.5px dashed #A7F3D0; background: #F0FDF8; }
+    .slot-legend .t i { background: #F1F5F9; border: 1.5px solid #E2E8F0; }
+    .slot-legend .s i { background: var(--indigo); border: 1.5px solid var(--indigo); }
+    .slot-legend svg.i { width: 13px; height: 13px; }
+    .fld { display: grid; gap: 6px; }
+    .fld label { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+    .inp { height: 48px; width: 100%; min-width: 0; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; font-weight: 600; font-size: 14px; color: var(--ink); outline: 0; transition: border-color .2s, box-shadow .2s; }
+    .inp:focus { border-color: #A5B4FC; box-shadow: 0 0 0 4px rgba(79,70,229,.12); }
+    .inp.bad { border-color: var(--red); box-shadow: 0 0 0 4px rgba(239,68,68,.1); }
+    .inp::placeholder { color: #A3AEBF; font-weight: 500; }
+    select.inp { -webkit-appearance: none; appearance: none; cursor: pointer; text-align: center; padding: 0 8px; }
+    .hint { font-size: 12px; color: var(--mute); line-height: 1.4; }
+    .hint.bad { color: #B91C1C; font-weight: 600; }
+    .plate-row { display: grid; grid-template-columns: 76px 1fr; gap: 8px; }
+    .plate { font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; }
+    .switch { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: #fff; border: 1px solid var(--line); cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch b { display: block; font-size: 13px; }
+    .switch .s { display: block; font-size: 12px; color: var(--mute); }
+    .switch .tg { margin-left: auto; width: 44px; height: 26px; border-radius: 999px; background: #CBD5E1; position: relative; transition: background .2s; flex: none; }
+    .switch .tg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .25s var(--ease); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .switch input:checked ~ .tg { background: var(--green); }
+    .switch input:checked ~ .tg::after { transform: translateX(18px); }
+    .switch input:focus-visible ~ .tg { outline: 2px solid var(--indigo); outline-offset: 2px; }
+    .ic-box { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: #ECFDF5; color: var(--green); flex: none; }
+    .ic-box.amber { background: #FFFBEB; color: #D97706; }
+    .ic-box.red { background: #FEF2F2; color: var(--red); }
+    .ic-box.indigo { background: var(--indigo-soft); color: var(--indigo); }
+    .bill { display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: #F8FAFC; border: 1px solid var(--line); font-size: 13px; }
+    .bill > div { display: flex; justify-content: space-between; gap: 10px; }
+    .bill span { color: var(--mute); }
+    .bill b { font-weight: 700; text-align: right; }
+    .bill .neg b { color: #047857; }
+    .bill .tot { padding-top: 10px; border-top: 1px dashed #CBD5E1; font-size: 15px; align-items: baseline; }
+    .bill .tot span { color: var(--ink); font-weight: 700; }
+    .bill .tot b { font-size: 20px; letter-spacing: -.02em; }
+    .note { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #F8FAFC; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+    .note svg.i { width: 16px; height: 16px; color: var(--indigo); margin-top: 1px; }
+    .alert { display: grid; gap: 10px; padding: 12px; border-radius: 14px; font-size: 12.5px; line-height: 1.45; border: 1px solid; }
+    .alert.red { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+    .alert.amber { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+    .alert.green { background: #ECFDF5; border-color: #A7F3D0; color: #065F46; }
+    .alert b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+    .alert-top { display: flex; gap: 10px; align-items: flex-start; }
+    .alert-top svg.i { margin-top: 1px; }
+    .row-a { display: flex; gap: 8px; flex-wrap: wrap; }
+    .alert .btn, .notice .btn, .locoff .btn { height: 36px; padding: 0 12px; font-size: 12.5px; border-radius: 10px; }
+    .btn.danger { background: var(--red); color: #fff; }
+    .pay-opts { display: grid; gap: 8px; }
+    .pay-opt { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 700; font-size: 13.5px; transition: border-color .2s, background .2s; }
+    .pay-opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .pay-opt small { display: block; font-weight: 500; color: var(--mute); font-size: 11.5px; }
+    .pay-opt .rd { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #CBD5E1; flex: none; transition: border .2s; }
+    .pay-opt:has(input:checked) { border-color: var(--indigo); background: var(--indigo-soft); }
+    .pay-opt input:checked ~ .rd { border: 6px solid var(--indigo); }
+    .pay-opt input:focus-visible ~ .rd { outline: 2px solid var(--indigo); outline-offset: 2px; }
+    .card-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .card-fields .full { grid-column: 1 / -1; }
+    .sum { display: grid; gap: 9px; padding: 14px; border-radius: 16px; background: #fff; border: 1px solid var(--line); }
+    .sum-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+    .sum-row span { color: var(--mute); flex: none; }
+    .sum-row b { text-align: right; }
+    .pass-plate { display: inline-block; padding: 1px 7px; border: 1.5px solid currentColor; border-radius: 6px; font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .1em; font-weight: 800; font-size: 12.5px; white-space: nowrap; }
+    /* pass */
+    .pass { border-radius: 20px; overflow: hidden; background: #fff; border: 1px solid var(--line); box-shadow: 0 18px 36px -24px rgba(79,70,229,.6); }
+    .pass-top { position: relative; padding: 16px; color: #fff; display: grid; gap: 3px; background: radial-gradient(120% 140% at 100% 0%, #818CF8 0%, #4F46E5 45%, #3730A3 100%); }
+    .pass-top small { opacity: .85; font-size: 12px; font-weight: 600; }
+    .pass-top .big { font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+    .pass-id { position: absolute; top: 14px; right: 14px; font: 700 11px ui-monospace, Menlo, monospace; background: rgba(255,255,255,.18); padding: 4px 8px; border-radius: 999px; }
+    .perf { position: relative; height: 0; border-top: 2px dashed var(--line); margin: 0 16px; }
+    .perf::before, .perf::after { content: ""; position: absolute; top: -11px; width: 20px; height: 20px; border-radius: 50%; background: #F4F6F9; border: 1px solid var(--line); }
+    .perf::before { left: -27px; } .perf::after { right: -27px; }
+    .pass-bot { display: grid; grid-template-columns: 116px 1fr; gap: 14px; padding: 16px; align-items: center; }
+    .qr { width: 116px; height: 116px; border-radius: 10px; border: 1px solid var(--line); display: block; }
+    .qr.big { width: 180px; height: 180px; }
+    .pass-meta { display: grid; gap: 9px; font-size: 13px; min-width: 0; }
+    .pass-meta span { display: block; font-size: 11px; color: var(--mute); font-weight: 600; }
+    .act-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .act { display: grid; justify-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; border: 1px solid var(--line); background: #fff; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+    .act svg.i { color: var(--indigo); }
+    .act.danger, .act.danger svg.i { color: var(--red); }
+    .act:hover { border-color: #C7D2FE; }
+    .check-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+    .check-list li { display: flex; gap: 8px; align-items: center; }
+    .check-list svg.i { width: 15px; height: 15px; color: var(--green); stroke-width: 2.6; }
+    .success { display: flex; gap: 12px; align-items: center; }
+    .success .ic-box { width: 46px; height: 46px; border-radius: 14px; }
+    .success b { font-size: 16px; display: block; }
+    .success p { margin: 2px 0 0; }
+    /* gate + plan */
+    .gate { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: center; padding: 14px; border-radius: 16px; background: #0F172A; color: #fff; }
+    .gate svg.g { width: 112px; height: 76px; }
+    .gate .arm { transform-box: view-box; transform-origin: 22px 50px; transition: transform 1.1s var(--ease); }
+    .gate.open .arm { transform: rotate(-78deg); }
+    .gate .beam { opacity: 0; }
+    .gate.scan .beam { opacity: 1; animation: beam .9s ease-in-out infinite alternate; }
+    @keyframes beam { from { transform: translateX(0); } to { transform: translateX(64px); } }
+    .gate small { color: #94A3B8; font-size: 11.5px; }
+    .gate b { display: block; font-size: 15px; margin: 2px 0 8px; }
+    .gate .stat { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; font-weight: 700; color: #FCD34D; }
+    .gate .stat svg.i { width: 14px; height: 14px; stroke-width: 2.6; }
+    .gate.open .stat { color: #6EE7B7; }
+    .plan { border-radius: 16px; background: #fff; border: 1px solid var(--line); padding: 8px; }
+    .plan svg { width: 100%; height: auto; }
+    .plan .route-p { stroke: var(--indigo); stroke-width: 4; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 700; stroke-dashoffset: 700; animation: draw 1.6s var(--ease) .2s forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    .dirs { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: d; }
+    .dirs li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45; counter-increment: d; }
+    .dirs li::before { content: counter(d); width: 22px; height: 22px; border-radius: 50%; background: var(--indigo-soft); color: var(--indigo); font-size: 11px; font-weight: 800; display: grid; place-items: center; flex: none; }
+    /* session */
+    .ring-wrap { display: grid; grid-template-columns: 132px 1fr; gap: 16px; align-items: center; padding: 14px; border-radius: 18px; background: #fff; border: 1px solid var(--line); }
+    .ring { position: relative; width: 132px; height: 132px; }
+    .ring svg { width: 132px; height: 132px; transform: rotate(-90deg); }
+    .ring circle { fill: none; stroke-width: 10; }
+    .ring .bg { stroke: #EEF2FF; }
+    .ring .fg { stroke: var(--indigo); stroke-linecap: round; transition: stroke-dashoffset .8s var(--ease), stroke .3s; }
+    .ring.low .fg { stroke: var(--amber); }
+    .ring.over .fg { stroke: var(--red); }
+    .ring > div { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+    .ring b { font-size: 26px; letter-spacing: -.03em; }
+    .ring small { font-size: 11.5px; color: var(--mute); font-weight: 600; }
+    .kv { display: grid; gap: 10px; }
+    .kv span { display: block; font-size: 11px; color: var(--mute); font-weight: 600; }
+    .kv b { font-size: 15px; }
+    .ev-live { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .ev-live div { padding: 10px; border-radius: 12px; background: #F8FAFC; border: 1px solid var(--line); }
+    .ev-live span { display: block; font-size: 11px; color: var(--mute); font-weight: 600; }
+    .ev-live b { font-size: 14px; }
+    .demo-clock { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--mute); background: #F1F5F9; padding: 4px 9px; border-radius: 999px; }
+    .demo-clock svg.i { width: 13px; height: 13px; }
+    /* receipt */
+    .stars { display: flex; gap: 6px; }
+    .stars button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: #CBD5E1; display: grid; place-items: center; }
+    .stars svg.i { width: 22px; height: 22px; }
+    .stars button.on { color: var(--amber); border-color: #FDE68A; background: #FFFBEB; }
+    .stars button.on svg { fill: currentColor; }
+    .nudge { padding: 16px; border-radius: 18px; background: linear-gradient(135deg, #EEF2FF, #F5F3FF); border: 1px solid #E0E7FF; display: grid; gap: 10px; }
+    .nudge h4 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .nudge p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+    /* notices, scenarios, empty, location */
+    .notice {
+      position: absolute; z-index: 7; top: var(--ot, 16px); left: calc(50% + (var(--panel-w) + 16px) / 2);
+      width: min(450px, calc(100% - 32px)); transform: translate(-50%, -10px);
+      display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 18px;
+      opacity: 0; pointer-events: none; transition: opacity .3s, transform .35s var(--ease);
+    }
+    .notice.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+    .notice > div { flex: 1; min-width: 0; }
+    .notice b { display: block; font-size: 13.5px; }
+    .notice p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+    .notice .row-a { margin-top: 10px; }
+    .scn { position: relative; justify-self: end; }
+    .scn-btn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 999px; font-weight: 700; font-size: 12.5px; color: var(--ink-2); }
+    .scn-btn:hover, .scn.open .scn-btn { color: var(--indigo); }
+    .scn-menu { position: absolute; right: calc(100% + 8px); top: 0; width: 250px; padding: 6px; border-radius: 16px; display: none; z-index: 10; }
+    .scn.open .scn-menu { display: grid; }
+    .scn-menu small { padding: 8px 10px 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); font-weight: 700; }
+    .scn-menu button { display: flex; align-items: center; gap: 10px; text-align: left; border: 0; background: none; padding: 9px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+    .scn-menu button:hover { background: #F1F5F9; color: var(--ink); }
+    .scn-menu svg.i { width: 16px; height: 16px; color: var(--indigo); }
+    .empty { padding: 26px 18px; text-align: center; display: grid; gap: 8px; justify-items: center; background: #fff; border: 1px dashed #CBD5E1; border-radius: 16px; }
+    .empty h3, .locoff h3 { margin: 4px 0 0; font-size: 16px; letter-spacing: -.01em; }
+    .empty p, .locoff p { margin: 0 0 6px; font-size: 12.5px; color: var(--mute); line-height: 1.5; }
+    .empty .chips { justify-content: center; }
+    .locoff { position: absolute; z-index: 6; left: calc(50% + (var(--panel-w) + 16px) / 2); top: 55%; transform: translate(-50%, -50%); width: min(360px, calc(100% - 32px)); padding: 22px; text-align: center; display: grid; gap: 6px; justify-items: center; }
+    .locoff[hidden] { display: none; }
+    .locoff .row-a { justify-content: center; }
+    .car.lost i { box-shadow: 0 0 0 5px rgba(245,158,11,.35); }
+    .car.lost svg { fill: var(--amber); }
+    .scrim { display: none; }
+
+    /* ---------- Country view (all of Jordan) ---------- */
+    .world, .markers { transition: opacity .45s; }
+    .mode-country .world, .mode-country .markers { opacity: 0; pointer-events: none; }
+    .country { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .45s, visibility 0s .45s; }
+    .mode-country .country { opacity: 1; visibility: visible; transition: opacity .45s; }
+    .cworld { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+    .cworld svg { display: block; max-width: none; }
+    .cmarks { position: absolute; inset: 0; pointer-events: none; }
+    .cmarks > * { position: absolute; left: 0; top: 0; }
+    .cpin { pointer-events: auto; border: 0; background: none; padding: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; z-index: 2; }
+    .cpin.live { z-index: 3; }
+    .cpin i { position: absolute; left: 6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--ink-2); box-shadow: 0 2px 6px rgba(15,23,42,.25); }
+    .cpin.t3 i { left: 7px; top: 7px; width: 10px; height: 10px; border-width: 2.5px; border-color: #64748B; }
+    .cpin.live i { left: 2px; top: 2px; width: 20px; height: 20px; background: var(--indigo); border-color: #fff; box-shadow: 0 0 0 5px rgba(79,70,229,.22), 0 4px 10px rgba(79,70,229,.5); }
+    .cpin.live i::after { content: ""; position: absolute; inset: -12px; border-radius: 50%; border: 2px solid rgba(79,70,229,.45); animation: halo 2.2s var(--ease) infinite; }
+    .cpin > span {
+      position: absolute; top: -3px; left: 24px; display: grid; white-space: nowrap; text-align: left; line-height: 1.2;
+      padding: 4px 9px; border-radius: 10px; background: rgba(255,255,255,.94); border: 1px solid var(--line);
+      box-shadow: 0 6px 14px -8px rgba(15,23,42,.4); transition: border-color .2s, transform .2s var(--ease);
+    }
+    .cpin.side-l > span { left: auto; right: 24px; text-align: right; }
+    .cpin.side-b > span { left: 12px; top: 30px; transform: translateX(-50%); text-align: center; }
+    .cpin b { font-size: 12.5px; color: var(--ink); }
+    .cpin.t3 b { font-size: 11.5px; }
+    .cpin em { font-style: normal; font-size: 10.5px; font-weight: 600; color: var(--mute); }
+    .cpin.live > span { background: var(--indigo); border-color: var(--indigo); padding: 6px 12px; box-shadow: 0 10px 22px -10px rgba(79,70,229,.9); }
+    .cpin.live b { color: #fff; font-size: 15px; }
+    .cpin.live em { color: #C7D2FE; }
+    .cpin:hover > span { border-color: #A5B4FC; }
+    .clabel { white-space: nowrap; pointer-events: none; }
+    .c-country { font-size: 12px; font-weight: 800; letter-spacing: .32em; color: #94A3B8; }
+    .c-region { font-size: 10.5px; font-weight: 700; letter-spacing: .24em; color: #A8B5C6; }
+    .c-water { font-size: 11.5px; font-style: italic; font-weight: 600; color: #6F9BC6; }
+    .c-shield { font-size: 10px; font-weight: 800; color: #fff; background: #64748B; padding: 2px 6px; border-radius: 5px; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(15,23,42,.25); }
+    .cinfo {
+      position: absolute; z-index: 5; left: calc(var(--panel-w) + 48px); top: var(--ot, 16px); max-width: 400px;
+      display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px;
+      opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .35s, transform .4s var(--ease);
+    }
+    .mode-country .cinfo { opacity: 1; transform: none; pointer-events: auto; }
+    .lod-2 .cpin.t3 > span { opacity: 0; transform: scale(.9); pointer-events: none; }
+    .lod-1 .cpin.t2 em, .lod-1 .c-shield, .lod-1 .c-region, .lod-1 .c-water { display: none; }
+    .lod-1 .cpin.t3 i { width: 8px; height: 8px; left: 8px; top: 8px; border-width: 2px; }
+    .cpin.live i::after { pointer-events: none; }
+    .cinfo b { display: block; font-size: 14px; }
+    .cinfo p { margin: 2px 0 0; font-size: 12px; color: var(--mute); line-height: 1.4; }
+    .cinfo .btn { height: 36px; padding: 0 12px; font-size: 12.5px; border-radius: 10px; flex: none; }
+    .legend { transition: opacity .3s; }
+    .mode-country .legend { opacity: 0; pointer-events: none; }
+    #jordan[aria-pressed="false"] { color: var(--ink-2); }
+    #jordan[aria-pressed="true"] { color: var(--indigo); background: var(--indigo-soft); }
+
+    /* ---------- Map SVG styling ---------- */
+    .m-block { fill: #E4E9F0; }
+    .m-bld { fill: #D9E0E9; }
+    .m-park { fill: #DDF3E6; }
+    .m-water { fill: #D6E6F5; }
+    .m-heritage { fill: #F3EADB; stroke: #E7D9C3; stroke-width: 2; }
+    .m-topo path { fill: none; stroke: rgba(100, 116, 139, .14); stroke-width: 1.3; }
+    .m-circle { font: 700 13px "Plus Jakarta Sans", system-ui, sans-serif; fill: #64748B; text-anchor: middle; paint-order: stroke; stroke: #F1F5F9; stroke-width: 5px; }
+    .m-heritagelabel { font: italic 700 13px "Plus Jakarta Sans", system-ui, sans-serif; fill: #A1804C; paint-order: stroke; stroke: #F8F3EA; stroke-width: 4px; }
+    .m-casing { stroke: #D3DBE5; fill: none; stroke-linecap: round; }
+    .m-road { stroke: #fff; fill: none; stroke-linecap: round; }
+    .m-label { font: 600 14px "Plus Jakarta Sans", system-ui, sans-serif; fill: #94A3B8; paint-order: stroke; stroke: #F1F5F9; stroke-width: 4px; letter-spacing: .02em; }
+    .m-area { font: 700 15px "Plus Jakarta Sans", system-ui, sans-serif; fill: #A8B5C6; letter-spacing: .28em; }
+    .m-parklabel { font: italic 600 13px "Plus Jakarta Sans", system-ui, sans-serif; fill: #5FA884; }
+    .m-waterlabel { font: italic 600 15px "Plus Jakarta Sans", system-ui, sans-serif; fill: #7FA6CC; letter-spacing: .12em; }
+    .m-full circle { fill: #CBD5E1; stroke: #fff; stroke-width: 2.5; }
+    .m-full text { font: 800 11px "Plus Jakarta Sans", system-ui, sans-serif; fill: #fff; text-anchor: middle; }
+    .m-route-casing { stroke: #fff; stroke-width: 15; fill: none; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 4px 6px rgba(79,70,229,.25)); }
+    .m-route { stroke: var(--indigo); stroke-width: 8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .m-route-flow { stroke: #A5B4FC; stroke-width: 3; fill: none; stroke-linecap: round; stroke-dasharray: 2 18; animation: flow 1.1s linear infinite; }
+    .m-route-done { stroke: #C7D2FE; stroke-width: 8.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    @keyframes flow { to { stroke-dashoffset: -20; } }
+    .labels-off .m-label, .labels-off .m-area, .labels-off .m-circle { display: none; }
+
+    /* ---------- Tablet: narrower panel ---------- */
+    @media (max-width: 1240px) {
+      :root { --panel-w: 340px; }
+      .brand > span:not(.brand-mark) { display: none; }
+      .cap-stat { padding: 0 12px; }
+      .capsule .btn { padding: 0 18px; }
+    }
+    @media (max-width: 1100px) {
+      .when .field { width: 140px; }
+      .hold { display: none; }
+    }
+
+    /* ---------- Mobile / small tablet: stacked layout, page scrolls ---------- */
+    @media (max-width: 959px) {
+      body { overflow: auto; }
+      .app { height: auto; overflow: visible; display: flex; flex-direction: column; gap: 12px; padding: 12px 12px 210px; }
+      .ui { display: contents; }
+      .top { order: 1; padding: 12px; }
+      .top-row { flex-wrap: wrap; }
+      .brand { flex: 1 1 100%; }
+      .brand > span:not(.brand-mark) { display: block; }
+      .fields, .when { flex: 1 1 100%; margin: 0; }
+      .fields .field, .when .field { flex: 1 1 0; max-width: none; width: auto; }
+      .map { order: 2; position: relative; inset: auto; height: 62svh; min-height: 420px; border-radius: var(--radius); border: 1px solid var(--glass-line); box-shadow: var(--shadow); }
+      .row { order: 3; padding: 0; display: block; }
+      .panel { width: 100%; max-height: none; }
+      .list { overflow: visible; }
+      .ctrls { right: 10px; top: 10px; bottom: auto; }
+      .map { height: 78svh; min-height: 620px; max-height: 760px; }
+      .pop .sub, .ev-row b + span, .pop-foot .price { display: none; }
+      .pop .slots { margin-top: 8px; }
+      .pop-foot { margin-top: 10px; } .pop-foot .btn { flex: 1; }
+      #cap-lot { overflow: hidden; text-overflow: ellipsis; }
+      .legend { display: none; }
+      .cinfo { left: 10px; right: 68px; top: auto; bottom: 10px; max-width: none; padding: 10px 12px; }
+      .cinfo b { font-size: 13px; }
+      .cinfo p { display: none; }
+      .pop { width: auto; right: 10px; transform: translateY(10px); }
+      .pop .slot-hero { margin-top: 8px; }
+      .capsule {
+        left: 12px; right: 12px; bottom: 60px; transform: none;
+        display: grid; grid-template-columns: 1fr auto auto; gap: 8px 0; padding: 10px; border-radius: 24px;
+      }
+      .cap-slot { padding-right: 8px; min-width: 0; }
+      .cap-slot > div { min-width: 0; }
+      .cap-btns { grid-column: 1 / -1; margin: 0; }
+      .cap-btns .nav { flex: 1; }
+      .cap-stat { padding: 0 10px; }
+      .toast { position: fixed; top: auto; bottom: 210px; left: 50%; }
+      .notice { position: fixed; z-index: 40; top: 12px; left: 50%; }
+      body.sheet-open .toast, body.sheet-open .notice { left: 50%; }
+      body.sheet-open .toast { z-index: 40; bottom: auto; top: 12px; }
+      .locoff { left: 50%; }
+      .scn-btn { width: 48px; padding: 0; justify-content: center; }
+      .scn-btn span { display: none; }
+      .sheet {
+        position: fixed; z-index: 32; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 92svh;
+        border-radius: 24px 24px 0 0; transform: translateY(105%);
+      }
+      .sheet::before { content: ""; flex: none; width: 40px; height: 4px; border-radius: 4px; background: #CBD5E1; margin: 8px auto 0; }
+      .scrim { display: block; position: fixed; inset: 0; z-index: 31; background: rgba(15,23,42,.4); opacity: 0; pointer-events: none; transition: opacity .3s; }
+      body.sheet-open .scrim { opacity: 1; pointer-events: auto; }
+      body.sheet-open { overflow: hidden; }
+    }
+    @media (max-width: 420px) {
+      .app { padding-left: 8px; padding-right: 8px; }
+      .field { padding: 0 10px; gap: 8px; }
+      .field svg.i:first-child { display: none; }
+      .cap-ic { width: 38px; height: 38px; font-size: 15px; }
+      .capsule strong { font-size: 14px; }
+      .cap-stat { padding: 0 8px; }
+      .pop { padding: 12px; }
+      .lot-foot .btn { padding: 0 12px; }
+      .sh-body { padding: 14px 12px; }
+      .pass-bot { grid-template-columns: 96px 1fr; }
+      .qr { width: 96px; height: 96px; }
+      .ring-wrap { grid-template-columns: 112px 1fr; }
+      .ring, .ring svg { width: 112px; height: 112px; }
+      .slot { height: 38px; font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .m-route-flow { animation: none; }
+      .plan .route-p { animation: none; stroke-dashoffset: 0; }
+      .gate.scan .beam { animation: none; }
+      .me i::before, .live i, .cpin.live i::after { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-road" viewBox="0 0 24 24"><path d="M5 20 9 4M19 20 15 4M12 5v2.5M12 10.5v3M12 16.5V19"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.5 5 13.5h6.5L10.5 21.5l8.5-11h-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-train" viewBox="0 0 24 24"><rect x="5.5" y="3" width="13" height="14" rx="4"/><path d="M5.5 10h13M9 21l1.5-4M15 21l-1.5-4"/><circle cx="9" cy="13.5" r=".6"/><circle cx="15" cy="13.5" r=".6"/></symbol>
+    <symbol id="i-access" viewBox="0 0 24 24"><circle cx="11" cy="4.5" r="1.7"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h5"/><path d="M8.2 10.8a5.3 5.3 0 1 0 7.5 6.5"/></symbol>
+    <symbol id="i-van" viewBox="0 0 24 24"><path d="M2.5 16.5V7.5a1.5 1.5 0 0 1 1.5-1.5h10.5l4 4.5 3 1v5h-19z"/><circle cx="7" cy="17" r="1.8"/><circle cx="17" cy="17" r="1.8"/><path d="M14.5 6v4.5h4"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 10.8a6 6 0 0 1-12 0C6 9.4 12 3 12 3z"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.5 2.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5.2 3.8h3.3l1.7 4.4-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.4 1.7v3.3a1.6 1.6 0 0 1-1.7 1.6A16.6 16.6 0 0 1 3.6 5.5a1.6 1.6 0 0 1 1.6-1.7z"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24"><path d="M3.5 10.8 20.5 3.5l-7.3 17-2-8.2z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"/><path d="m3 12.6 9 4.8 9-4.8"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M12 2.5 19 20l-7-3.6L5 20z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.3"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h11"/><circle cx="16" cy="13.5" r="1.2"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9.5 3h5M10 3v6L4.8 18.2A1.8 1.8 0 0 0 6.4 21h11.2a1.8 1.8 0 0 0 1.6-2.8L14 9V3"/><path d="M7 15h10"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+    <symbol id="i-gps-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4 4l16 16"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 3.5v5h5"/></symbol>
+  </svg>
+
+  <main class="app" id="app">
+    <!-- Fullscreen map -->
+    <div class="map" id="map" aria-label="Map of parking lots near Zahran St, Amman" role="region">
+      <div class="world" id="world"></div>
+      <div class="country" id="country" aria-hidden="true">
+        <div class="cworld" id="cworld"></div>
+        <div class="cmarks" id="cmarks"></div>
+      </div>
+      <div class="cinfo glass" id="cinfo">
+        <span class="ic-box indigo"><svg class="i"><use href="#i-globe"/></svg></span>
+        <div><b>Spotlane across Jordan</b><p><span class="num">322</span> partner lots in 16 cities. Amman is live in this demo.</p></div>
+        <button type="button" class="btn primary" id="c-back">Back to Amman</button>
+      </div>
+      <div class="markers" id="markers">
+        <div class="me" id="me"><i></i><b>You · 3rd Circle</b></div>
+        <div class="car" id="car"><i><svg viewBox="0 0 24 24"><use href="#i-car"/></svg></i></div>
+        <div class="pop glass" id="pop" role="dialog" aria-label="Selected parking lot"></div>
+      </div>
+      <div class="ctrls">
+        <div class="scn" id="scn">
+          <button type="button" class="scn-btn glass" aria-expanded="false" aria-controls="scn-menu" title="Demo scenarios"><svg class="i"><use href="#i-flask"/></svg><span>Scenarios</span></button>
+          <div class="scn-menu glass" id="scn-menu">
+            <small>Try an edge case</small>
+            <button type="button" data-scn="loc"><svg class="i"><use href="#i-gps-off"/></svg>Location is off</button>
+            <button type="button" data-scn="empty"><svg class="i"><use href="#i-search"/></svg>No lots available</button>
+            <button type="button" data-scn="hold"><svg class="i"><use href="#i-timer"/></svg>Hold about to expire</button>
+            <button type="button" data-scn="taken"><svg class="i"><use href="#i-alert"/></svg>Slot taken at checkout</button>
+            <button type="button" data-scn="declined"><svg class="i"><use href="#i-card"/></svg>Payment declined</button>
+            <button type="button" data-scn="late"><svg class="i"><use href="#i-clock"/></svg>Running late</button>
+            <button type="button" data-scn="gps"><svg class="i"><use href="#i-gps-off"/></svg>GPS lost while driving</button>
+            <button type="button" data-scn="reset"><svg class="i"><use href="#i-restart"/></svg>Restart guest journey</button>
+          </div>
+        </div>
+        <div class="legend glass" aria-label="Map legend">
+          <span class="high"><i></i>High availability</span>
+          <span class="med"><i></i>Medium availability</span>
+          <span class="low"><i></i>Low availability</span>
+          <span class="route"><i></i>Your route</span>
+        </div>
+        <div class="ctrl-stack glass">
+          <button type="button" id="jordan" aria-pressed="false" aria-label="Show all of Jordan" title="All of Jordan"><svg class="i"><use href="#i-globe"/></svg></button>
+        </div>
+        <div class="ctrl-stack glass">
+          <button type="button" id="zin" aria-label="Zoom in"><svg class="i"><use href="#i-plus"/></svg></button>
+          <hr>
+          <button type="button" id="zout" aria-label="Zoom out"><svg class="i"><use href="#i-minus"/></svg></button>
+        </div>
+        <div class="ctrl-stack glass">
+          <button type="button" id="recenter" aria-label="Recenter map"><svg class="i"><use href="#i-locate"/></svg></button>
+          <hr>
+          <button type="button" id="layers" aria-label="Toggle street labels" aria-pressed="true"><svg class="i"><use href="#i-layers"/></svg></button>
+        </div>
+      </div>
+      <div class="notice glass" id="notice" role="alert"></div>
+      <div class="locoff glass" id="locoff" hidden>
+        <span class="ic-box amber"><svg class="i"><use href="#i-gps-off"/></svg></span>
+        <h3>Location is off</h3>
+        <p>Turn on location to see lots around you and get directions — or search for a street instead.</p>
+        <div class="row-a"><button type="button" class="btn primary" data-loc="on">Turn on location</button><button type="button" class="btn ghost" data-loc="search">Search a street</button></div>
+      </div>
+      <div class="toast glass" id="toast" role="status" aria-live="polite"><i><svg class="i"><use href="#i-check"/></svg></i><span></span></div>
+    </div>
+
+    <div class="ui">
+      <!-- Top filter header -->
+      <header class="top glass">
+        <div class="top-row">
+          <a class="brand" href="#" aria-label="Spotlane home">
+            <span class="brand-mark">S</span>
+            <span><b>Spotlane</b><small>Smart parking finder</small></span>
+          </a>
+          <div class="fields">
+            <label class="field">
+              <svg class="i"><use href="#i-pin"/></svg>
+              <span class="fl"><small>You are in</small><input id="city" value="Amman, Jordan" autocomplete="off"></span>
+            </label>
+            <label class="field">
+              <svg class="i"><use href="#i-road"/></svg>
+              <span class="fl"><small>Street</small><input id="street" value="Zahran St" autocomplete="off"></span>
+            </label>
+          </div>
+          <div class="when">
+            <label class="field">
+              <svg class="i"><use href="#i-cal"/></svg>
+              <span class="fl"><small>Date</small>
+                <select id="date"><option>Jun 27</option><option selected>Jun 28</option><option>Jun 29</option><option>Jun 30</option></select>
+              </span>
+              <svg class="i chev"><use href="#i-chev"/></svg>
+            </label>
+            <label class="field">
+              <svg class="i"><use href="#i-clock"/></svg>
+              <span class="fl"><small>Time</small>
+                <select id="time"><option>6:30 PM</option><option>7:00 PM</option><option selected>7:30 PM</option><option>8:00 PM</option><option>8:30 PM</option><option>9:00 PM</option></select>
+              </span>
+              <svg class="i chev"><use href="#i-chev"/></svg>
+            </label>
+          </div>
+        </div>
+        <div class="amen" role="group" aria-label="Amenities">
+          <label class="pill"><input type="checkbox" value="disabled" checked><span><span class="box"><svg class="i"><use href="#i-check"/></svg></span>Disabled parking ♿</span></label>
+          <label class="pill"><input type="checkbox" value="ev" checked><span><span class="box"><svg class="i"><use href="#i-check"/></svg></span>EV charging station ⚡</span></label>
+          <label class="pill"><input type="checkbox" value="long" checked><span><span class="box"><svg class="i"><use href="#i-check"/></svg></span>Car longer than 3.5m 🚐</span></label>
+          <label class="pill"><input type="checkbox" value="pr" checked><span><span class="box"><svg class="i"><use href="#i-check"/></svg></span>Park and Ride 🚇</span></label>
+          <label class="pill"><input type="checkbox" value="wash" checked><span><span class="box"><svg class="i"><use href="#i-check"/></svg></span>Park and wash 🧼</span></label>
+        </div>
+      </header>
+
+      <div class="row">
+        <!-- Result list -->
+        <aside class="panel glass" aria-labelledby="found">
+          <div class="panel-head">
+            <span class="live"><i></i><span id="updated">Live · updated just now</span></span>
+            <h1 id="found">We found <em>3 parking lots</em> near you</h1>
+            <p id="ctx">Near Zahran St · Jun 28, 7:30 PM</p>
+            <div class="seg" role="group" aria-label="Sort results">
+              <button type="button" data-sort="best" aria-pressed="true">Best match</button>
+              <button type="button" data-sort="price" aria-pressed="false">Cheapest</button>
+              <button type="button" data-sort="dist" aria-pressed="false">Closest</button>
+            </div>
+          </div>
+          <div class="list" id="list">
+            <article class="lot med" data-id="penn" tabindex="0">
+              <div class="lot-top">
+                <span class="lot-mark">P</span>
+                <div><h3>Jabal Amman Car Park</h3><p class="addr">Al-Kulliyah St, off 2nd Circle, Amman</p></div>
+              </div>
+              <div class="avail"><span class="badge"><i></i>Medium availability <span class="num" data-free>14 free</span></span><span class="meter"><span data-meter style="width:18%"></span></span></div>
+              <div class="meta">
+                <span class="chip ev" data-amen="ev"><svg class="i"><use href="#i-bolt"/></svg>EV 22 kW</span>
+                <span class="chip metro" data-amen="pr"><svg class="i"><use href="#i-train"/></svg>BRT 3 min</span>
+                <span class="chip" data-amen="disabled"><svg class="i"><use href="#i-access"/></svg></span>
+                <span class="dist num">0.6 km · 3 min</span>
+              </div>
+              <div class="lot-foot">
+                <span class="price"><b class="num">JD 1.50</b>/hr</span>
+                <button type="button" class="btn primary" data-book>Book a spot</button>
+              </div>
+            </article>
+
+            <article class="lot high" data-id="kst" tabindex="0">
+              <span class="best">Best price</span>
+              <div class="lot-top">
+                <span class="lot-mark">P</span>
+                <div><h3>Shmeisani Central Garage - Mawqif</h3><p class="addr">Wadi Saqra St, Shmeisani, Amman</p></div>
+              </div>
+              <div class="avail"><span class="badge"><i></i>High availability <span class="num" data-free>42 free</span></span><span class="meter"><span data-meter style="width:35%"></span></span></div>
+              <div class="meta">
+                <span class="chip ev" data-amen="ev"><svg class="i"><use href="#i-bolt"/></svg>EV 50 kW DC</span>
+                <span class="chip ev" data-amen="ev"><svg class="i"><use href="#i-bolt"/></svg>4 chargers</span>
+                <span class="chip" data-amen="long"><svg class="i"><use href="#i-van"/></svg></span>
+                <span class="chip" data-amen="wash"><svg class="i"><use href="#i-drop"/></svg></span>
+                <span class="dist num">1.2 km · 6 min</span>
+              </div>
+              <div class="lot-foot">
+                <span class="price"><b class="num">JD 1.00</b>/hr</span>
+                <button type="button" class="btn primary" data-book>Book a spot</button>
+              </div>
+            </article>
+
+            <article class="lot low" data-id="spp" tabindex="0">
+              <div class="lot-top">
+                <span class="lot-mark">P</span>
+                <div><h3>Abdali Boulevard Parking</h3><p class="addr">Abdali Blvd, Al-Abdali, Amman</p></div>
+              </div>
+              <div class="avail"><span class="badge"><i></i>Low availability <span class="num" data-free>3 free</span></span><span class="meter"><span data-meter style="width:5%"></span></span></div>
+              <div class="meta">
+                <span class="chip" data-amen="disabled"><svg class="i"><use href="#i-access"/></svg></span>
+                <span class="chip metro" data-amen="pr"><svg class="i"><use href="#i-train"/></svg>Park &amp; Ride</span>
+                <span class="dist num">1.1 km · 5 min</span>
+              </div>
+              <div class="lot-foot">
+                <span class="price"><b class="num">JD 2.00</b>/hr</span>
+                <button type="button" class="btn ghost" data-notify><svg class="i"><use href="#i-bell"/></svg>Notify me</button>
+              </div>
+            </article>
+            <div class="empty" id="empty" hidden>
+              <span class="ic-box amber"><svg class="i"><use href="#i-search"/></svg></span>
+              <h3>No lots available right now</h3>
+              <p>Everything nearby is full or doesn't match your filters for this time.</p>
+              <div class="chips">
+                <button type="button" class="opt" data-fix="time">Try 8:00 PM</button>
+                <button type="button" class="opt" data-fix="radius">Widen to 2 km</button>
+                <button type="button" class="opt" data-fix="clear">Clear filters</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Bottom floating navigation pass -->
+    <section class="capsule glass" aria-label="Your reservation">
+      <div class="cap-slot">
+        <span class="cap-ic">P</span>
+        <div>
+          <small id="cap-lot">Shmeisani Central Garage · Floor 2</small>
+          <strong><span id="cap-title">Reserved Slot</span> <b id="cap-slot">#B-14</b></strong><span class="hold num" id="hold">14:59</span>
+        </div>
+      </div>
+      <div class="cap-stat"><small id="cap-l1">ETA</small><strong class="num" id="cap-eta">6 mins</strong></div>
+      <div class="cap-stat"><small id="cap-l2">Distance</small><strong class="num" id="cap-dist">1.2 km</strong></div>
+      <div class="cap-btns">
+        <button type="button" class="btn primary nav" id="navBtn"><svg class="i"><use href="#i-nav"/></svg><span>Start Navigation</span></button>
+        <button type="button" class="icon-btn" id="contact" aria-label="Contact Garage" title="Contact Garage"><svg class="i"><use href="#i-phone"/></svg></button>
+      </div>
+    </section>
+
+    <!-- Guest journey sheet: details → checkout → pass → arrival → session → receipt -->
+    <section class="sheet glass" id="sheet" aria-label="Booking" inert></section>
+    <div class="scrim" id="scrim"></div>
+  </main>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script>
+  (() => {
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const NS = 'http://www.w3.org/2000/svg';
+
+    /* ---------------- Data ---------------- */
+    const ME = { x: 950, y: 940 };
+    const LOTS = {
+      penn: { name: 'Jabal Amman Car Park', short: 'Jabal Amman Car Park', level: 'med', levelLabel: 'Medium availability',
+        price: 1.5, priceLabel: 'JD 1.50', free: 14, total: 80, band: [9, 22], km: 0.6, min: 3, x: 1260, y: 761,
+        floor: 'Level P1', slot: 'A-07', ev: ['EV charging · 1 of 2 bays free', '22 kW AC · Type 2'], evOn: true,
+        phone: '06 500 0119', route: [[950, 940], [1230, 920], [1260, 761]] },
+      kst: { name: 'Shmeisani Central Garage - Mawqif', short: 'Shmeisani Central Garage', level: 'high', levelLabel: 'High availability',
+        price: 1, priceLabel: 'JD 1.00', free: 42, total: 120, band: [34, 52], km: 1.2, min: 6, x: 772, y: 372,
+        floor: 'Floor 2', slot: 'B-14', ev: ['EV charger ready · 2 of 4 bays free', '50 kW DC fast charge · CCS / Type 2'], evOn: true,
+        phone: '06 500 0148', route: [[950, 940], [680, 960], [700, 760], [740, 560], [772, 372]] },
+      spp: { name: 'Abdali Boulevard Parking', short: 'Abdali Boulevard Parking', level: 'low', levelLabel: 'Low availability',
+        price: 2, priceLabel: 'JD 2.00', free: 3, total: 60, band: [1, 5], km: 1.1, min: 5, x: 1430, y: 490,
+        floor: 'Level 3', slot: 'C-02', ev: ['No EV bays at this site', 'Nearest charger: Jabal Amman Car Park'], evOn: false,
+        phone: '06 500 0173', route: [[950, 940], [1230, 920], [1260, 761], [1330, 600], [1430, 490]] }
+    };
+    // seeded rng for stable generative map
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+    /* ---------------- Generative street map: Amman ---------------- */
+    // A hilly city: neighbourhood street grids at different angles, topographic contours,
+    // Zahran St with its numbered circles, Wadi Abdoun, the Citadel and Al-Balad. The grid keeps going past every screen edge.
+    const X0 = -1424, Y0 = -1040, X1 = 3400, Y1 = 2420;
+    const ROADS = [
+      { name: 'Zahran St', w: 26, at: [.2, .5, .78], pts: [[-1424, 1190], [-380, 1110], [-110, 1070], [160, 1030], [420, 990], [680, 960], [950, 940], [1230, 920], [1500, 900], [1700, 930], [1820, 990], [1950, 1040]] },
+      { name: 'Wadi Saqra St', w: 22, at: [.3, .58], pts: [[680, 960], [700, 760], [740, 560], [772, 372], [800, 150], [830, -250], [880, -1040]] },
+      { name: 'Al-Kulliyah St', w: 18, at: [.55], pts: [[1230, 920], [1260, 761], [1330, 600], [1430, 490], [1490, 300], [1520, 100]] },
+      { name: 'Abdali Blvd', w: 16, at: [.5], pts: [[1395, 330], [1430, 490], [1465, 640]] },
+      { name: 'King Hussein St', w: 20, at: [.4], pts: [[1430, 490], [1640, 600], [1800, 760], [1950, 1040], [2050, 1200], [2200, 1500], [2350, 2420]] },
+      { name: 'Queen Rania St', w: 26, at: [.25, .5, .72], pts: [[-1424, -230], [-400, -170], [300, -150], [830, -250], [1400, -280], [2200, -200], [3400, -260]] },
+      { name: 'Al-Madina Al-Munawwara St', w: 22, at: [.42], pts: [[60, -1040], [140, -150], [200, 400], [190, 800], [160, 1030]] },
+      { name: 'Mecca St', w: 24, at: [.45], pts: [[-110, 1070], [-260, 600], [-520, 0], [-760, -500], [-1000, -1040]] },
+      { name: 'Abdoun Bridge', w: 18, at: [.2], pts: [[420, 990], [450, 1160], [480, 1300], [560, 1700], [600, 2420]] },
+      { name: 'Airport Rd', w: 26, at: [.4], pts: [[-380, 1110], [-640, 1500], [-900, 2000], [-1100, 2420]] },
+      { name: 'Al-Istiqlal St', w: 20, at: [.5], pts: [[1520, -1040], [1580, -300], [1640, 250], [1700, 560], [1800, 760]] },
+      { name: 'Abdul Hamid Sharaf St', w: 18, at: [.3, .62], pts: [[200, 400], [500, 330], [772, 372], [1000, 300], [1395, 330]] },
+      { name: 'Al-Qahira St', w: 16, at: [.4], pts: [[-200, 1520], [480, 1300], [1100, 1340], [1600, 1420], [2050, 1200]] },
+      { name: 'Rainbow St', w: 14, at: [.5], pts: [[1500, 900], [1610, 870], [1740, 880]] },
+      { name: 'Hashemi St', w: 18, at: [.3], pts: [[1950, 1040], [2300, 1060], [2800, 1000], [3400, 1060]] },
+      { name: 'Al-Quds St', w: 18, at: [.4], pts: [[2050, 1200], [2600, 1500], [3400, 1700]] }
+    ];
+    const CIRCLES = [[1500, 900], [1230, 920], [950, 940], [680, 960], [420, 990], [160, 1030], [-110, 1070], [-380, 1110]];
+    // [cx, cy, radius, street angle°, block size] — each neighbourhood has its own grid
+    const DISTRICTS = [
+      [700, 330, 400, 12, 92], [1450, 470, 260, -22, 74], [1330, 860, 300, 8, 64], [1760, 520, 260, 32, 66],
+      [2000, 1000, 270, -14, 52], [1280, 80, 330, -4, 80], [480, 780, 330, -6, 96], [600, 1500, 430, 18, 110],
+      [-20, 1420, 400, -12, 86], [100, 640, 360, 4, 102], [-360, 60, 480, -24, 98], [-950, 560, 500, 14, 110],
+      [300, -620, 480, 2, 108], [-950, -650, 480, 28, 112], [1100, -650, 430, -10, 100], [2250, 300, 430, 22, 90],
+      [2350, -520, 450, -6, 104], [-1000, 1550, 460, -20, 108], [1450, 1650, 480, 10, 100], [2550, 1500, 480, -18, 96],
+      [-300, 2150, 450, 6, 112], [900, 2150, 450, -14, 104], [2200, 2150, 420, 12, 100], [3050, 800, 420, -8, 96],
+      [3050, -300, 420, 16, 104], [3100, 2050, 400, 0, 100], [2750, 1000, 300, 25, 80], [-1150, -100, 300, -8, 100],
+      [1010, 620, 300, -16, 78], [1150, 1190, 300, 6, 90], [280, 1170, 280, -4, 94], [1720, 1260, 320, 14, 86],
+      [1890, 790, 190, -30, 58], [860, -20, 320, 8, 94], [-650, 1000, 380, 10, 104], [-620, -480, 380, -14, 104]
+    ];
+    const HILLS = [[1880, 700, 240], [1330, 820, 300], [700, 300, 330], [1300, 60, 320], [1760, 480, 220], [-360, 0, 420], [100, 640, 320], [600, 1520, 380], [2250, 300, 360], [-950, 560, 420], [-20, 1420, 320]];
+
+    function el(tag, attrs, parent) {
+      const n = document.createElementNS(NS, tag);
+      for (const k in attrs) n.setAttribute(k, attrs[k]);
+      if (parent) parent.appendChild(n);
+      return n;
+    }
+    const blob = (cx, cy, r, wob = .12) => {
+      const p1 = rnd() * 6.28, p2 = rnd() * 6.28, p3 = rnd() * 6.28;
+      let d = '';
+      for (let k = 0; k <= 48; k++) {
+        const t = k / 48 * Math.PI * 2;
+        const rr = r * (1 + wob * Math.sin(3 * t + p1) + wob * .6 * Math.sin(5 * t + p2) + wob * .3 * Math.sin(2 * t + p3));
+        d += `${k ? 'L' : 'M'}${(cx + rr * Math.cos(t)).toFixed(1)} ${(cy + rr * Math.sin(t)).toFixed(1)}`;
+      }
+      return d + 'Z';
+    };
+    const poly = pts => 'M' + pts.map(p => p.join(' ')).join('L');
+
+    function buildMap() {
+      const svg = el('svg', { width: X1 - X0, height: Y1 - Y0, viewBox: `${X0} ${Y0} ${X1 - X0} ${Y1 - Y0}`, 'aria-hidden': 'true' });
+      svg.style.cssText = `position:absolute;left:${X0}px;top:${Y0}px`;
+      const defs = el('defs', {}, svg);
+      const gCity = el('g', {}, svg), gGreen = el('g', {}, svg), gTopo = el('g', { class: 'm-topo' }, svg),
+        gRoads = el('g', {}, svg), gTop = el('g', {}, svg), gLabels = el('g', {}, svg);
+      el('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#F1F5F9' }, gCity);
+
+      // Neighbourhoods: soft-edged blob, building footprints, then its own street grid on top
+      DISTRICTS.forEach(([cx, cy, r, ang, sp], i) => {
+        const shape = blob(cx, cy, r, .14);
+        const cp = el('clipPath', { id: `dc${i}` }, defs); el('path', { d: shape }, cp);
+        const g = el('g', { 'clip-path': `url(#dc${i})` }, gCity);
+        el('path', { d: shape, class: 'm-block' }, g);
+        const loc = el('g', { transform: `translate(${cx} ${cy}) rotate(${ang})` }, g);
+        let b = '';
+        for (let k = 0, n = Math.round(r * r / 1500); k < n; k++) {
+          const w = sp * (.22 + rnd() * .3), h = sp * (.18 + rnd() * .26);
+          const x = (rnd() * 2 - 1) * r, y = (rnd() * 2 - 1) * r;
+          b += `M${x.toFixed(0)} ${y.toFixed(0)}h${w.toFixed(0)}v${h.toFixed(0)}h${(-w).toFixed(0)}z`;
+        }
+        el('path', { d: b, class: 'm-bld' }, loc);
+        let st = '';
+        const line = (horizontal, off) => {
+          const pts = [];
+          for (let s = -r; s <= r; s += r / 3) {
+            const j = (rnd() * 2 - 1) * sp * .09;
+            pts.push(horizontal ? [s, off + j] : [off + j, s]);
+          }
+          st += poly(pts.map(p => p.map(v => +v.toFixed(1))));
+        };
+        for (let o = -r + sp * rnd(); o < r; o += sp * (.85 + rnd() * .4)) if (rnd() > .1) line(true, o);
+        for (let o = -r + sp * rnd(); o < r; o += sp * (1.1 + rnd() * .5)) if (rnd() > .18) line(false, o);
+        el('path', { d: st, class: 'm-casing', 'stroke-width': 11, 'stroke-linejoin': 'round' }, loc);
+        el('path', { d: st, class: 'm-road', 'stroke-width': 8, 'stroke-linejoin': 'round' }, loc);
+      });
+
+      // Wadi Abdoun, parks, heritage sites
+      const wadi = [[-300, 1260], [100, 1230], [420, 1185], [700, 1230], [1000, 1195], [1300, 1255], [1650, 1300]];
+      el('path', { d: poly(wadi), fill: 'none', stroke: '#DDF3E6', 'stroke-width': 74, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gGreen);
+      el('path', { d: poly(wadi), fill: 'none', stroke: '#CFE3F3', 'stroke-width': 4, 'stroke-dasharray': '10 8', 'stroke-linecap': 'round' }, gGreen);
+      el('path', { d: blob(-950, -210, 170, .1), class: 'm-park' }, gGreen);
+      el('path', { d: blob(1530, 610, 46, .08), class: 'm-park' }, gGreen);
+      el('path', { d: blob(2075, 1170, 34, .06), class: 'm-park' }, gGreen);
+      el('path', { d: blob(1880, 700, 74, .1), class: 'm-heritage' }, gGreen);
+      el('path', { d: 'M1985 1125A48 48 0 0 1 2081 1125Z', class: 'm-heritage' }, gGreen);
+      for (let k = 1; k < 4; k++) el('path', { d: `M${2033 - 48 + k * 11} 1125A${48 - k * 11} ${48 - k * 11} 0 0 1 ${2033 + 48 - k * 11} 1125`, fill: 'none', stroke: '#E2D2B6', 'stroke-width': 1.5 }, gGreen);
+
+      // Topographic contours — Amman's jabals
+      HILLS.forEach(([cx, cy, R]) => { for (let r = 46; r <= R; r += 40) el('path', { d: blob(cx, cy, r, .1) }, gTopo); });
+
+      // Arterial roads + Zahran St circles
+      ROADS.forEach(r => el('path', { d: poly(r.pts), class: 'm-casing', 'stroke-width': r.w + 3, 'stroke-linejoin': 'round' }, gRoads));
+      ROADS.forEach(r => el('path', { d: poly(r.pts), class: 'm-road', 'stroke-width': r.w, 'stroke-linejoin': 'round' }, gRoads));
+      CIRCLES.forEach(([x, y]) => {
+        el('circle', { cx: x, cy: y, r: 34, fill: '#fff', stroke: '#D3DBE5', 'stroke-width': 3 }, gRoads);
+        el('circle', { cx: x, cy: y, r: 18, fill: '#DDF3E6', stroke: '#C5E8D3', 'stroke-width': 2 }, gRoads);
+      });
+
+      // Small "full" lots
+      const g = el('g', { class: 'm-full' }, gTop);
+      [[1500, 805], [520, 580], [1700, 400], [1260, 310], [380, 760], [1630, 1080], [1080, 580], [270, 420],
+       [2200, 670], [-200, 300], [1900, 1300], [600, -150], [2500, 220], [140, -420], [-600, 1300], [2400, 1250]].forEach(([x, y]) => {
+        el('circle', { cx: x, cy: y, r: 12 }, g);
+        const t = el('text', { x, y: y + 4 }, g); t.textContent = 'P';
+      });
+
+      // Route layers
+      el('path', { id: 'routeCasing', class: 'm-route-casing', d: '' }, gTop);
+      el('path', { id: 'route', class: 'm-route', d: '' }, gTop);
+      el('path', { id: 'routeDone', class: 'm-route-done', d: '', 'stroke-dasharray': '0 99999' }, gTop);
+      el('path', { id: 'routeFlow', class: 'm-route-flow', d: '' }, gTop);
+
+      // Labels: road names follow the road, always reading left → right
+      ROADS.forEach((r, i) => {
+        const pts = r.pts[0][0] > r.pts[r.pts.length - 1][0] ? [...r.pts].reverse() : r.pts;
+        el('path', { id: `rl${i}`, d: poly(pts) }, defs);
+        r.at.forEach(at => {
+          const t = el('text', { class: 'm-label', dy: 5 }, gLabels);
+          const tp = el('textPath', { href: `#rl${i}`, startOffset: `${at * 100}%`, 'text-anchor': 'middle' }, t);
+          tp.textContent = r.name;
+        });
+      });
+      const label = (txt, x, y, cls = 'm-label', rot = 0) => {
+        const t = el('text', { x, y, class: cls, 'text-anchor': 'middle', transform: rot ? `rotate(${rot} ${x} ${y})` : '' }, gLabels);
+        t.textContent = txt;
+      };
+      const ordn = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
+      CIRCLES.forEach(([x, y], i) => label(`${ordn(i + 1)} Circle`, x, y - 44, 'm-circle'));
+      label('Amman Citadel', 1880, 704, 'm-heritagelabel');
+      label('Roman Theatre', 2033, 1150, 'm-heritagelabel');
+      label('Abdali Park', 1530, 614, 'm-parklabel');
+      label('King Hussein Park', -950, -205, 'm-parklabel');
+      label('W A D I   A B D O U N', 860, 1218, 'm-parklabel');
+      label('SHMEISANI', 540, 250, 'm-area');
+      label('AL-ABDALI', 1560, 420, 'm-area');
+      label('JABAL AMMAN', 1350, 1030, 'm-area');
+      label('JABAL AL-WEIBDEH', 1820, 420, 'm-area');
+      label('AL-BALAD', 2150, 960, 'm-area');
+      label('JABAL AL-HUSSEIN', 1220, -60, 'm-area');
+      label('ABDOUN', 700, 1430, 'm-area');
+      label('SWEIFIEH', -60, 1400, 'm-area');
+      label('UM UTHAINA', 40, 860, 'm-area');
+      label('KHALDA', -1000, 520, 'm-area');
+      label("TLA' AL-ALI", -380, -60, 'm-area');
+      label('JUBEIHA', 300, -640, 'm-area');
+      return svg;
+    }
+
+    /* ---------------- View state (pan / zoom) ---------------- */
+    const map = $('#map'), world = $('#world'), markers = $('#markers'), pop = $('#pop');
+    world.appendChild(buildMap());
+    const view = { s: 1, tx: 0, ty: 0 };
+    const clampS = s => Math.min(2.4, Math.max(.28, s));
+
+    const pins = {};
+    Object.entries(LOTS).forEach(([id, l]) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = `pin ${l.level}`; b.dataset.id = id;
+      b.setAttribute('aria-label', `${l.short}, ${l.levelLabel}, ${l.priceLabel} per hour`);
+      b.innerHTML = `<span class="pin-in"><span class="pin-body"><span class="pin-p">P</span><span class="num">${l.priceLabel}</span></span><span class="pin-tail"></span><span class="pin-dot"></span></span>`;
+      markers.insertBefore(b, pop);
+      pins[id] = b;
+    });
+
+    let selected = 'kst', reserved = 'kst';
+
+    function place(node, x, y) { node.style.transform = `translate3d(${x * view.s + view.tx}px, ${y * view.s + view.ty}px, 0)`; }
+    function render() {
+      world.style.transform = `translate3d(${view.tx}px, ${view.ty}px, 0) scale(${view.s})`;
+      Object.entries(pins).forEach(([id, p]) => place(p, LOTS[id].x, LOTS[id].y));
+      place($('#me'), ME.x, ME.y);
+      if (nav.on || nav.p) place($('#car'), nav.pt.x, nav.pt.y);
+      placePop();
+    }
+
+    // Desktop: side call-out next to the pin. Stacked layouts: card docked to the bottom of the map.
+    function placePop() {
+      if (!pop.classList.contains('on')) return;
+      const l = LOTS[selected];
+      const px = l.x * view.s + view.tx, py = l.y * view.s + view.ty;
+      const mw = map.clientWidth, mh = map.clientHeight, w = pop.offsetWidth, h = pop.offsetHeight;
+      const tip = $('.pop-tip', pop);
+      pop.classList.remove('side-l', 'side-r', 'docked');
+      if (isStacked()) {
+        pop.classList.add('docked');
+        pop.style.left = '10px'; pop.style.top = (mh - h - 10) + 'px';
+        return;
+      }
+      const cy = py - 30;                       // centre of the pin body
+      const gap = $('.pin-body', pins[selected]).offsetWidth / 2 + 14;
+      const right = px + gap + w < mw - 80;
+      pop.classList.add(right ? 'side-r' : 'side-l');
+      const left = right ? px + gap : px - gap - w;
+      const top = Math.min(Math.max(cy - h * .42, 8), mh - h - 8);
+      pop.style.left = left + 'px'; pop.style.top = top + 'px';
+      tip.style.left = ''; tip.style.top = Math.min(Math.max(cy - top, 22), h - 22) + 'px';
+    }
+
+    let tween = null;
+    function animateTo(t, dur = 650) {
+      cancelAnimationFrame(tween);
+      if (reduceMotion || !dur) { Object.assign(view, t); render(); return; }
+      const from = { ...view }, t0 = performance.now();
+      const step = now => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        view.s = from.s + (t.s - from.s) * e; view.tx = from.tx + (t.tx - from.tx) * e; view.ty = from.ty + (t.ty - from.ty) * e;
+        render();
+        if (k < 1) tween = requestAnimationFrame(step);
+      };
+      tween = requestAnimationFrame(step);
+    }
+
+    const isStacked = () => matchMedia('(max-width: 959px)').matches;
+    function availRect() {
+      const mw = map.clientWidth, mh = map.clientHeight;
+      if (isStacked()) return { l: 52, t: 56, r: mw - 64, b: mh - (pop.offsetHeight || 240) - 30 };
+      const m = map.getBoundingClientRect();
+      const panel = $('.panel').getBoundingClientRect(), head = $('.top').getBoundingClientRect();
+      return { l: panel.right - m.left + 40, t: head.bottom - m.top + 24, r: mw - 200, b: mh - 120 };
+    }
+    // Fit the user, every lot and (desktop) the side call-out of the Shmeisani pin into the free area.
+    function fitView(dur) {
+      const a = availRect(), aw = Math.max(120, a.r - a.l), ah = Math.max(120, a.b - a.t);
+      const pts = [ME, ...Object.values(LOTS)];
+      const K = LOTS.kst, pw = pop.offsetWidth || 300, ph = pop.offsetHeight || 300;
+      let s = 1, box;
+      for (let it = 0; it < 4; it++) {
+        let x0 = Math.min(...pts.map(p => p.x)) - 50, x1 = Math.max(...pts.map(p => p.x)) + 60;
+        let y0 = Math.min(...pts.map(p => p.y)) - 70, y1 = Math.max(...pts.map(p => p.y)) + 40;
+        if (!isStacked()) {
+          x1 = Math.max(x1, K.x + (60 + pw) / s);
+          y0 = Math.min(y0, K.y - (30 + ph * .42) / s);
+          y1 = Math.max(y1, K.y + (ph * .58 - 30) / s);
+        }
+        box = { x0, x1, y0, y1 };
+        s = clampS(Math.min(aw / (x1 - x0), ah / (y1 - y0), 1.1));
+      }
+      const tx = a.l + (aw - (box.x1 - box.x0) * s) / 2 - box.x0 * s;
+      const ty = a.t + (ah - (box.y1 - box.y0) * s) / 2 - box.y0 * s;
+      animateTo({ s, tx, ty }, dur);
+    }
+    function zoomAt(f, cx = map.clientWidth / 2, cy = map.clientHeight / 2, dur = 300) {
+      const s = clampS(view.s * f), k = s / view.s;
+      animateTo({ s, tx: cx - (cx - view.tx) * k, ty: cy - (cy - view.ty) * k }, dur);
+    }
+
+    /* ---------------- Country view: all of Jordan ---------------- */
+    // Semantic zoom: zoom out past Amman (or tap the Jordan button) to see the whole country; tap Amman to dive back in.
+    const LON0 = 34.6, LAT0 = 33.6, KM = 600, COSL = .854;
+    const proj = (lon, lat) => [+((lon - LON0) * KM * COSL).toFixed(1), +((LAT0 - lat) * KM).toFixed(1)];
+    const CW = proj(39.6, 0)[0], CH = proj(0, 29.0)[1];
+    const JORDAN = [[35.546, 32.394], [35.72, 32.709], [36.834, 32.313], [38.792, 33.379], [39.195, 32.161], [39.005, 32.01], [37.002, 31.508],
+      [37.999, 30.509], [37.668, 30.339], [37.504, 30.004], [36.741, 29.865], [36.501, 29.505], [36.069, 29.197], [34.956, 29.357],
+      [34.923, 29.501], [35.421, 31.1], [35.398, 31.489], [35.545, 31.783]];
+    const HIGHLANDS = [[35.75, 32.65], [36.0, 32.3], [36.08, 31.9], [35.98, 31.3], [35.88, 30.6], [35.72, 30.0], [35.35, 29.62], [35.12, 29.6], [35.42, 30.3], [35.6, 31.0], [35.66, 31.8], [35.6, 32.4]];
+    const DEAD_SEA = [[35.49, 31.77], [35.58, 31.75], [35.6, 31.55], [35.56, 31.3], [35.52, 31.12], [35.45, 31.07], [35.4, 31.3], [35.43, 31.55], [35.47, 31.7]];
+    const GULF = [[34.93, 29.565], [35.0, 29.54], [34.99, 29.4], [34.93, 29.2], [34.82, 28.6], [34.6, 27.8], [34.4, 27.8], [34.6, 28.6], [34.7, 29.2]];
+    const HIGHWAYS = [
+      { n: '15', pts: [[35.93, 31.95], [35.99, 31.72], [36.04, 31.25], [35.93, 30.75], [35.73, 30.2], [35.49, 29.99], [35.3, 29.8], [35.08, 29.6], [35.01, 29.53]] },
+      { n: '35', pts: [[35.85, 32.55], [35.9, 32.28], [35.93, 31.95], [35.79, 31.72], [35.75, 31.45], [35.7, 31.18], [35.6, 30.84], [35.53, 30.52], [35.48, 30.32], [35.55, 30.1], [35.49, 29.99]] },
+      { n: '65', pts: [[35.57, 32.6], [35.58, 32.3], [35.55, 32.0], [35.6, 31.76], [35.6, 31.55], [35.57, 31.3], [35.5, 31.05], [35.35, 30.7], [35.2, 30.2], [35.08, 29.75], [35.01, 29.53]] },
+      { n: '10', pts: [[36.09, 32.07], [36.21, 32.34], [37.13, 32.2], [38.2, 32.5], [39.05, 32.98]] },
+      { n: '40', pts: [[35.93, 31.95], [36.3, 31.88], [36.82, 31.83], [37.12, 31.57], [37.3, 31.38]] },
+      { pts: [[35.93, 31.95], [36.09, 32.07]] }, { pts: [[35.85, 32.55], [36.21, 32.34]] },
+      { pts: [[35.73, 32.04], [35.93, 31.95]] }, { pts: [[35.93, 31.95], [35.72, 31.84], [35.6, 31.76]] }
+    ];
+    const RIVER = [[35.57, 32.64], [35.58, 32.45], [35.55, 32.3], [35.57, 32.1], [35.53, 31.95], [35.53, 31.77]];
+    // name, lon, lat, partner lots, tier, label side
+    const CITIES = [
+      ['Amman', 35.93, 31.95, 128, 1, 'b'], ['Zarqa', 36.09, 32.07, 31, 2, 'r'], ['Irbid', 35.85, 32.55, 46, 2, 'r'], ['Aqaba', 35.01, 29.53, 38, 2, 'l'],
+      ['Salt', 35.73, 32.04, 9, 3, 'l'], ['Madaba', 35.79, 31.72, 11, 3, 'r'], ['Jerash', 35.9, 32.28, 7, 3, 'r'], ['Ajloun', 35.75, 32.33, 4, 3, 'l'],
+      ['Mafraq', 36.21, 32.34, 5, 3, 'r'], ['Karak', 35.7, 31.18, 6, 3, 'r'], ['Tafilah', 35.6, 30.84, 3, 3, 'r'], ["Ma'an", 35.73, 30.2, 4, 3, 'r'],
+      ['Petra', 35.48, 30.32, 14, 3, 'l'], ['Wadi Rum', 35.42, 29.58, 2, 3, 'r'], ['Dead Sea', 35.59, 31.72, 12, 3, 'l'], ['Azraq', 36.82, 31.83, 2, 3, 'r']
+    ];
+    const CLABELS = [['SYRIA', 36.5, 33.05, 'c-country'], ['IRAQ', 39.35, 33.15, 'c-country'], ['SAUDI ARABIA', 38.3, 30.0, 'c-country'],
+      ['EASTERN DESERT · BADIA', 38.0, 32.62, 'c-region'], ['WADI ARABA', 35.18, 30.42, 'c-region c-rot'], ['Jordan River', 35.47, 32.25, 'c-water c-rot'],
+      ['Gulf of Aqaba', 34.82, 29.3, 'c-water'], ['Dead Sea', 35.37, 31.42, 'c-water c-rot']];
+    const SHIELDS = [['15', 36.08, 30.95], ['35', 35.6, 30.66], ['65', 35.3, 30.62], ['10', 37.05, 32.24], ['40', 36.62, 31.78]];
+
+    const country = $('#country'), cworld = $('#cworld'), cmarks = $('#cmarks');
+    const cview = { s: .3, tx: 0, ty: 0 };
+    let mode = 'city', ctween = null;
+    (function buildCountry() {
+      const pts = a => 'M' + a.map(p => proj(p[0], p[1]).join(' ')).join('L');
+      const svg = el('svg', { width: CW, height: CH, viewBox: `0 0 ${CW} ${CH}`, 'aria-hidden': 'true' });
+      svg.style.overflow = 'visible';
+      const defs = el('defs', {}, svg);
+      const cp = el('clipPath', { id: 'jo-clip' }, defs); el('path', { d: pts(JORDAN) + 'Z' }, cp);
+      el('path', { d: pts(JORDAN) + 'Z', fill: '#FBFCFE', stroke: '#E0E7FF', 'stroke-width': 18, 'stroke-linejoin': 'round' }, svg);
+      el('path', { d: pts(JORDAN) + 'Z', fill: '#FBFCFE' }, svg);
+      const inner = el('g', { 'clip-path': 'url(#jo-clip)' }, svg);
+      el('path', { d: pts(HIGHLANDS) + 'Z', fill: '#EEF2F8' }, inner);
+      for (let k = 1; k <= 4; k++) {        // highland contours, shrinking inwards
+        const c = [35.75, 31.2], sh = HIGHLANDS.map(([x, y]) => [c[0] + (x - c[0]) * (1 - k * .14), c[1] + (y - c[1]) * (1 - k * .1)]);
+        el('path', { d: pts(sh) + 'Z', fill: 'none', stroke: 'rgba(100,116,139,.13)', 'stroke-width': 1.6 }, inner);
+      }
+      el('path', { d: pts(DEAD_SEA) + 'Z', fill: '#CFE3F3', stroke: '#B9D5EE', 'stroke-width': 2 }, svg);
+      el('path', { d: pts(GULF) + 'Z', fill: '#CFE3F3', stroke: '#B9D5EE', 'stroke-width': 2 }, svg);
+      el('path', { d: pts(RIVER), fill: 'none', stroke: '#A9CBEA', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
+      HIGHWAYS.forEach(h => el('path', { d: pts(h.pts), fill: 'none', stroke: '#CBD5E1', 'stroke-width': h.n ? 9 : 6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg));
+      HIGHWAYS.forEach(h => el('path', { d: pts(h.pts), fill: 'none', stroke: '#fff', 'stroke-width': h.n ? 5 : 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg));
+      el('path', { d: pts(JORDAN) + 'Z', fill: 'none', stroke: '#818CF8', 'stroke-width': 2.5, 'stroke-dasharray': '10 6', 'stroke-linejoin': 'round' }, svg);
+      const [ax, ay] = proj(35.93, 31.95);
+      el('circle', { cx: ax, cy: ay, r: 34, fill: 'rgba(79,70,229,.1)', stroke: 'rgba(79,70,229,.35)', 'stroke-width': 1.5 }, svg);
+      cworld.appendChild(svg);
+
+      CITIES.forEach(([name, lon, lat, n, tier, side]) => {
+        const b = document.createElement('button');
+        const [x, y] = proj(lon, lat);
+        b.type = 'button'; b.className = `cpin t${tier} side-${side}${tier === 1 ? ' live' : ''}`;
+        b.dataset.x = x; b.dataset.y = y; b.dataset.city = name;
+        b.setAttribute('aria-label', `${name}: ${n} partner lots${tier === 1 ? ', live in this demo' : ''}`);
+        b.innerHTML = `<i></i><span><b>${name}</b><em class="num">${tier === 1 ? '3 near you · ' : ''}${n} lots</em></span>`;
+        b.onclick = () => name === 'Amman' ? enterCity() : toast(`${name}: ${n} partner lots · booking opens soon — Amman is live in this demo`, 'pin');
+        cmarks.appendChild(b);
+      });
+      CLABELS.forEach(([t, lon, lat, cls]) => {
+        const s = document.createElement('span'); const [x, y] = proj(lon, lat);
+        s.className = `clabel ${cls}`; s.dataset.x = x; s.dataset.y = y; s.textContent = t; cmarks.appendChild(s);
+      });
+      SHIELDS.forEach(([n, lon, lat]) => {
+        const s = document.createElement('span'); const [x, y] = proj(lon, lat);
+        s.className = 'clabel c-shield num'; s.dataset.x = x; s.dataset.y = y; s.textContent = n; cmarks.appendChild(s);
+      });
+    })();
+
+    function renderCountry() {
+      cworld.style.transform = `translate3d(${cview.tx}px, ${cview.ty}px, 0) scale(${cview.s})`;
+      cmarks.classList.toggle('lod-1', cview.s < .16);    // level of detail: towns appear as you zoom in
+      cmarks.classList.toggle('lod-2', cview.s < .3);
+      $$('[data-x]', cmarks).forEach(m => {
+        const extra = m.classList.contains('clabel') ? ` translate(-50%, -50%)${m.classList.contains('c-rot') ? ' rotate(-72deg)' : ''}` : '';
+        m.style.transform = `translate3d(${m.dataset.x * cview.s + cview.tx}px, ${m.dataset.y * cview.s + cview.ty}px, 0)${extra}`;
+      });
+    }
+    function cAvail() {
+      const mw = map.clientWidth, mh = map.clientHeight;
+      if (isStacked()) return { l: 14, t: 14, r: mw - 70, b: mh - 78 };
+      const a = availRect(); return { l: a.l, t: a.t + 76, r: a.r, b: a.b };
+    }
+    // frame Jordan's borders (plus a little air), not the whole canvas
+    const JB = (() => { const p = JORDAN.map(([lo, la]) => proj(lo, la)), xs = p.map(q => q[0]), ys = p.map(q => q[1]);
+      return { x0: Math.min(...xs) - 60, x1: Math.max(...xs) + 110, y0: Math.min(...ys) - 70, y1: Math.max(...ys) + 40 }; })();
+    const cfitScale = () => { const a = cAvail(); return Math.min((a.r - a.l) / (JB.x1 - JB.x0), (a.b - a.t) / (JB.y1 - JB.y0)); };
+    const clampC = s => Math.min(cfitScale() * 4, Math.max(cfitScale() * .8, s));
+    function animateC(t, dur = 500) {
+      cancelAnimationFrame(ctween);
+      if (reduceMotion || !dur) { Object.assign(cview, t); return renderCountry(); }
+      const from = { ...cview }, t0 = performance.now();
+      const step = now => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        cview.s = from.s + (t.s - from.s) * e; cview.tx = from.tx + (t.tx - from.tx) * e; cview.ty = from.ty + (t.ty - from.ty) * e;
+        renderCountry(); if (k < 1) ctween = requestAnimationFrame(step);
+      };
+      ctween = requestAnimationFrame(step);
+    }
+    function fitCountry(dur) {
+      const a = cAvail(), s = cfitScale();
+      animateC({ s, tx: a.l + ((a.r - a.l) - (JB.x1 - JB.x0) * s) / 2 - JB.x0 * s, ty: a.t + ((a.b - a.t) - (JB.y1 - JB.y0) * s) / 2 - JB.y0 * s }, dur);
+    }
+    function zoomCountry(f, cx = map.clientWidth / 2, cy = map.clientHeight / 2, dur = 260) {
+      const s = clampC(cview.s * f), k = s / cview.s;
+      animateC({ s, tx: cx - (cx - cview.tx) * k, ty: cy - (cy - cview.ty) * k }, dur);
+    }
+    function setModeUI() {
+      const c = mode === 'country';
+      map.classList.toggle('mode-country', c);
+      country.setAttribute('aria-hidden', !c);
+      $('#jordan').setAttribute('aria-pressed', c);
+      $('#jordan').setAttribute('aria-label', c ? 'Back to Amman streets' : 'Show all of Jordan');
+    }
+    function enterCountry() {
+      if (mode === 'country') return;
+      if (nav.on) return toast('Stop navigation to see all of Jordan', 'nav');
+      mode = 'country'; pop.classList.remove('on'); hideNotice();
+      fitCountry(0);
+      // start slightly zoomed into Amman, then pull back to the whole country
+      const [ax, ay] = proj(35.93, 31.95), end = { ...cview };
+      if (!reduceMotion) { cview.s = end.s * 3; cview.tx = map.clientWidth / 2 - ax * cview.s; cview.ty = map.clientHeight / 2 - ay * cview.s; renderCountry(); }
+      setModeUI(); animateC(end, 700);
+    }
+    function enterCity() {
+      if (mode === 'city') return;
+      mode = 'city';
+      const [ax, ay] = proj(35.93, 31.95);
+      if (!reduceMotion) animateC({ s: cview.s * 3, tx: map.clientWidth / 2 - ax * cview.s * 3, ty: map.clientHeight / 2 - ay * cview.s * 3 }, 450);
+      setModeUI(); fitView(reduceMotion ? 0 : 600);
+      setTimeout(() => select(selected), reduceMotion ? 0 : 450);
+    }
+    $('#jordan').onclick = () => mode === 'city' ? enterCountry() : enterCity();
+    $('#c-back').onclick = enterCity;
+
+    // drag + wheel (both views)
+    let drag = null, wheelOutAtMin = 0;
+    map.addEventListener('pointerdown', e => {
+      if (e.target.closest('.pin, .pop, .ctrls, .toast, .cpin, .cinfo, .notice, .locoff')) return;
+      cancelAnimationFrame(tween); cancelAnimationFrame(ctween);
+      const v = mode === 'city' ? view : cview;
+      drag = { x: e.clientX, y: e.clientY, tx: v.tx, ty: v.ty };
+      map.setPointerCapture(e.pointerId); map.classList.add('dragging');
+    });
+    map.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const v = mode === 'city' ? view : cview;
+      v.tx = drag.tx + e.clientX - drag.x; v.ty = drag.ty + e.clientY - drag.y;
+      mode === 'city' ? render() : renderCountry();
+    });
+    const endDrag = () => { drag = null; map.classList.remove('dragging'); };
+    map.addEventListener('pointerup', endDrag); map.addEventListener('pointercancel', endDrag);
+    map.addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = map.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, out = e.deltaY > 0;
+      if (mode === 'country') return zoomCountry(out ? 1 / 1.15 : 1.15, x, y, 160);
+      if (out && view.s <= clampS(0) + .001) { if (++wheelOutAtMin > 3) { wheelOutAtMin = 0; enterCountry(); } return; }
+      wheelOutAtMin = 0;
+      zoomAt(out ? 1 / 1.15 : 1.15, x, y, 160);
+    }, { passive: false });
+    $('#zin').onclick = () => mode === 'city' ? zoomAt(1.3) : zoomCountry(1.3);
+    $('#zout').onclick = () => {
+      if (mode === 'country') return zoomCountry(1 / 1.3);
+      if (view.s <= clampS(0) + .001) return enterCountry();
+      zoomAt(1 / 1.3);
+    };
+    $('#recenter').onclick = () => mode === 'city' ? fitView() : fitCountry();
+    $('#layers').onclick = e => {
+      const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+      e.currentTarget.setAttribute('aria-pressed', on);
+      world.classList.toggle('labels-off', !on);
+    };
+
+    /* ---------------- Route ---------------- */
+    const routeD = id => 'M' + LOTS[id].route.map(p => p.join(' ')).join('L');
+    function drawRoute(id) {
+      ['route', 'routeCasing', 'routeFlow', 'routeDone'].forEach(r => document.getElementById(r).setAttribute('d', routeD(id)));
+      document.getElementById('routeDone').setAttribute('stroke-dasharray', '0 99999');
+    }
+
+    /* ---------------- Guest journey: state ---------------- */
+    // status: held (slot held 15 min, not paid) → paid → parked → done. View = which sheet is open.
+    const FEE = .25, EV_RATE = .2, HOLD = 15 * 60 - 1;
+    const pad = n => String(n).padStart(2, '0');
+    const money = v => 'JD ' + v.toFixed(2);
+    const mmss = s => `${Math.floor(s / 60)}:${pad(s % 60)}`;
+    const toMin = t => { const m = t.match(/(\d+):(\d+)\s*(AM|PM)/); return (+m[1] % 12 + (m[3] === 'PM' ? 12 : 0)) * 60 + +m[2]; };
+    const fmtT = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; const h = Math.floor(m / 60); return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}`; };
+    const hm = min => { min = Math.abs(Math.round(min)); return `${Math.floor(min / 60)}:${pad(min % 60)}`; };
+    const durTxt = min => [min >= 60 ? `${Math.floor(min / 60)}h` : '', min % 60 ? `${min % 60}m` : ''].filter(Boolean).join(' ') || '0m';
+    const nth = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
+    const ico = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
+    const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const cleanPlate = v => v.replace(/[\s-]/g, '').toUpperCase();
+    const validPlate = v => /^[A-Z0-9]{2,8}$/.test(cleanPlate(v));
+
+    Object.keys(LOTS).forEach(k => LOTS[k].key = k);
+    Object.assign(LOTS.kst, { addr: 'Wadi Saqra St, Shmeisani', amen: ['ev', 'long', 'wash', 'disabled'], kw: 50, entrance: 'Wadi Saqra St entrance', floors: [['Floor 1', 'A'], ['Floor 2', 'B'], ['Floor 3', 'C']] });
+    Object.assign(LOTS.penn, { addr: 'Al-Kulliyah St, off 2nd Circle', amen: ['ev', 'pr', 'disabled'], kw: 22, entrance: 'Al-Kulliyah St entrance', floors: [['Level P1', 'A'], ['Level P2', 'D']] });
+    Object.assign(LOTS.spp, { addr: 'Abdali Blvd, Al-Abdali', amen: ['disabled', 'pr'], kw: 0, entrance: 'Abdali Blvd entrance', floors: [['Level 2', 'B'], ['Level 3', 'C']] });
+
+    const fresh = () => ({
+      lot: 'kst', floor: 'Floor 2', slot: 'B-14', status: 'held', view: null,
+      arrive: null, hours: 3, plate: '', region: 'JO', size: 'std', ev: true, modifying: false,
+      contact: '', pay: 'card', cnum: '4242 4242 4242 4242', cexp: '08 / 29', ccvc: '123', paid: 0, id: '', error: null, confirmCancel: false,
+      arrived: false, gate: 'idle', showQr: false, reassigned: false,
+      elapsed: 0, ext: 0, extPaid: 0, extSel: 60, lateFee: 0, kwh: 0, charging: false, lowWarned: false,
+      rating: 0, tags: new Set(), account: 'offer'
+    });
+    let S = fresh(), holdLeft = HOLD, locOff = false, emptyScn = false;
+    const taken = new Set();                       // slots other drivers grabbed during the demo
+    const scenario = { slotTaken: false, declined: false };
+    const total = () => LOTS[S.lot].price * S.hours + FEE;
+    const payName = () => S.pay === 'express' ? 'phone wallet' : `card •••• ${S.cnum.replace(/\D/g, '').slice(-4) || '4242'}`;
+    const endMin = () => S.arrive + S.hours * 60 + S.ext;
+
+    function slotState(lotId, row, n) {
+      const l = LOTS[lotId], id = `${row}-${pad(n)}`;
+      let h = 2166136261; for (const c of lotId + id) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+      h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13;
+      const busy = id !== l.slot && (h >>> 0) / 4294967296 < 1 - Math.min(1, l.free / l.total * 1.6);
+      return { id, acc: n <= 2, ev: l.kw > 0 && n >= 15, taken: taken.has(`${lotId}:${id}`) || busy };
+    }
+    function nextFree(lotId, row, from) {
+      const order = Array.from({ length: 16 }, (_, i) => i + 1).sort((a, b) => Math.abs(a - from) - Math.abs(b - from) || a - b);
+      for (const n of order) { const st = slotState(lotId, row, n); if (!st.taken && st.id !== S.slot) return st.id; }
+      return null;
+    }
+
+    /* ---------------- Pop-over ---------------- */
+    function slotStrip(id) {
+      const l = LOTS[id], mine = S.lot === id, label = mine ? S.slot : l.slot;
+      const [row, nn] = label.split('-'), base = Math.min(Math.max(1, +nn - 3), 9);
+      return Array.from({ length: 8 }, (_, i) => {
+        const st = slotState(id, row, base + i), me = st.id === label;
+        return `<span class="${me ? 'mine' : st.taken ? 'taken' : ''}" title="${st.id}${me ? ' · ' + (mine && S.status !== 'held' ? 'booked for you' : 'held for you') : st.taken ? ' · taken' : ' · free'}">${pad(base + i)}</span>`;
+      }).join('');
+    }
+    function openPop(id) {
+      const l = LOTS[id], mine = S.lot === id, booked = mine && S.status !== 'held';
+      const floor = mine ? S.floor : l.floor, slot = mine ? S.slot : l.slot;
+      pop.className = `pop glass ${l.level}`;
+      pop.innerHTML = `
+        <div class="pop-head"><span class="badge"><i></i>${l.levelLabel} <span class="num">${l.free} free</span></span>
+          <button type="button" class="x" aria-label="Close">${ico('x')}</button></div>
+        <h4>${l.short}</h4>
+        <p class="sub num">${l.km} km · ${l.min} min drive · ${l.priceLabel}/hr</p>
+        <div class="slot-hero"><small>${booked ? 'Booked for you' : mine ? 'Held for you' : 'Best slot for you'}</small><strong>${floor} / Slot ${slot} ${booked ? 'is yours' : 'available'}</strong>
+          <div class="slots" aria-label="Slots on ${floor}">${slotStrip(id)}</div></div>
+        <div class="ev-row ${l.evOn ? '' : 'none'}"><span class="ev-ic">${ico('bolt')}</span><span><b>${l.ev[0]}</b><span>${l.ev[1]}</span></span></div>
+        <div class="pop-foot"><span class="price"><b class="num">${l.priceLabel}</b>/hr</span>
+          <button type="button" class="btn ${booked ? 'booked' : 'primary'}" data-popbook>${booked ? ico('check') + 'View pass' : 'Book a spot'}</button></div>
+        <i class="pop-tip"></i>`;
+      $('.x', pop).onclick = () => pop.classList.remove('on');
+      $('[data-popbook]', pop).onclick = () => startBooking(id);
+      requestAnimationFrame(() => { pop.classList.add('on'); placePop(); });
+      placePop();
+    }
+
+    function select(id, { pan = false } = {}) {
+      if (mode === 'country') { selected = id; return enterCity(); }
+      selected = id;
+      Object.entries(pins).forEach(([k, p]) => p.classList.toggle('is-active', k === id));
+      $$('.lot').forEach(c => c.classList.toggle('is-active', c.dataset.id === id));
+      if (!nav.on && !locOff) drawRoute(id);
+      pop.classList.add('on'); openPop(id);
+      if (pan) {
+        const a = availRect(), l = LOTS[id];
+        const px = l.x * view.s + view.tx, py = l.y * view.s + view.ty;
+        const inside = px > a.l && px < a.r - 260 && py > a.t + 80 && py < a.b;
+        if (!inside) animateTo({ s: view.s, tx: view.tx + ((a.l + a.r) / 2 - 150 - px), ty: view.ty + ((a.t + a.b) / 2 - py) });
+      }
+    }
+
+    /* ---------------- Sheet machinery ---------------- */
+    const sheet = $('#sheet');
+    const STEP = { details: 0, checkout: 1, pass: 2 };
+    function openSheet(name, keepScroll) {
+      const body0 = $('.sh-body', sheet), scroll = keepScroll && body0 ? body0.scrollTop : 0;
+      S.view = name;
+      const v = VIEWS[name](), st = STEP[name];
+      sheet.setAttribute('aria-label', v.title);
+      sheet.innerHTML = `
+        <div class="sh-head">
+          <div class="sh-top">
+            ${v.back ? `<button type="button" class="x" data-back aria-label="Back">${ico('back')}</button>` : ''}
+            <div><h2 tabindex="-1">${v.title}</h2>${v.sub ? `<p>${v.sub}</p>` : ''}</div>
+            <button type="button" class="x" data-close aria-label="Close">${ico('x')}</button>
+          </div>
+          ${st != null ? `<div class="steps" aria-label="Step ${st + 1} of 3">${['Details', 'Checkout', 'Pass'].map((t, i) => `<span class="${i < st ? 'done' : i === st ? 'cur' : ''}">${i + 1}. ${t}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="sh-body">${v.body}</div>
+        ${v.foot ? `<div class="sh-foot">${v.foot}</div>` : ''}`;
+      $('[data-close]', sheet).onclick = closeSheet;
+      if (v.back) $('[data-back]', sheet).onclick = v.back;
+      if (v.bind) v.bind(sheet);
+      $('.sh-body', sheet).scrollTop = scroll;
+      if (!sheet.classList.contains('on')) {
+        sheet.removeAttribute('inert'); sheet.classList.add('on'); document.body.classList.add('sheet-open');
+        $('h2', sheet).focus({ preventScroll: true });
+      }
+      updateSession(); renderCapsule();
+    }
+    function closeSheet() {
+      if (!sheet.classList.contains('on')) return;
+      sheet.classList.remove('on'); sheet.setAttribute('inert', ''); document.body.classList.remove('sheet-open');
+      S.view = null; renderCapsule();
+    }
+    const rerender = () => S.view && openSheet(S.view, true);
+    const on = (root, sel, ev, fn) => $$(sel, root).forEach(el => el.addEventListener(ev, fn));
+
+    function billRows(due) {
+      const l = LOTS[S.lot];
+      return `<div class="bill">
+        <div><span>Parking · ${S.hours}h × ${l.priceLabel}</span><b class="num">${money(l.price * S.hours)}</b></div>
+        <div><span>Service fee</span><b class="num">${money(FEE)}</b></div>
+        ${S.ev && l.kw ? `<div><span>EV energy · JD 0.20/kWh</span><b>billed after</b></div>` : ''}
+        ${S.modifying ? `<div class="neg"><span>Already paid</span><b class="num">−${money(S.paid)}</b></div>` : ''}
+        <div class="tot"><span>${S.modifying ? (due >= 0 ? 'Due now' : 'Refund') : 'Total'}</span><b class="num">${money(Math.abs(due))}</b></div>
+      </div>`;
+    }
+    function qrSVG(txt, cls = 'qr') {
+      const n = 25; let h = 0;
+      for (const c of txt) h = (h * 131 + c.charCodeAt(0)) >>> 0;
+      const r = () => ((h = (h * 1664525 + 1013904223) >>> 0) / 4294967296);
+      const finder = (x, y) => `M${x} ${y}h7v7h-7zM${x + 1} ${y + 1}v5h5v-5zM${x + 2} ${y + 2}h3v3h-3z`;
+      let d = finder(0, 0) + finder(n - 7, 0) + finder(0, n - 7);
+      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+        if ((x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9)) continue;
+        if (r() < .48) d += `M${x} ${y}h1v1h-1z`;
+      }
+      return `<svg class="${cls}" viewBox="-2 -2 ${n + 4} ${n + 4}" role="img" aria-label="Entry QR code ${txt}"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path fill-rule="evenodd" fill="#0F172A" d="${d}"/></svg>`;
+    }
+    function floorPlan(row, n) {
+      const parts = [], other = String.fromCharCode(row.charCodeAt(0) + 1);
+      for (let i = 0; i < 8; i++) parts.push(`<rect x="${62 + i * 32}" y="10" width="28" height="34" rx="4" fill="${(i * 5 + row.charCodeAt(0)) % 3 ? '#E2E8F0' : '#F0FDF8'}" stroke="#E2E8F0"/>`);
+      for (let k = 1; k <= 16; k++) {
+        const st = slotState(S.lot, row, k), me = st.id === S.slot;
+        const x = 62 + ((k - 1) % 8) * 32, y = k <= 8 ? 84 : 120;
+        parts.push(`<rect x="${x}" y="${y}" width="28" height="34" rx="4" fill="${me ? '#4F46E5' : st.taken ? '#E2E8F0' : '#F0FDF8'}" stroke="${me ? '#4F46E5' : st.taken ? '#E2E8F0' : '#A7F3D0'}"${!me && !st.taken ? ' stroke-dasharray="3 2"' : ''}/>`);
+        parts.push(`<text x="${x + 14}" y="${y + 21}" text-anchor="middle" font-size="9" font-weight="800" fill="${me ? '#fff' : st.taken ? '#94A3B8' : '#047857'}">${pad(k)}</text>`);
+      }
+      const bx = 62 + ((n - 1) % 8) * 32 + 14;
+      const route = n <= 8 ? `M30 190V64H${bx}V82` : `M30 190V178H${bx}V156`;
+      return `<svg viewBox="0 0 340 214" role="img" aria-label="Floor plan with route to ${S.slot}">
+        <rect x="2" y="2" width="336" height="210" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+        ${parts.join('')}
+        <rect x="320" y="84" width="14" height="70" rx="4" fill="#FEF3C7" stroke="#FDE68A"/>
+        <text x="327" y="119" text-anchor="middle" font-size="8" font-weight="800" fill="#B45309" transform="rotate(-90 327 119)">LIFT</text>
+        <rect x="8" y="150" width="44" height="56" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+        <text x="30" y="204" text-anchor="middle" font-size="8" font-weight="800" fill="#4338CA">RAMP</text>
+        <text x="40" y="31" text-anchor="middle" font-size="11" font-weight="800" fill="#94A3B8">${other}</text>
+        <text x="40" y="123" text-anchor="middle" font-size="11" font-weight="800" fill="#4338CA">${row}</text>
+        <text x="190" y="68" text-anchor="middle" font-size="8" font-weight="700" letter-spacing="3" fill="#CBD5E1">AISLE</text>
+        <text x="190" y="196" text-anchor="middle" font-size="8" font-weight="700" letter-spacing="3" fill="#CBD5E1">AISLE</text>
+        <path class="route-p" d="${route}"/>
+        <circle cx="30" cy="190" r="6" fill="#4F46E5" stroke="#fff" stroke-width="2.5"/>
+      </svg>`;
+    }
+
+    /* ---------------- Sheet views ---------------- */
+    const VIEWS = {
+      details() {
+        const l = LOTS[S.lot], fl = l.floors.find(f => f[0] === S.floor) || l.floors[0], row = fl[1];
+        const base = toMin($('#time').value);
+        if (S.arrive == null) S.arrive = base;
+        const arrOpts = [...new Set([base, base + 15, base + 30, base + 45, S.arrive])].sort((a, b) => a - b);
+        const slotBtn = n => {
+          const st = slotState(S.lot, row, n), sel = st.id === S.slot;
+          return `<button type="button" class="slot${st.taken && !sel ? ' taken' : ''}${sel ? ' sel' : ''}" data-slot="${st.id}" ${st.taken && !sel ? 'disabled' : ''} aria-pressed="${sel}" aria-label="Slot ${st.id}${st.acc ? ', accessible' : ''}${st.ev ? ', EV charger' : ''}${st.taken && !sel ? ', taken' : ''}">${pad(n)}${st.acc ? ico('access') : st.ev ? ico('bolt') : ''}</button>`;
+        };
+        const rng = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+        const due = total() - (S.modifying ? S.paid : 0);
+        return {
+          title: S.modifying ? 'Modify booking' : 'Reserve your spot',
+          sub: `${l.short} · ${l.priceLabel}/hr`,
+          back: S.modifying ? () => { S.modifying = false; openSheet('pass'); } : null,
+          body: `
+            ${S.modifying ? `<div class="alert amber"><div class="alert-top">${ico('edit')}<div><b>Changing booking ${S.id}</b>You'll only pay — or get back — the difference.</div></div></div>` : ''}
+            <div class="lot-line ${l.level}"><span class="lot-mark">P</span><div><b>${l.short}</b><p>${l.addr} · ${l.km} km</p></div><span class="badge"><i></i><span class="num">${l.free} free</span></span></div>
+            <div class="sec"><h3>Arrival · ${$('#date').value}</h3>
+              <div class="chips">${arrOpts.map(m => `<button type="button" class="opt num" data-arr="${m}" aria-pressed="${m === S.arrive}">${fmtT(m)}</button>`).join('')}</div></div>
+            <div class="sec"><h3>How long?</h3>
+              <div class="stepper"><button type="button" data-hrs="-1" aria-label="One hour less" ${S.hours <= 1 ? 'disabled' : ''}>${ico('minus')}</button>
+                <div><b class="num">${S.hours} hour${S.hours > 1 ? 's' : ''}</b><small class="num">${fmtT(S.arrive)} → ${fmtT(S.arrive + S.hours * 60)}</small></div>
+                <button type="button" data-hrs="1" aria-label="One hour more" ${S.hours >= 12 ? 'disabled' : ''}>${ico('plus')}</button></div></div>
+            <div class="sec"><h3>Choose your slot <em>${S.floor} · ${S.slot}</em></h3>
+              <div class="seg" role="group" aria-label="Floor" style="grid-template-columns:repeat(${l.floors.length},1fr)">${l.floors.map(f => `<button type="button" data-floor="${f[0]}" aria-pressed="${f[0] === S.floor}">${f[0]}</button>`).join('')}</div>
+              <div class="slot-map"><div class="slot-grid">${rng(1, 8).map(slotBtn).join('')}</div><div class="aisle">AISLE</div><div class="slot-grid">${rng(9, 16).map(slotBtn).join('')}</div></div>
+              <div class="slot-legend"><span><i></i>Free</span><span class="t"><i></i>Taken</span><span class="s"><i></i>Yours</span><span>${ico('access')}Accessible</span>${l.kw ? `<span>${ico('bolt')}EV charger</span>` : ''}</div></div>
+            <div class="sec"><h3>Your vehicle</h3>
+              <div class="fld"><label for="plate">Licence plate</label>
+                <div class="plate-row"><select class="inp" id="region" aria-label="Plate country">${['JO', 'SA', 'AE', 'KW', 'IQ'].map(r => `<option ${r === S.region ? 'selected' : ''}>${r}</option>`).join('')}</select>
+                  <input class="inp plate" id="plate" value="${esc(S.plate)}" placeholder="12-34567" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="plate-msg"></div>
+                <span class="hint" id="plate-msg">The gate reads your plate — no ticket, no app needed at entry.</span></div>
+              <div class="seg" role="group" aria-label="Vehicle size" style="grid-template-columns:1fr 1fr"><button type="button" data-size="std" aria-pressed="${S.size === 'std'}">Standard car</button><button type="button" data-size="long" aria-pressed="${S.size === 'long'}">Longer than 3.5m</button></div>
+              ${S.size === 'long' ? (l.amen.includes('long')
+                ? `<div class="note">${ico('check')}<span>We'll keep an XL bay (up to 5.4 m) for you at no extra cost.</span></div>`
+                : `<div class="alert amber"><div class="alert-top">${ico('alert')}<div><b>No XL bays here</b>${l.short} has a 2.1 m height limit and standard bays only. Shmeisani Central Garage fits longer vehicles.</div></div></div>`) : ''}
+            </div>
+            ${l.kw ? `<label class="switch"><input type="checkbox" id="evres" ${S.ev ? 'checked' : ''}><span class="ic-box">${ico('bolt')}</span><span><b>Charge while I'm parked</b><span class="s">${l.kw} kW · JD 0.20/kWh, billed after your session</span></span><span class="tg"></span></label>` : ''}
+            ${billRows(due)}
+            <div class="note">${ico('clock')}<span>Free cancellation until <b>${fmtT(S.arrive - 15)}</b>. Running late? Your slot stays yours until <b>${fmtT(S.arrive + 15)}</b>.</span></div>`,
+          foot: `<button type="button" class="btn primary" data-next>Continue to checkout · <span class="num">${money(Math.abs(due))}</span></button>
+            <small>${S.status === 'held' ? `${S.slot} held for you · <b class="num" data-holdtxt>${mmss(holdLeft)}</b>` : 'No account needed'}</small>`,
+          bind(root) {
+            on(root, '[data-arr]', 'click', e => { S.arrive = +e.currentTarget.dataset.arr; rerender(); });
+            on(root, '[data-hrs]', 'click', e => { S.hours = Math.min(12, Math.max(1, S.hours + +e.currentTarget.dataset.hrs)); rerender(); });
+            on(root, '[data-floor]', 'click', e => {
+              S.floor = e.currentTarget.dataset.floor;
+              const r = l.floors.find(f => f[0] === S.floor)[1];
+              if (S.slot[0] !== r) S.slot = nextFree(S.lot, r, 8) || S.slot;
+              rerender(); select(S.lot);
+            });
+            on(root, '[data-slot]', 'click', e => { S.slot = e.currentTarget.dataset.slot; rerender(); select(S.lot); });
+            on(root, '[data-size]', 'click', e => { S.size = e.currentTarget.dataset.size; rerender(); });
+            on(root, '#region', 'change', e => { S.region = e.target.value; });
+            on(root, '#evres', 'change', e => { S.ev = e.target.checked; rerender(); });
+            on(root, '#plate', 'input', e => {
+              S.plate = e.target.value.toUpperCase(); e.target.value = S.plate;
+              e.target.classList.remove('bad'); const m = $('#plate-msg', root); m.classList.remove('bad');
+              m.textContent = 'The gate reads your plate — no ticket, no app needed at entry.';
+            });
+            $('[data-next]', root).onclick = () => {
+              if (!validPlate(S.plate)) {
+                const i = $('#plate', root), m = $('#plate-msg', root);
+                i.classList.add('bad'); m.classList.add('bad');
+                m.textContent = S.plate ? 'Use 2–8 letters and numbers, like 12-34567.' : 'Add your plate so the gate can let you in.';
+                i.focus(); i.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+                return;
+              }
+              openSheet('checkout');
+            };
+          }
+        };
+      },
+
+      checkout() {
+        const l = LOTS[S.lot], due = total() - (S.modifying ? S.paid : 0), err = S.error;
+        const errBox = !err ? '' : err.type === 'taken'
+          ? `<div class="alert red"><div class="alert-top">${ico('alert')}<div><b>${err.slot} was just taken</b>Another driver booked it a moment ago — you haven't been charged.${err.alt ? ` <b style="display:inline;font-size:inherit">${err.alt}</b> is free on the same floor, same price.` : ''}</div></div>
+              <div class="row-a">${err.alt ? `<button type="button" class="btn primary" data-err="alt">Take ${err.alt}</button>` : ''}<button type="button" class="btn ghost" data-err="pick">Choose another slot</button></div></div>`
+          : err.type === 'declined'
+          ? `<div class="alert red"><div class="alert-top">${ico('card')}<div><b>Payment declined</b>Your bank didn't approve this payment, so you haven't been charged. Try Express pay or another card.</div></div>
+              <div class="row-a"><button type="button" class="btn primary" data-err="express">Use Express pay</button><button type="button" class="btn ghost" data-err="card">Edit card</button></div></div>`
+          : `<div class="alert amber"><div class="alert-top">${ico('timer')}<div><b>Your hold expired</b>We released ${S.slot} after 15 minutes. It's still free right now — hold it again to finish booking.</div></div>
+              <div class="row-a"><button type="button" class="btn primary" data-err="rehold">Hold ${S.slot} again</button></div></div>`;
+        return {
+          title: S.modifying ? 'Confirm changes' : 'Checkout', sub: 'Guest checkout · no account needed',
+          back: () => { S.error = null; openSheet('details'); },
+          body: `
+            ${errBox}
+            <div class="sum">
+              <div class="sum-row"><span>Garage</span><b>${l.short}</b></div>
+              <div class="sum-row"><span>Slot</span><b>${S.floor} · ${S.slot}</b></div>
+              <div class="sum-row"><span>When</span><b class="num">${$('#date').value}, ${fmtT(S.arrive)} – ${fmtT(S.arrive + S.hours * 60)}</b></div>
+              <div class="sum-row"><span>Vehicle</span><b><span class="pass-plate">${S.region} ${esc(S.plate)}</span></b></div>
+              ${S.ev && l.kw ? `<div class="sum-row"><span>EV charging</span><b>${l.kw} kW reserved</b></div>` : ''}
+            </div>
+            <div class="sec"><h3>Send my pass &amp; receipt to</h3>
+              <div class="fld"><input class="inp" id="guest-contact" type="text" inputmode="email" autocomplete="email" value="${esc(S.contact)}" placeholder="Email or mobile number" aria-label="Email or mobile number" aria-describedby="contact-msg">
+              <span class="hint" id="contact-msg">We'll text or email your entry pass. No password, no sign-up.</span></div></div>
+            <div class="sec"><h3>Payment</h3>
+              <div class="pay-opts" role="radiogroup" aria-label="Payment method">
+                <label class="pay-opt"><input type="radio" name="pay" value="express" ${S.pay === 'express' ? 'checked' : ''}><span class="ic-box indigo">${ico('wallet')}</span><span>Express pay<small>Phone wallet · confirm with face or fingerprint</small></span><span class="rd"></span></label>
+                <label class="pay-opt"><input type="radio" name="pay" value="card" ${S.pay === 'card' ? 'checked' : ''}><span class="ic-box indigo">${ico('card')}</span><span>Credit or debit card<small>Visa, Mastercard, Amex</small></span><span class="rd"></span></label>
+              </div>
+              ${S.pay === 'card' ? `<div class="card-fields">
+                <input class="inp full num" id="cnum" value="${esc(S.cnum)}" inputmode="numeric" autocomplete="cc-number" placeholder="Card number" aria-label="Card number">
+                <input class="inp num" id="cexp" value="${esc(S.cexp)}" inputmode="numeric" autocomplete="cc-exp" placeholder="MM / YY" aria-label="Expiry date">
+                <input class="inp num" id="ccvc" value="${esc(S.ccvc)}" inputmode="numeric" autocomplete="cc-csc" placeholder="CVC" aria-label="Security code"></div>
+                <span class="hint">Demo card is pre-filled.</span>` : ''}
+            </div>
+            ${billRows(due)}
+            <div class="note">${ico('lock')}<span>Encrypted payment. Cancel free until <b>${fmtT(S.arrive - 15)}</b> for a full refund.</span></div>`,
+          foot: `<button type="button" class="btn primary" data-pay>${ico(S.pay === 'express' ? 'wallet' : 'lock')}${due >= 0 ? `Pay <span class="num">${money(due)}</span>` : `Confirm · refund <span class="num">${money(-due)}</span>`}</button>
+            <small>By paying you agree to the garage's parking terms.</small>`,
+          bind(root) {
+            on(root, '#guest-contact', 'input', e => { S.contact = e.target.value.trim(); e.target.classList.remove('bad'); const m = $('#contact-msg', root); m.classList.remove('bad'); m.textContent = "We'll text or email your entry pass. No password, no sign-up."; });
+            on(root, 'input[name="pay"]', 'change', e => { S.pay = e.target.value; S.error = null; rerender(); });
+            [['#cnum', 'cnum'], ['#cexp', 'cexp'], ['#ccvc', 'ccvc']].forEach(([sel, k]) => on(root, sel, 'input', e => { S[k] = e.target.value; e.target.classList.remove('bad'); }));
+            on(root, '[data-err]', 'click', e => {
+              const a = e.currentTarget.dataset.err, err = S.error; S.error = null;
+              if (a === 'alt') { S.slot = err.alt; toast(`Switched to ${err.alt} · same floor, same price`); select(S.lot); rerender(); }
+              else if (a === 'pick') openSheet('details');
+              else if (a === 'express') { S.pay = 'express'; rerender(); }
+              else if (a === 'card') { rerender(); $('#cnum', sheet)?.focus(); }
+              else if (a === 'rehold') { holdLeft = HOLD; renderCapsule(); toast(`${S.slot} held again for 15 min`, 'timer'); rerender(); }
+            });
+            $('[data-pay]', root).onclick = e => pay(e.currentTarget, root);
+          }
+        };
+      },
+
+      pass() {
+        const l = LOTS[S.lot];
+        return {
+          title: "You're booked", sub: `Pass sent to ${esc(S.contact)}`,
+          body: `
+            <div class="pass">
+              <div class="pass-top"><span class="pass-id">${S.id}</span><small>${l.short}</small><span class="big">${S.floor} · ${S.slot}</span><small class="num">${$('#date').value} · ${fmtT(S.arrive)} – ${fmtT(S.arrive + S.hours * 60)}</small></div>
+              <div class="perf"></div>
+              <div class="pass-bot">${qrSVG(S.id)}
+                <div class="pass-meta">
+                  <div><span>Entry by plate</span><b class="pass-plate">${S.region} ${esc(S.plate)}</b></div>
+                  <div><span>Paid</span><b class="num">${money(S.paid + S.lateFee)}${S.ev && l.kw ? ' + EV energy' : ''}</b></div>
+                  <div><span>Entrance</span><b>${l.entrance}</b></div>
+                </div></div>
+            </div>
+            <div class="act-row">
+              <button type="button" class="act" data-a="wallet">${ico('wallet')}Add to wallet</button>
+              <button type="button" class="act" data-a="share">${ico('share')}Share</button>
+              <button type="button" class="act" data-a="modify">${ico('edit')}Modify</button>
+              <button type="button" class="act danger" data-a="cancel">${ico('x')}Cancel</button>
+            </div>
+            ${S.confirmCancel ? `<div class="alert red"><div class="alert-top">${ico('alert')}<div><b>Cancel this booking?</b>It's free until ${fmtT(S.arrive - 15)}. ${money(S.paid + S.lateFee)} goes back to your ${payName()} in 3–5 days.</div></div>
+              <div class="row-a"><button type="button" class="btn danger" data-a="cancel-yes">Yes, cancel booking</button><button type="button" class="btn ghost" data-a="cancel-no">Keep it</button></div></div>` : ''}
+            <div class="note">${ico('clock')}<span>Running late? ${S.slot} stays yours until <b>${fmtT(S.arrive + 15)}</b>. We'll message you before it's released.</span></div>
+            <ul class="check-list"><li>${ico('check')}No ticket — the barrier reads your plate</li><li>${ico('check')}QR code works as a backup at the gate</li><li>${ico('check')}Extend your time from your phone</li></ul>`,
+          foot: `<button type="button" class="btn primary" data-go>${ico('nav')}Start Navigation</button><button type="button" class="btn text" data-here>I'm already at the garage</button>`,
+          bind(root) {
+            on(root, '[data-a]', 'click', e => {
+              const a = e.currentTarget.dataset.a;
+              if (a === 'wallet') toast('Pass added to your phone wallet', 'wallet');
+              if (a === 'share') {
+                const text = `Parking at ${l.short}, ${S.floor} · ${S.slot}, ${fmtT(S.arrive)}`;
+                if (navigator.share) navigator.share({ title: 'Parking pass', text }).catch(() => {}); else toast('Pass link copied — share it with your passenger', 'share');
+              }
+              if (a === 'modify') { S.modifying = true; S.confirmCancel = false; openSheet('details'); }
+              if (a === 'cancel') { S.confirmCancel = true; rerender(); }
+              if (a === 'cancel-no') { S.confirmCancel = false; rerender(); }
+              if (a === 'cancel-yes') resetJourney(`Booking cancelled · ${money(S.paid + S.lateFee)} refunded to your ${payName()}`);
+            });
+            $('[data-go]', root).onclick = startNav;
+            $('[data-here]', root).onclick = () => { S.arrived = true; openSheet('arrive'); };
+          }
+        };
+      },
+
+      arrive() {
+        const l = LOTS[S.lot], n = +S.slot.split('-')[1], row = S.slot[0], g = S.gate;
+        const dirs = [
+          `Come up the ramp to <b>${S.floor}</b> and keep left`,
+          n <= 8 ? `Turn right into the north aisle along row ${row}` : `Drive straight into the south aisle along row ${row}`,
+          `<b>${S.slot}</b> is the ${nth(((n - 1) % 8) + 1)} bay on your ${n <= 8 ? 'right' : 'left'}`,
+          'The lift to street level is at the far end of the aisle'
+        ];
+        return {
+          title: `Welcome to ${l.short}`, sub: `${S.floor} · Slot ${S.slot}`,
+          body: `
+            <div class="gate ${g}">
+              <svg class="g" viewBox="0 0 120 80" aria-hidden="true">
+                <rect x="0" y="72" width="120" height="4" rx="2" fill="#334155"/>
+                <rect x="14" y="36" width="16" height="38" rx="3" fill="#475569"/>
+                <circle cx="22" cy="43" r="3.2" fill="${g === 'open' ? '#10B981' : '#F59E0B'}"/>
+                <g class="arm"><rect x="20" y="47" width="98" height="7" rx="3.5" fill="#F8FAFC"/><rect x="42" y="47" width="12" height="7" fill="#EF4444"/><rect x="66" y="47" width="12" height="7" fill="#EF4444"/><rect x="90" y="47" width="12" height="7" fill="#EF4444"/></g>
+                <rect class="beam" x="36" y="16" width="3" height="54" rx="1.5" fill="#818CF8"/>
+              </svg>
+              <div><small>${l.entrance}</small>
+                <b>${g === 'open' ? 'Gate open — welcome!' : g === 'scan' ? 'Reading your plate…' : 'Pull up to the barrier'}</b>
+                <span class="pass-plate">${S.region} ${esc(S.plate)}</span>
+                <span class="stat">${g === 'open' ? ico('check') + 'Plate recognised · booking ' + S.id : g === 'scan' ? 'Camera scanning…' : 'Camera ready'}</span></div>
+            </div>
+            ${S.showQr && g !== 'open' ? `<div class="sum" style="justify-items:center;text-align:center">${qrSVG(S.id, 'qr big')}<span class="hint">Hold this up to the scanner on the barrier post.</span></div>` : ''}
+            ${g === 'open' ? `
+              <div class="sec"><h3>Find your slot <em>${S.floor} · ${S.slot}</em></h3>
+                <div class="plan">${floorPlan(row, n)}</div>
+                <ol class="dirs">${dirs.map(d => `<li><span>${d}</span></li>`).join('')}</ol>
+                ${S.reassigned
+                  ? `<div class="alert green"><div class="alert-top">${ico('check')}<div><b>You've been moved to ${S.slot}</b>Same floor, same price. We've reported the blocked bay to the garage.</div></div></div>`
+                  : `<button type="button" class="btn ghost" data-occupied>${ico('alert')}Someone's parked in ${S.slot}?</button>`}
+              </div>`
+              : `<div class="note">${ico('alert')}<span>Gate not opening? Show your QR code, or call the garage — staff can open it remotely.</span></div>`}`,
+          foot: g === 'open'
+            ? `<button type="button" class="btn primary" data-parked>${ico('check')}I've parked</button>`
+            : `<button type="button" class="btn primary" data-gate ${g === 'scan' ? 'disabled' : ''}>${ico('nav')}I'm at the gate</button><button type="button" class="btn text" data-qr>${S.showQr ? 'Hide QR code' : 'Show QR code instead'}</button>`,
+          bind(root) {
+            $('[data-gate]', root)?.addEventListener('click', () => {
+              S.gate = 'scan'; rerender();
+              setTimeout(() => { S.gate = 'open'; if (S.view === 'arrive') rerender(); toast('Gate open — follow the route to your slot'); }, reduceMotion ? 300 : 1700);
+            });
+            $('[data-qr]', root)?.addEventListener('click', () => { S.showQr = !S.showQr; rerender(); });
+            $('[data-occupied]', root)?.addEventListener('click', () => {
+              taken.add(`${S.lot}:${S.slot}`);
+              let alt = nextFree(S.lot, row, n), floor = S.floor;
+              if (!alt) for (const f of l.floors) { alt = nextFree(S.lot, f[1], 8); if (alt) { floor = f[0]; break; } }
+              if (!alt) return toast('No free bays — staff are on the way to help', 'phone');
+              S.slot = alt; S.floor = floor; S.reassigned = true; rerender(); renderCapsule();
+              toast(`Moved to ${alt} at no extra cost`);
+            });
+            $('[data-parked]', root)?.addEventListener('click', () => {
+              S.status = 'parked'; S.elapsed = 0; S.charging = S.ev && l.kw > 0;
+              if (nav.p) { nav.p = 0; car.classList.remove('on'); }
+              updateBookButtons(); openSheet('parked');
+              toast(S.charging ? 'Session started · charger connected' : 'Session started — enjoy your evening', S.charging ? 'bolt' : 'check');
+            });
+          }
+        };
+      },
+
+      parked() {
+        const l = LOTS[S.lot], C = 2 * Math.PI * 56, sel = S.extSel;
+        return {
+          title: 'Parking session', sub: `${l.short} · ${S.floor} · ${S.slot}`,
+          body: `
+            <div class="ring-wrap">
+              <div class="ring" data-ring><svg viewBox="0 0 132 132" aria-hidden="true"><circle class="bg" cx="66" cy="66" r="56"/><circle class="fg" cx="66" cy="66" r="56" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg>
+                <div><b class="num" data-left>–</b><small data-leftlbl>left</small></div></div>
+              <div class="kv"><div><span>Started</span><b class="num">${fmtT(S.arrive)}</b></div><div><span>Ends</span><b class="num" data-ends>–</b></div><div><span>Charged so far</span><b class="num" data-sofar>–</b></div></div>
+            </div>
+            <span class="demo-clock">${ico('timer')}Demo clock · 1 second = 1 minute</span>
+            ${l.kw ? `<div class="sec"><h3>EV charging <em>${l.kw} kW · JD 0.20/kWh</em></h3>
+              <label class="switch"><input type="checkbox" id="evsw" ${S.charging ? 'checked' : ''}><span class="ic-box">${ico('bolt')}</span><span><b data-evstate>${S.charging ? 'Charging' : 'Not charging'}</b><span class="s">Connector at bay ${S.slot}</span></span><span class="tg"></span></label>
+              <div class="ev-live"><div><span>Energy</span><b class="num" data-kwh>0.0 kWh</b></div><div><span>Cost</span><b class="num" data-evcost>JD 0.00</b></div><div><span>Battery</span><b class="num" data-batt>34%</b></div></div></div>` : ''}
+            <div class="sec"><h3>Need more time?</h3>
+              <div class="chips">${[30, 60, 120].map(m => `<button type="button" class="opt num" data-ext="${m}" aria-pressed="${sel === m}">+${durTxt(m)} · ${money(l.price * m / 60)}</button>`).join('')}</div>
+              <button type="button" class="btn ghost" data-extend>${ico('plus')}Extend by ${durTxt(sel)} · ${money(l.price * sel / 60)}</button>
+              <span class="hint">Charged to your ${payName()}. Overtime is billed at ${money(l.price / 4)} per 15 min.</span></div>`,
+          foot: `<button type="button" class="btn primary" data-end>${ico('receipt')}End session &amp; get receipt</button><small>Leaving? Drive to the exit — the barrier opens for your plate.</small>`,
+          bind(root) {
+            on(root, '#evsw', 'change', e => { S.charging = e.target.checked; toast(S.charging ? 'Charging started' : 'Charging paused', 'bolt'); updateSession(); });
+            on(root, '[data-ext]', 'click', e => { S.extSel = +e.currentTarget.dataset.ext; rerender(); });
+            $('[data-extend]', root).onclick = () => extend(S.extSel);
+            $('[data-end]', root).onclick = () => { S.status = 'done'; S.charging = false; updateBookButtons(); openSheet('receipt'); };
+          }
+        };
+      },
+
+      receipt() {
+        const l = LOTS[S.lot], over = Math.max(0, S.elapsed - (S.hours * 60 + S.ext)), overCost = Math.ceil(over / 15) * l.price / 4;
+        const evCost = S.kwh * EV_RATE, sum = S.paid + S.extPaid + S.lateFee + overCost + evCost;
+        const tags = ['Easy entry', 'Found my slot fast', 'Clean & well lit', 'Good value', 'Hard to find the exit'];
+        return {
+          title: 'Receipt', sub: `${l.short} · ${$('#date').value}`,
+          body: `
+            <div class="success"><span class="ic-box">${ico('check')}</span><div><b>Thanks for parking with us</b><p class="hint">${durTxt(S.elapsed)} in ${S.slot} · receipt sent to ${esc(S.contact)}</p></div></div>
+            <div class="bill">
+              <div><span>Parking · ${S.hours}h × ${l.priceLabel}</span><b class="num">${money(l.price * S.hours)}</b></div>
+              ${S.ext ? `<div><span>Extension · +${durTxt(S.ext)}</span><b class="num">${money(S.extPaid)}</b></div>` : ''}
+              ${S.lateFee ? `<div><span>Late-arrival hold</span><b class="num">${money(S.lateFee)}</b></div>` : ''}
+              ${over ? `<div><span>Overtime · ${durTxt(over)}</span><b class="num">${money(overCost)}</b></div>` : ''}
+              ${S.kwh ? `<div><span>EV charging · ${S.kwh.toFixed(1)} kWh</span><b class="num">${money(evCost)}</b></div>` : ''}
+              <div><span>Service fee</span><b class="num">${money(FEE)}</b></div>
+              <div class="tot"><span>Total charged</span><b class="num">${money(sum)}</b></div>
+              <div><span>Paid with</span><b>${payName()}</b></div>
+            </div>
+            <div class="sec"><h3>How was it?</h3>
+              <div class="stars" role="group" aria-label="Rate your parking">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-star="${i}" class="${i <= S.rating ? 'on' : ''}" aria-label="${i} star${i > 1 ? 's' : ''}" aria-pressed="${i === S.rating}">${ico('star')}</button>`).join('')}</div>
+              ${S.rating ? `<div class="chips">${tags.map(t => `<button type="button" class="opt" data-tag="${t}" aria-pressed="${S.tags.has(t)}">${t}</button>`).join('')}</div>` : ''}
+            </div>
+            ${S.account === 'offer' ? `<div class="nudge">
+                <span class="ic-box indigo">${ico('user')}</span>
+                <h4>Book in one tap next time</h4>
+                <p>Save <b class="pass-plate">${S.region} ${esc(S.plate)}</b>, your ${payName()} and this receipt. Just add a password — we already have ${esc(S.contact)}.</p>
+                <input class="inp" type="password" id="pw" placeholder="Create a password (8+ characters)" autocomplete="new-password" aria-label="Create a password" aria-describedby="pw-msg">
+                <span class="hint" id="pw-msg">Your receipt is already on its way, with or without an account.</span>
+                <div class="row-a"><button type="button" class="btn primary" data-acct>Create free account</button><button type="button" class="btn text" data-skip>Not now</button></div>
+              </div>`
+            : S.account === 'created' ? `<div class="alert green"><div class="alert-top">${ico('check')}<div><b>Account created</b>Your plate, ${payName()} and parking history are saved. Next time it's one tap.</div></div></div>` : ''}`,
+          foot: `<button type="button" class="btn primary" data-done>Done</button>`,
+          bind(root) {
+            on(root, '[data-star]', 'click', e => { S.rating = +e.currentTarget.dataset.star; rerender(); });
+            on(root, '[data-tag]', 'click', e => { const t = e.currentTarget.dataset.tag; S.tags.has(t) ? S.tags.delete(t) : S.tags.add(t); rerender(); });
+            $('[data-acct]', root)?.addEventListener('click', () => {
+              const pw = $('#pw', root);
+              if (pw.value.length < 8) { pw.classList.add('bad'); const m = $('#pw-msg', root); m.classList.add('bad'); m.textContent = 'Use at least 8 characters.'; pw.focus(); return; }
+              S.account = 'created'; rerender(); toast('Account created — welcome to Spotlane', 'user');
+            });
+            $('[data-skip]', root)?.addEventListener('click', () => { S.account = 'skipped'; rerender(); });
+            $('[data-done]', root).onclick = () => resetJourney(S.rating ? 'Thanks for the feedback!' : 'See you next time');
+          }
+        };
+      }
+    };
+
+    /* ---------------- Journey actions ---------------- */
+    function startBooking(id) {
+      if (['paid', 'parked'].includes(S.status)) {
+        if (id !== S.lot) toast('You already have a booking — manage it from your pass', 'alert');
+        return openSheet(S.status === 'parked' ? 'parked' : S.arrived ? 'arrive' : 'pass');
+      }
+      if (S.status === 'done') S = fresh();
+      if (id !== S.lot) {
+        Object.assign(S, { lot: id, floor: LOTS[id].floor, slot: LOTS[id].slot, error: null, ev: LOTS[id].kw > 0 });
+        holdLeft = HOLD; drawRoute(id);
+      }
+      if (holdLeft <= 0) holdLeft = HOLD;
+      select(id, { pan: !isStacked() });
+      openSheet('details');
+    }
+
+    function pay(btn, root) {
+      const c = $('#guest-contact', root);
+      if (!/^\S+@\S+\.\S{2,}$/.test(S.contact) && S.contact.replace(/\D/g, '').length < 10) {
+        c.classList.add('bad'); const m = $('#contact-msg', root); m.classList.add('bad');
+        m.textContent = S.contact ? 'Enter a valid email or a 10-digit mobile number.' : 'Add an email or mobile number so we can send your pass.';
+        c.focus(); return;
+      }
+      if (S.pay === 'card') {
+        const bad = [['#cnum', S.cnum.replace(/\D/g, '').length < 15], ['#cexp', !/^\d{2}\s*\/\s*\d{2}$/.test(S.cexp)], ['#ccvc', !/^\d{3,4}$/.test(S.ccvc)]].filter(x => x[1]);
+        if (bad.length) { bad.forEach(([sel]) => $(sel, root).classList.add('bad')); $(bad[0][0], root).focus(); return; }
+      }
+      if (S.status === 'held' && holdLeft <= 0) { S.error = { type: 'hold' }; return rerender(); }
+      btn.classList.add('loading'); btn.disabled = true;
+      setTimeout(() => {
+        if (scenario.slotTaken) {
+          scenario.slotTaken = false; taken.add(`${S.lot}:${S.slot}`);
+          S.error = { type: 'taken', slot: S.slot, alt: nextFree(S.lot, S.slot[0], +S.slot.split('-')[1]) };
+          select(S.lot); return rerender();
+        }
+        if (scenario.declined) { scenario.declined = false; S.error = { type: 'declined' }; return rerender(); }
+        const was = S.modifying, due = total() - (was ? S.paid : 0);
+        Object.assign(S, { error: null, modifying: false, paid: total(), status: 'paid' });
+        if (!S.id) S.id = 'SPT-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+        updateBookButtons(); select(S.lot); openSheet('pass');
+        toast(was ? (due >= 0 ? `Booking updated · ${money(due)} charged` : `Booking updated · ${money(-due)} refunded`) : `Paid ${money(S.paid)} · pass sent to ${S.contact}`);
+      }, reduceMotion ? 300 : 1400);
+    }
+
+    function extend(m) {
+      const l = LOTS[S.lot];
+      S.ext += m; S.extPaid += l.price * m / 60; S.lowWarned = false;
+      toast(`Extended by ${durTxt(m)} · now ends ${fmtT(endMin())}`, 'timer');
+      if (S.view === 'parked') updateSession();
+      renderCapsule();
+    }
+
+    function updateBookButtons() {
+      $$('.lot').forEach(c => {
+        const b = $('[data-book]', c); if (!b) return;
+        const mine = c.dataset.id === S.lot && ['paid', 'parked'].includes(S.status);
+        b.className = `btn ${mine ? 'booked' : 'primary'}`;
+        b.innerHTML = mine ? ico('check') + 'Booked' : 'Book a spot';
+      });
+      if (pop.classList.contains('on')) openPop(selected);
+    }
+
+    function resetJourney(msg) {
+      if (nav.on) stopNav(false);
+      S = fresh(); taken.clear(); holdLeft = HOLD; nav.p = 0; car.classList.remove('on', 'lost');
+      closeSheet(); hideNotice(); updateBookButtons(); select('kst'); renderCapsule();
+      if (msg) toast(msg);
+    }
+
+    /* ---------------- Capsule (bottom pass) ---------------- */
+    const navBtn = $('#navBtn'), car = $('#car');
+    function renderCapsule() {
+      const l = LOTS[S.lot], hold = $('#hold');
+      const set = (sel, v) => { const e = $(sel); if (e.textContent !== v) e.textContent = v; };
+      let cta;
+      set('#cap-lot', `${l.short} · ${S.floor}`); set('#cap-slot', `#${S.slot}`);
+      if (S.status === 'parked' || S.status === 'done') {
+        const left = S.hours * 60 + S.ext - S.elapsed;
+        set('#cap-title', 'Parked in'); set('#cap-l1', left >= 0 ? 'Time left' : 'Overtime'); set('#cap-eta', hm(left));
+        set('#cap-l2', 'Ends'); set('#cap-dist', fmtT(endMin()));
+        hold.className = 'hold num paid'; set('#hold', S.charging ? 'Charging' : 'Live');
+        cta = S.status === 'done' ? ['receipt', 'View receipt'] : ['timer', 'Manage session'];
+      } else {
+        set('#cap-title', 'Reserved Slot'); set('#cap-l1', 'ETA'); set('#cap-l2', 'Distance');
+        if (S.arrived) { set('#cap-eta', 'Arrived'); set('#cap-dist', '0 km'); }
+        else if (!nav.on) { set('#cap-eta', locOff ? '—' : `${l.min} mins`); set('#cap-dist', locOff ? '—' : `${l.km} km`); }
+        if (S.status === 'held') {
+          hold.className = `hold num${holdLeft <= 0 ? ' exp' : ''}`;
+          set('#hold', holdLeft > 0 ? mmss(holdLeft) : 'Expired');
+          cta = holdLeft > 0 ? ['check', 'Complete booking'] : ['timer', 'Hold again'];
+        } else {
+          hold.className = 'hold num paid'; set('#hold', 'Paid');
+          cta = S.arrived ? ['check', 'Open gate'] : nav.on ? ['x', 'Stop Navigation'] : ['nav', 'Start Navigation'];
+        }
+      }
+      $('use', navBtn).setAttribute('href', '#i-' + cta[0]); set('#navBtn span', cta[1]);
+      navBtn.classList.toggle('on', nav.on);
+    }
+    navBtn.onclick = () => {
+      if (S.status === 'held') {
+        if (holdLeft <= 0) { holdLeft = HOLD; hideNotice(); renderCapsule(); return toast(`${S.slot} held again for 15 min`, 'timer'); }
+        return startBooking(S.lot);
+      }
+      if (S.status === 'parked') return openSheet('parked');
+      if (S.status === 'done') return openSheet('receipt');
+      if (S.arrived) return openSheet('arrive');
+      nav.on ? stopNav(false) : startNav();
+    };
+    $('#contact').onclick = () => { const l = LOTS[S.lot]; toast(`Calling ${l.short} · ${l.phone}`, 'phone'); };
+
+    /* ---------------- Navigation simulation ---------------- */
+    const nav = { on: false, p: 0, pt: { x: ME.x, y: ME.y }, raf: 0, hold: 0 };
+    function stopNav(arrived) {
+      nav.on = false; cancelAnimationFrame(nav.raf); car.classList.remove('lost');
+      if (arrived) { S.arrived = true; renderCapsule(); openSheet('arrive'); }
+      else { nav.p = 0; car.classList.remove('on'); drawRoute(selected); renderCapsule(); }
+    }
+    function startNav() {
+      closeSheet();
+      if (mode === 'country') { mode = 'city'; setModeUI(); fitView(0); }
+      if (locOff) setLocOff(false);
+      if (selected !== S.lot) select(S.lot, { pan: true });
+      drawRoute(S.lot);
+      const path = document.getElementById('route'), done = document.getElementById('routeDone');
+      const total = path.getTotalLength(), l = LOTS[S.lot];
+      nav.on = true; nav.p = 0; nav.hold = 0; car.classList.add('on'); renderCapsule();
+      const dur = reduceMotion ? 1 : 9000; let last = performance.now(), prog = 0;
+      const step = now => {
+        if (now > nav.hold) prog += now - last;
+        last = now;
+        nav.p = Math.min(1, prog / dur);
+        const len = nav.p * total, pt = path.getPointAtLength(len), ahead = path.getPointAtLength(Math.min(total, len + 4));
+        nav.pt = pt;
+        $('svg', car).style.transform = `rotate(${Math.atan2(ahead.y - pt.y, ahead.x - pt.x) * 180 / Math.PI + 90}deg)`;
+        done.setAttribute('stroke-dasharray', `${len} 99999`);
+        const mins = Math.max(1, Math.ceil(l.min * (1 - nav.p)));
+        $('#cap-eta').textContent = `${mins} min${mins > 1 ? 's' : ''}`;
+        $('#cap-dist').textContent = `${(l.km * (1 - nav.p)).toFixed(1)} km`;
+        render();
+        if (nav.p < 1 && nav.on) nav.raf = requestAnimationFrame(step);
+        else if (nav.p >= 1) stopNav(true);
+      };
+      if (!reduceMotion) toast(`Navigating to ${l.short} · ${S.floor}, Slot ${S.slot}`, 'nav');
+      nav.raf = requestAnimationFrame(step);
+    }
+
+    /* ---------------- Notices, toast, scenarios ---------------- */
+    let toastT, noticeT;
+    function toast(msg, icon = 'check') {
+      const t = $('#toast');
+      $('span', t).textContent = msg;
+      $('use', t).setAttribute('href', `#i-${icon}`);
+      t.classList.add('on'); clearTimeout(toastT);
+      toastT = setTimeout(() => t.classList.remove('on'), 3400);
+    }
+    function notice({ tone = 'amber', icon = 'alert', title, text, actions = [], timeout = 0 }) {
+      const n = $('#notice'); clearTimeout(noticeT);
+      n.innerHTML = `<span class="ic-box ${tone}">${ico(icon)}</span><div><b>${title}</b><p>${text}</p>${actions.length ? `<div class="row-a">${actions.map((a, i) => `<button type="button" class="btn ${a.primary ? 'primary' : 'ghost'}" data-i="${i}">${a.label}</button>`).join('')}</div>` : ''}</div><button type="button" class="x" aria-label="Dismiss">${ico('x')}</button>`;
+      n.classList.add('on');
+      $$('[data-i]', n).forEach(b => b.onclick = () => { hideNotice(); actions[+b.dataset.i].fn(); });
+      $('.x', n).onclick = hideNotice;
+      if (timeout) noticeT = setTimeout(hideNotice, timeout);
+    }
+    function hideNotice() { $('#notice').classList.remove('on'); }
+
+    function holdExpired() {
+      renderCapsule();
+      notice({ tone: 'red', icon: 'timer', title: `Your hold on ${S.slot} expired`,
+        text: "We released the slot after 15 minutes. It's still free right now — grab it again before someone else does.",
+        actions: [
+          { label: `Hold ${S.slot} again`, primary: true, fn: () => { holdLeft = HOLD; S.error = null; renderCapsule(); toast(`${S.slot} held again for 15 min`, 'timer'); rerender(); } },
+          { label: 'See other lots', fn: () => { closeSheet(); $('.panel').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' }); } }
+        ] });
+    }
+    function gpsLost() {
+      nav.hold = performance.now() + 3500; car.classList.add('lost');
+      notice({ tone: 'amber', icon: 'gps-off', title: 'GPS signal lost', text: "Showing your last known position. Keep going — we'll reroute as soon as the signal is back." });
+      setTimeout(() => { car.classList.remove('lost'); if (nav.on) notice({ tone: 'green', icon: 'check', title: 'Signal restored', text: 'Route updated · ETA unchanged.', timeout: 2600 }); }, 3500);
+    }
+    function runningLate() {
+      notice({ tone: 'amber', icon: 'clock', title: "Looks like you're running late",
+        text: `${S.slot} is held until ${fmtT(S.arrive + 15)}. Keep it for 30 more minutes for ${money(.5)} so it isn't released.`,
+        actions: [
+          { label: `Keep my slot · ${money(.5)}`, primary: true, fn: () => { S.arrive += 30; S.lateFee += .5; toast(`Slot held until ${fmtT(S.arrive + 15)}`, 'timer'); rerender(); } },
+          { label: "I'll make it", fn: () => {} }
+        ] });
+    }
+    function setLocOff(off) {
+      locOff = off; $('#locoff').hidden = !off; $('#me').hidden = off;
+      if (off) { ['route', 'routeCasing', 'routeFlow', 'routeDone'].forEach(r => document.getElementById(r).setAttribute('d', '')); pop.classList.remove('on'); }
+      else drawRoute(selected);
+      renderCapsule();
+    }
+    $$('[data-loc]').forEach(b => b.onclick = () => {
+      if (b.dataset.loc === 'on') { setLocOff(false); select(selected); toast('Location on · showing lots near you', 'locate'); }
+      else { const i = $('#street'); i.focus(); i.select(); }
+    });
+
+    function applyFilter() {
+      const want = $$('.amen input:checked').map(i => i.value);
+      let n = 0;
+      Object.entries(LOTS).forEach(([id, l]) => {
+        const ok = !emptyScn && (!want.length || want.some(a => l.amen.includes(a)));
+        $(`.lot[data-id="${id}"]`).hidden = !ok; pins[id].hidden = !ok;
+        if (ok) n++;
+        else if (selected === id) pop.classList.remove('on');
+      });
+      $$('.chip[data-amen]').forEach(c => c.classList.toggle('off', !want.includes(c.dataset.amen)));
+      $('#found').innerHTML = n ? `We found <em>${n} parking lot${n > 1 ? 's' : ''}</em> near you` : 'No parking lots near you';
+      $('#empty').hidden = n > 0;
+      const visible = !pins[selected].hidden;
+      if (!nav.on && !locOff) visible ? drawRoute(selected) : ['route', 'routeCasing', 'routeFlow', 'routeDone'].forEach(r => document.getElementById(r).setAttribute('d', ''));
+      return n;
+    }
+    $$('[data-fix]').forEach(b => b.onclick = () => {
+      const f = b.dataset.fix; emptyScn = false;
+      if (f === 'time') { $('#time').value = '8:00 PM'; ctx(); }
+      if (f === 'clear') $$('.amen input').forEach(i => i.checked = true);
+      const n = applyFilter();
+      toast(f === 'radius' ? `Search widened to 2 km · ${n} lots found` : f === 'time' ? `Showing lots for 8:00 PM · ${n} found` : `Filters cleared · ${n} lots found`);
+      select(selected);
+    });
+
+    const scn = $('#scn'), scnBtn = $('.scn-btn');
+    const toggleScn = open => { scn.classList.toggle('open', open); scnBtn.setAttribute('aria-expanded', open); };
+    scnBtn.onclick = e => { e.stopPropagation(); toggleScn(!scn.classList.contains('open')); };
+    document.addEventListener('click', e => { if (!scn.contains(e.target)) toggleScn(false); });
+    const needHeld = () => { if (S.status !== 'held') { toast('This happens before payment — restart the journey to try it', 'alert'); return false; } return true; };
+    const SCN = {
+      loc: () => setLocOff(true),
+      empty: () => { emptyScn = true; applyFilter(); if (isStacked()) $('#empty').scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); },
+      hold: () => { if (!needHeld()) return; holdLeft = 6; renderCapsule(); toast(`Hold on ${S.slot} ends in a few seconds…`, 'timer'); },
+      taken: () => { if (!needHeld()) return; scenario.slotTaken = true; startBooking(S.lot); toast('Continue and pay — another driver will grab your slot', 'alert'); },
+      declined: () => { if (!needHeld()) return; scenario.declined = true; startBooking(S.lot); toast('Continue and pay — the card will be declined', 'card'); },
+      late: () => { if (S.status !== 'paid' || S.arrived) return toast('Book a spot first, then try running late', 'alert'); runningLate(); },
+      gps: () => {
+        if (nav.on) return gpsLost();
+        if (S.status === 'paid' && !S.arrived) { startNav(); return setTimeout(gpsLost, 1600); }
+        toast('Book a spot first, then start navigation', 'alert');
+      },
+      reset: () => { emptyScn = false; scenario.slotTaken = scenario.declined = false; setLocOff(false); applyFilter(); resetJourney('Guest journey restarted'); }
+    };
+    $$('[data-scn]').forEach(b => b.onclick = () => { toggleScn(false); SCN[b.dataset.scn](); });
+
+    /* ---------------- Session clock ---------------- */
+    function updateSession() {
+      if (S.view !== 'parked') return;
+      const r = $('[data-ring]', sheet); if (!r) return;
+      const l = LOTS[S.lot], tot = S.hours * 60 + S.ext, left = tot - S.elapsed, C = 2 * Math.PI * 56;
+      $('.fg', r).style.strokeDashoffset = C * (1 - Math.max(0, left) / tot);
+      r.classList.toggle('low', left <= 15 && left >= 0); r.classList.toggle('over', left < 0);
+      $('[data-left]', r).textContent = hm(left);
+      $('[data-leftlbl]', r).textContent = left >= 0 ? 'left' : 'overtime';
+      $('[data-ends]', sheet).textContent = fmtT(endMin());
+      const overCost = Math.ceil(Math.max(0, -left) / 15) * l.price / 4;
+      $('[data-sofar]', sheet).textContent = money(S.paid + S.extPaid + S.lateFee + overCost + S.kwh * EV_RATE);
+      if (l.kw) {
+        $('[data-kwh]', sheet).textContent = `${S.kwh.toFixed(1)} kWh`;
+        $('[data-evcost]', sheet).textContent = money(S.kwh * EV_RATE);
+        $('[data-batt]', sheet).textContent = `${Math.min(100, Math.round(34 + S.kwh / 75 * 100))}%`;
+        $('[data-evstate]', sheet).textContent = S.charging ? 'Charging' : 'Not charging';
+        $('#evsw', sheet).checked = S.charging;
+      }
+    }
+    setInterval(() => {
+      if (S.status === 'held' && holdLeft > 0) { holdLeft--; if (!holdLeft) holdExpired(); }
+      if (S.status === 'parked') {
+        S.elapsed++;
+        const l = LOTS[S.lot];
+        if (S.charging) {
+          S.kwh += l.kw / 60;
+          if (34 + S.kwh / 75 * 100 >= 100) { S.kwh = .66 * 75; S.charging = false; toast('Charging complete · battery full', 'bolt'); }
+        }
+        const left = S.hours * 60 + S.ext - S.elapsed;
+        if (left === 15 && !S.lowWarned) {
+          S.lowWarned = true;
+          notice({ tone: 'amber', icon: 'timer', title: '15 minutes left on your parking',
+            text: `Extend now to avoid overtime at ${money(l.price / 4)} per 15 min.`,
+            actions: [{ label: `Extend 1h · ${money(l.price)}`, primary: true, fn: () => extend(60) }, { label: "I'm leaving soon", fn: () => {} }] });
+        }
+        updateSession();
+      }
+      const ht = $('[data-holdtxt]', sheet); if (ht) ht.textContent = mmss(holdLeft);
+      renderCapsule();
+    }, 1000);
+
+    /* ---------------- List & pins interactions ---------------- */
+    $$('.lot').forEach(c => {
+      const id = c.dataset.id;
+      c.addEventListener('click', e => {
+        if (e.target.closest('[data-book]')) return startBooking(id);
+        if (e.target.closest('[data-notify]')) return toast(`We'll alert you when a slot frees up at ${LOTS[id].short}`, 'bell');
+        select(id, { pan: true });
+        if (isStacked()) map.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+      });
+      c.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); select(id, { pan: true }); } });
+      c.addEventListener('mouseenter', () => pins[id].classList.add('hot'));
+      c.addEventListener('mouseleave', () => pins[id].classList.remove('hot'));
+    });
+    Object.entries(pins).forEach(([id, p]) => p.addEventListener('click', () => select(id)));
+
+    $$('.panel .seg button').forEach(b => b.onclick = () => {
+      $$('.panel .seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      const order = { best: ['penn', 'kst', 'spp'], price: ['kst', 'penn', 'spp'], dist: ['penn', 'kst', 'spp'] }[b.dataset.sort];
+      const list = $('#list');
+      order.forEach(id => list.insertBefore($(`.lot[data-id="${id}"]`, list), $('#empty')));
+    });
+
+    $$('.amen input').forEach(i => i.addEventListener('change', () => {
+      const n = applyFilter();
+      toast(n ? `${n} lot${n > 1 ? 's' : ''} match your amenities` : 'No lots match these amenities', n ? 'check' : 'alert');
+    }));
+
+    // Date / time / location context
+    function ctx() {
+      $('#ctx').textContent = `Near ${$('#street').value || 'your location'} · ${$('#date').value}, ${$('#time').value}`;
+    }
+    ['#date', '#time'].forEach(s => $(s).addEventListener('change', () => { ctx(); jitter(3); if (S.status === 'held') S.arrive = null; toast(`Availability refreshed for ${$('#date').value}, ${$('#time').value}`); }));
+    ['#city', '#street'].forEach(s => $(s).addEventListener('keydown', e => { if (e.key === 'Enter') { ctx(); if (locOff) setLocOff(false); fitView(); toast(`Showing lots near ${$('#street').value}, ${$('#city').value}`); } }));
+
+    /* ---------------- Real-time availability ticks ---------------- */
+    let lastTick = Date.now();
+    function paintLot(id) {
+      const l = LOTS[id], c = $(`.lot[data-id="${id}"]`);
+      $('[data-free]', c).textContent = `${l.free} free`;
+      $('[data-meter]', c).style.width = `${Math.max(4, l.free / l.total * 100)}%`;
+      if (selected === id && pop.classList.contains('on')) { const n = $('.pop-head .num', pop); if (n) n.textContent = `${l.free} free`; }
+    }
+    function jitter(times = 1) {
+      for (let k = 0; k < times; k++) {
+        const ids = Object.keys(LOTS), id = ids[Math.floor(Math.random() * ids.length)], l = LOTS[id];
+        l.free = Math.min(l.band[1], Math.max(l.band[0], l.free + (Math.random() < .5 ? -1 : 1)));
+        paintLot(id);
+      }
+      lastTick = Date.now();
+    }
+    setInterval(() => jitter(1), 4000);
+    setInterval(() => {
+      const s = Math.round((Date.now() - lastTick) / 1000);
+      $('#updated').textContent = s < 2 ? 'Live · updated just now' : `Live · updated ${s}s ago`;
+    }, 1000);
+
+    /* ---------------- Layout + boot ---------------- */
+    function layout() {
+      if (isStacked()) { map.style.removeProperty('--ot'); return; }
+      const head = $('.top').getBoundingClientRect(), app = $('#app').getBoundingClientRect(), m = map.getBoundingClientRect();
+      $('#app').style.setProperty('--sheet-top', `${head.bottom - app.top + 14}px`);
+      map.style.setProperty('--ot', `${head.bottom - m.top + 14}px`);
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (scn.classList.contains('open')) { toggleScn(false); scnBtn.focus(); }
+      else if (S.view) closeSheet();
+    });
+    $('#scrim').onclick = closeSheet;
+
+    drawRoute('kst');
+    applyFilter();
+    select('kst');
+    renderCapsule();
+    layout();
+    fitView(0);
+    let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layout(); mode === 'city' ? fitView(0) : fitCountry(0); }, 120); });
+    if (document.fonts) document.fonts.ready.then(() => { layout(); if (mode === 'city') { fitView(0); placePop(); } });
+  })();
+  </script>
+</body>
+</html>
