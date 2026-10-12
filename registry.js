@@ -279,5 +279,13 @@ window.EMS_REGISTRY = [
     path: "dashboards/07-spotlane-live/",
     accent: "#4F46E5",
     summary: "Testable Spotlane on a real map of Jordan: real car parks, your location, search and routes, with simulated availability and payments plus built-in feedback for research sessions."
+  },
+  {
+    title: "Volara Air Ops",
+    industry: "Drone logistics",
+    tags: ["Real Jordan terrain", "88k real Amman buildings", "Country ↔ city zoom", "Live drone camera", "Bilingual labels"],
+    path: "dashboards/06-volara-drone-ops/",
+    accent: "#3CC8FF",
+    summary: "Map-first drone delivery control over real Jordan: true elevation and border at country scale, 88,000 real Amman buildings and streets at city scale, and a live camera from the selected drone."
   }
 ];
