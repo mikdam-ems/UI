@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sotto Umbrellas</title>
+  <meta name="description" content="A scroll story for a fictional umbrella maker: rain on the glass, a 3D umbrella that opens over you, then a shop where umbrellas jump into your stand.">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500;1,600&family=Jost:wght@400;500&family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav" id="nav">
+    <a class="logo" href="#story">SOTTO</a>
+    <nav aria-label="Main">
+      <a href="#umbrellas" data-i18n="nav.umbrellas">Umbrellas</a>
+      <a href="#story" data-go="0.3" data-i18n="nav.opens">How it opens</a>
+      <a href="#bench" data-i18n="nav.bench">The bench</a>
+      <a href="#visit" data-i18n="nav.visit">Visit</a>
+    </nav>
+    <div class="tools">
+      <button type="button" class="icon" id="sound" aria-pressed="false" data-i18n-aria="nav.sound" aria-label="Rain sound">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="w" d="M16 9c1.2 1.6 1.2 4.4 0 6M18.5 6.5c2.6 3 2.6 8 0 11" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="lang" id="lang" data-i18n="nav.lang" data-i18n-aria="nav.langAria">عربي</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ THE STORY ============ -->
+    <section class="story" id="story" aria-label="Story">
+      <div class="stick">
+        <canvas id="story-gl" aria-hidden="true"></canvas>
+
+        <div class="chap c0" data-range="-1,0,0.03,0.1">
+          <h1 data-i18n="hero.title">It’s raining<br>on your screen.</h1>
+          <p data-i18n="hero.sub">Scroll, or pull the umbrella open.</p>
+        </div>
+        <div class="chap c0h" data-range="-1,0,0.02,0.06">
+          <span class="cue" aria-hidden="true"></span><span data-i18n="hero.hint">Move to wipe the glass · drag up to open</span>
+        </div>
+        <div class="chap c1" data-range="0.2,0.27,0.34,0.4">
+          <h2 data-i18n="c1.title">Eight ribs. One breath.</h2>
+          <p data-i18n="c1.sub">Ash and steel unfold in a single motion. Then the rain is someone else’s problem.</p>
+        </div>
+        <div class="chap c2" data-range="0.46,0.52,0.6,0.65">
+          <p class="eyebrow" data-i18n="c2.eyebrow">Ombrellai · since 1921</p>
+          <h2 data-i18n="c2.sub">Step out of the rain.</h2>
+        </div>
+        <div class="chap c4" data-range="0.86,0.93,1.1,1.2">
+          <h2 data-i18n="c4.title">Come in. Dry off.<br>Choose yours.</h2>
+          <a class="btn-solid light" href="#umbrellas" data-i18n="c4.cta">See the umbrellas</a>
+        </div>
+
+        <div class="dots" role="navigation" aria-label="Story chapters">
+          <button type="button" data-p="0"><span data-i18n="dots.rain">The rain</span></button>
+          <button type="button" data-p="0.3"><span data-i18n="dots.open">How it opens</span></button>
+          <button type="button" data-p="0.56"><span data-i18n="dots.sign">Sotto</span></button>
+          <button type="button" data-p="1"><span data-i18n="dots.inside">Inside</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ THE SHOP ============ -->
+    <section class="shop" id="umbrellas">
+      <header class="sec-head">
+        <p class="eyebrow" data-i18n="shop.eyebrow">The rail</p>
+        <h2 data-i18n="shop.title">The umbrellas</h2>
+        <p data-i18n="shop.sub">Made on the bench behind the counter. Hover to lift one off the rail, open it, then drop it in your stand.</p>
+      </header>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <!-- ============ THE BENCH ============ -->
+    <section class="bench" id="bench">
+      <header class="sec-head">
+        <p class="eyebrow" data-i18n="bench.eyebrow">The bench</p>
+        <h2 data-i18n="bench.title">Seventy-four steps, one pair of hands.</h2>
+        <p data-i18n="bench.sub">Every Sotto is built start to finish by one maker, who signs the inside of the runner.</p>
+      </header>
+      <ol class="steps">
+        <li><span class="n">I</span><h3 data-i18n="bench.s1">Ribs</h3><p data-i18n="bench.s1d">Steel ribs, filed and tipped with brass so they never snag the cloth.</p></li>
+        <li><span class="n">II</span><h3 data-i18n="bench.s2">Canopy</h3><p data-i18n="bench.s2d">Waxed cotton cut in panels, sewn tight, then stretched for a night.</p></li>
+        <li><span class="n">III</span><h3 data-i18n="bench.s3">Handle</h3><p data-i18n="bench.s3d">Chestnut, malacca or ash, steamed and bent by hand into a crook.</p></li>
+      </ol>
+      <dl class="stats">
+        <div><dt>1921</dt><dd data-i18n="bench.k1">founded</dd></div>
+        <div><dt>11</dt><dd data-i18n="bench.k2">hours per umbrella</dd></div>
+        <div><dt>∞</dt><dd data-i18n="bench.k3">lifetime re-cover</dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <footer class="visit" id="visit">
+    <div>
+      <p class="logo">SOTTO</p>
+      <h2 data-i18n="visit.title">Visit the shop</h2>
+    </div>
+    <div>
+      <p data-i18n="visit.addr">Under the portico, 12 Via dei Mercanti</p>
+      <p data-i18n="visit.hours">Tue–Sat · 10:00–19:00 · open late when it rains</p>
+      <p class="muted" data-i18n="visit.note">Sotto is a fictional brand made for the EMS showcase.</p>
+    </div>
+  </footer>
+
+  <!-- 3D umbrellas for the rail + flights (click-through overlay) -->
+  <canvas id="shop-gl" aria-hidden="true"></canvas>
+
+  <!-- the cart is an umbrella stand -->
+  <button type="button" class="stand" id="stand" aria-label="Your stand, 0 umbrellas">
+    <svg viewBox="0 0 100 130" aria-hidden="true">
+      <defs>
+        <linearGradient id="brass" x1="0" x2="1">
+          <stop offset="0" stop-color="#6b4a1a"/><stop offset=".28" stop-color="#e9c983"/><stop offset=".5" stop-color="#c9a35a"/><stop offset="1" stop-color="#5a3c14"/>
+        </linearGradient>
+        <linearGradient id="inside" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1c1208"/><stop offset="1" stop-color="#4a3414"/></linearGradient>
+      </defs>
+      <ellipse cx="50" cy="40" rx="34" ry="9" fill="url(#inside)"/>
+      <g id="stand-handles"></g>
+      <path d="M16 40 L21 116 Q50 128 79 116 L84 40 Q50 53 16 40 Z" fill="url(#brass)"/>
+      <path d="M16 40 Q50 53 84 40" fill="none" stroke="#f6e2ae" stroke-width="2.4"/>
+      <path d="M19 74 Q50 86 81 74 M20.6 100 Q50 112 79.4 100" fill="none" stroke="rgba(60,35,10,.45)" stroke-width="2"/>
+      <ellipse cx="50" cy="40" rx="34" ry="9" fill="none" stroke="#8a6a2a" stroke-width="1.6"/>
+    </svg>
+    <span class="count" id="stand-count">0</span>
+  </button>
+
+  <div class="drawer" id="drawer" hidden>
+    <div class="scrim"></div>
+    <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+      <header><h2 id="drawer-title" data-i18n="stand.title">Your stand</h2><button type="button" class="x" data-i18n-aria="stand.close" aria-label="Close">✕</button></header>
+      <ul id="drawer-list"></ul>
+      <footer>
+        <div class="tot"><span data-i18n="stand.subtotal">Subtotal</span><b id="drawer-total">€0</b></div>
+        <button type="button" class="btn-solid" id="checkout" data-i18n="stand.checkout">Checkout</button>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <a class="ems-back" href="../../">← EMS Showcase</a>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="i18n.js"></script>
+  <script src="umbrella.js"></script>
+  <script src="paint.js"></script>
+  <script src="story.js"></script>
+  <script src="shop.js"></script>
+  <script>
+    (function () {
+      const S = window.Sotto, html = document.documentElement, nav = document.getElementById('nav');
+      document.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); S.goTo(+a.dataset.go); }));
+      const snd = document.getElementById('sound');
+      snd.addEventListener('click', () => snd.setAttribute('aria-pressed', S.sound.toggle()));
+      document.getElementById('lang').addEventListener('click', () => S.setLang(S.lang === 'ar' ? 'en' : 'ar'));
+      const story = document.getElementById('story');
+      const onScroll = () => html.classList.toggle('past-story', story.getBoundingClientRect().bottom < 70);
+      addEventListener('scroll', onScroll, { passive: true }); onScroll();
+      S.applyLang();
+    })();
+  </script>
+</body>
+</html>
