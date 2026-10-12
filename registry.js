@@ -241,5 +241,16 @@ window.EMS_REGISTRY = [
     path: "experiments/02-sotto-umbrellas/",
     accent: "#a8121c",
     summary: "Umbrella maker scroll story: rain runs down your screen, a 3D umbrella opens over you, you walk into the shop, and umbrellas leap into an umbrella-stand cart."
+  },
+  {
+    id: "mobile-01",
+    kind: "mobile",
+    type: "Mobile",
+    title: "Elevate",
+    industry: "Corporate finance",
+    tags: ["3 live screens", "AI insight card", "Glass dock", "Forecast vs actuals", "Filter menus"],
+    path: "mobile/01-elevate-finance/",
+    accent: "#FF6B4A",
+    summary: "Executive finance app in three phones: filter KPI scorecards, ask the coral AI assistant, tap forecast bars — the glass dock switches every screen."
   }
 ];
