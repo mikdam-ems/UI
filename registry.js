@@ -252,5 +252,13 @@ window.EMS_REGISTRY = [
     path: "mobile/01-elevate-finance/",
     accent: "#FF6B4A",
     summary: "Executive finance app in three phones: filter KPI scorecards, ask the coral AI assistant, tap forecast bars — the glass dock switches every screen."
+  },
+  {
+    title: "Logixor",
+    industry: "Supply chain & logistics",
+    tags: ["Three.js", "Explorable 3D site", "Glassmorphism", "Day / night", "Live camera feed"],
+    path: "dashboards/06-logixor-logistics/",
+    accent: "#2563EB",
+    summary: "Logistics command centre over a procedural 3D port: pan, zoom and fly to warehouses, docks and live shipments, with day and night modes."
   }
 ];
