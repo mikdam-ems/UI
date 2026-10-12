@@ -254,6 +254,9 @@ window.EMS_REGISTRY = [
     summary: "Executive finance app in three phones: filter KPI scorecards, ask the coral AI assistant, tap forecast bars — the glass dock switches every screen."
   },
   {
+    id: "dash-08",
+    kind: "dashboard",
+    type: "Dashboard",
     title: "Logixor",
     industry: "Supply chain & logistics",
     tags: ["Three.js", "Explorable 3D site", "Glassmorphism", "Day / night", "Live camera feed"],
@@ -262,6 +265,9 @@ window.EMS_REGISTRY = [
     summary: "Logistics command centre over a procedural 3D port: pan, zoom and fly to warehouses, docks and live shipments, with day and night modes."
   },
   {
+    id: "dash-09",
+    kind: "dashboard",
+    type: "Dashboard",
     title: "Spotlane",
     industry: "Smart mobility · Amman",
     tags: ["Full guest journey", "Jordan → Amman zoom", "QR pass + gate entry", "Live session", "Edge-case scenarios"],
@@ -281,6 +287,9 @@ window.EMS_REGISTRY = [
     summary: "Testable Spotlane on a real map of Jordan: real car parks, your location, search and routes, with simulated availability and payments plus built-in feedback for research sessions."
   },
   {
+    id: "dash-10",
+    kind: "dashboard",
+    type: "Dashboard",
     title: "Volara Air Ops",
     industry: "Drone logistics",
     tags: ["Real Jordan terrain", "88k real Amman buildings", "Country ↔ city zoom", "Live drone camera", "Bilingual labels"],
