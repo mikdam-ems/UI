@@ -122,6 +122,17 @@ window.EMS_REGISTRY = [
     summary: "Banking hero with a working phone: tap pocket cards, hide the balance, top up and flip months on the chart."
   },
   {
+    id: "hero-11",
+    kind: "hero",
+    type: "Hero",
+    title: "Ocean Dew Spa",
+    industry: "Wellness & beauty",
+    tags: ["Generative pool caustics", "Capsule carousel", "Illustrated still lifes", "Booking sheet"],
+    path: "heroes/11-ocean-dew-spa/",
+    accent: "#7CCBEA",
+    summary: "Luxury spa hero on a code-made pool: PEACE & RELAX over five stadium capsules that rotate with the arrows, and a round BOOK NOW that opens a booking sheet."
+  },
+  {
     id: "dash-01",
     kind: "dashboard",
     type: "Dashboard",
